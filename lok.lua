@@ -1,5 +1,5 @@
 -- ====================================================================
--- VOLLEYBALL LEGENDS - AGGRESSIVE SPORT EDITION (PREMIUM)
+-- VOLLEYBALL LEGENDS - AGGRESSIVE SPORT EDITION (PREMIUM v1.3)
 -- + COLOR PICKER + CORNER RADIUS + MEGA HITBOX + BALL ESP + TRAIL
 -- + PLAYER TRACERS + RANGE GUARD
 -- ====================================================================
@@ -69,7 +69,7 @@ local ToggleRegistry = {}
 local Br = {}
 local BallESP = { model = nil, highlight = nil, particles = nil, light = nil, trail = nil, trailAtt0 = nil, trailAtt1 = nil }
 local Pred = { ring = nil, center = nil, lastPos = nil, lastTime = nil, smoothVel = nil, smoothLand = nil }
-local HitboxVisual = { Sphere = nil, Ring = nil, Radius = 0, PulseTime = 0, RotateAngle = 0 }
+local HitboxVisual = { Ring = nil, Radius = 0 }
 
 local MegaHitbox = {
     Enabled = false,
@@ -453,7 +453,7 @@ end)
 
 task.spawn(function()
     task.wait(0.3)
-    local totalTime = 1.4
+    local totalTime = 1.2
     local startTime = tick()
     while true do
         local elapsed = tick() - startTime
@@ -516,9 +516,9 @@ MainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 local MainStrokeGradient = Instance.new("UIGradient", MainStroke)
 MainStrokeGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0, THEME.ACCENT_DARK),
-    ColorSequenceKeypoint.new(0.2, THEME.ACCENT_HOT),
+    ColorSequenceKeypoint.new(0.25, THEME.ACCENT_HOT),
     ColorSequenceKeypoint.new(0.5, THEME.ACCENT_GLOW),
-    ColorSequenceKeypoint.new(0.8, THEME.ACCENT_HOT),
+    ColorSequenceKeypoint.new(0.75, THEME.ACCENT_HOT),
     ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
 })
 MainStrokeGradient.Transparency = NumberSequence.new({
@@ -532,12 +532,12 @@ task.spawn(function()
         for i = -1, 1, 0.02 do
             if not MainStrokeGradient.Parent then break end
             MainStrokeGradient.Offset = Vector2.new(i, 0)
-            task.wait(0.03)
+            task.wait(0.025)
         end
         for i = 1, -1, -0.02 do
             if not MainStrokeGradient.Parent then break end
             MainStrokeGradient.Offset = Vector2.new(i, 0)
-            task.wait(0.03)
+            task.wait(0.025)
         end
     end
 end)
@@ -617,21 +617,21 @@ for i = 1, 12 do
 end
 
 local Divider = Instance.new("Frame")
-Divider.Size = UDim2.new(0, 3, 1, 0)
-Divider.Position = UDim2.new(0.3, -1.5, 0, 0)
+Divider.Size = UDim2.new(0, 1, 1, 0)
+Divider.Position = UDim2.new(0.3, -0.5, 0, 0)
 Divider.BackgroundColor3 = THEME.ACCENT
 Divider.BorderSizePixel = 0
 Divider.ZIndex = 5
 Divider.Parent = PanelHolder
-Divider.BackgroundTransparency = 0.4
+Divider.BackgroundTransparency = 0
 
 local DividerGradient = Instance.new("UIGradient", Divider)
 DividerGradient.Rotation = 90
 DividerGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0, THEME.ACCENT_DARK),
-    ColorSequenceKeypoint.new(0.2, THEME.ACCENT_HOT),
+    ColorSequenceKeypoint.new(0.25, THEME.ACCENT_HOT),
     ColorSequenceKeypoint.new(0.5, THEME.ACCENT_GLOW),
-    ColorSequenceKeypoint.new(0.8, THEME.ACCENT_HOT),
+    ColorSequenceKeypoint.new(0.75, THEME.ACCENT_HOT),
     ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
 })
 
@@ -730,7 +730,7 @@ local LogoVersion = Instance.new("TextLabel")
 LogoVersion.Size = UDim2.new(1, -65, 0, 14)
 LogoVersion.Position = UDim2.new(0, 65, 0, 48)
 LogoVersion.BackgroundTransparency = 1
-LogoVersion.Text = "// FREE 1.2.0"
+LogoVersion.Text = "// FREE 1.3.0"
 LogoVersion.TextColor3 = THEME.TEXT_LOW
 LogoVersion.TextSize = 10
 LogoVersion.Font = Enum.Font.Code
@@ -896,7 +896,7 @@ HeaderPulse.Parent = PageHeader
 task.spawn(function()
     while ScreenGui.Parent do
         HeaderRunner.Position = UDim2.new(-0.3, 0, 0, 45)
-        local t = TweenService:Create(HeaderRunner, TweenInfo.new(1.6, Enum.EasingStyle.Linear), {Position = UDim2.new(1, 0, 0, 45)})
+        local t = TweenService:Create(HeaderRunner, TweenInfo.new(1.2, Enum.EasingStyle.Linear), {Position = UDim2.new(1, 0, 0, 45)})
         t:Play()
         t.Completed:Wait()
         task.wait(0.3)
@@ -929,6 +929,28 @@ local function CreateBracket(pos, size, anchor, flipX, flipY)
     hLine.Parent = bracket
     if flipY then hLine.Position = UDim2.new(0, 0, 1, -2) end
 
+    local hGrad = Instance.new("UIGradient", hLine)
+    hGrad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, THEME.ACCENT_DARK),
+        ColorSequenceKeypoint.new(0.5, THEME.ACCENT_HOT),
+        ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
+    })
+
+    task.spawn(function()
+        while hGrad.Parent do
+            for i = -1, 1, 0.03 do
+                if not hGrad.Parent then break end
+                hGrad.Offset = Vector2.new(i, 0)
+                task.wait(0.04)
+            end
+            for i = 1, -1, -0.03 do
+                if not hGrad.Parent then break end
+                hGrad.Offset = Vector2.new(i, 0)
+                task.wait(0.04)
+            end
+        end
+    end)
+
     local vLine = Instance.new("Frame")
     vLine.Size = UDim2.new(0, 2, 1, 0)
     vLine.BackgroundColor3 = THEME.ACCENT_HOT
@@ -937,13 +959,36 @@ local function CreateBracket(pos, size, anchor, flipX, flipY)
     vLine.Parent = bracket
     if flipX then vLine.Position = UDim2.new(1, -2, 0, 0) end
 
-    return hLine, vLine
+    local vGrad = Instance.new("UIGradient", vLine)
+    vGrad.Rotation = 90
+    vGrad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, THEME.ACCENT_DARK),
+        ColorSequenceKeypoint.new(0.5, THEME.ACCENT_HOT),
+        ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
+    })
+
+    task.spawn(function()
+        while vGrad.Parent do
+            for i = -1, 1, 0.03 do
+                if not vGrad.Parent then break end
+                vGrad.Offset = Vector2.new(0, i)
+                task.wait(0.04)
+            end
+            for i = 1, -1, -0.03 do
+                if not vGrad.Parent then break end
+                vGrad.Offset = Vector2.new(0, i)
+                task.wait(0.04)
+            end
+        end
+    end)
+
+    return hLine, vLine, hGrad, vGrad
 end
 
-Br.TL_h, Br.TL_v = CreateBracket(UDim2.new(0, -6, 0, -6), UDim2.new(0, 22, 0, 22), Vector2.new(0, 0), false, false)
-Br.TR_h, Br.TR_v = CreateBracket(UDim2.new(1, 6, 0, -6), UDim2.new(0, 22, 0, 22), Vector2.new(1, 0), true, false)
-Br.BL_h, Br.BL_v = CreateBracket(UDim2.new(0, -6, 1, 6), UDim2.new(0, 22, 0, 22), Vector2.new(0, 1), false, true)
-Br.BR_h, Br.BR_v = CreateBracket(UDim2.new(1, 6, 1, 6), UDim2.new(0, 22, 0, 22), Vector2.new(1, 1), true, true)
+Br.TL_h, Br.TL_v, Br.TL_hg, Br.TL_vg = CreateBracket(UDim2.new(0, -6, 0, -6), UDim2.new(0, 22, 0, 22), Vector2.new(0, 0), false, false)
+Br.TR_h, Br.TR_v, Br.TR_hg, Br.TR_vg = CreateBracket(UDim2.new(1, 6, 0, -6), UDim2.new(0, 22, 0, 22), Vector2.new(1, 0), true, false)
+Br.BL_h, Br.BL_v, Br.BL_hg, Br.BL_vg = CreateBracket(UDim2.new(0, -6, 1, 6), UDim2.new(0, 22, 0, 22), Vector2.new(0, 1), false, true)
+Br.BR_h, Br.BR_v, Br.BR_hg, Br.BR_vg = CreateBracket(UDim2.new(1, 6, 1, 6), UDim2.new(0, 22, 0, 22), Vector2.new(1, 1), true, true)
 
 local TabNames = {"Main", "Visuals", "Combat", "Settings"}
 local TabIndexes = { "01", "02", "03", "04" }
@@ -1727,11 +1772,11 @@ end)
 task.spawn(function()
     while ScreenGui.Parent do
         TweenService:Create(LogoBadgeGlow, TweenInfo.new(0.8), {Transparency = 0.3}):Play()
-        TweenService:Create(MainStroke, TweenInfo.new(0.8), {Transparency = 0.15}):Play()
+        TweenService:Create(MainGlow, TweenInfo.new(0.8), {Transparency = 0.6}):Play()
         TweenService:Create(AvatarGlow, TweenInfo.new(0.8), {Transparency = 0.75}):Play()
         task.wait(0.8)
         TweenService:Create(LogoBadgeGlow, TweenInfo.new(0.8), {Transparency = 0.75}):Play()
-        TweenService:Create(MainStroke, TweenInfo.new(0.8), {Transparency = 0.5}):Play()
+        TweenService:Create(MainGlow, TweenInfo.new(0.8), {Transparency = 0.95}):Play()
         TweenService:Create(AvatarGlow, TweenInfo.new(0.8), {Transparency = 0.95}):Play()
         task.wait(0.8)
     end
@@ -2203,30 +2248,14 @@ end
 _CreatePredictorVisuals()
 
 -- ====================================================================
--- HITBOX VISUAL
+-- HITBOX VISUAL (кольцо, без сферы, без вращения, без пульсации)
 -- ====================================================================
 local function _DestroyHitboxVisual()
     if HitboxVisual.Ring then pcall(function() HitboxVisual.Ring:Destroy() end) HitboxVisual.Ring = nil end
-    if HitboxVisual.Sphere then pcall(function() HitboxVisual.Sphere:Destroy() end) HitboxVisual.Sphere = nil end
 end
 
 local function _CreateHitboxVisual()
     _DestroyHitboxVisual()
-
-    local sphere = Instance.new("Part")
-    sphere.Name = "VL_HitboxSphere"
-    sphere.Shape = Enum.PartType.Ball
-    sphere.Size = Vector3.new(6, 6, 6)
-    sphere.Anchored = true
-    sphere.CanCollide = false
-    sphere.CanQuery = false
-    sphere.CanTouch = false
-    sphere.CastShadow = false
-    sphere.Material = Enum.Material.ForceField
-    sphere.Color = THEME.ACCENT_GLOW
-    sphere.Transparency = 0.8
-    sphere.Parent = workspace
-    HitboxVisual.Sphere = sphere
 
     local ring = Instance.new("Part")
     ring.Name = "VL_HitboxRing"
@@ -2244,8 +2273,6 @@ local function _CreateHitboxVisual()
     HitboxVisual.Ring = ring
 
     HitboxVisual.Radius = MegaHitbox.SizeMultiplier * 1.2835
-    HitboxVisual.PulseTime = 0
-    HitboxVisual.RotateAngle = 0
 end
 
 local function _UpdateHitboxVisual(dt)
@@ -2258,7 +2285,6 @@ local function _UpdateHitboxVisual(dt)
     if not ball or not ball.PrimaryPart then
         if HitboxVisual.Ring then
             HitboxVisual.Ring.Transparency = 1
-            HitboxVisual.Sphere.Transparency = 1
         end
         return
     end
@@ -2271,17 +2297,11 @@ local function _UpdateHitboxVisual(dt)
     local desiredRadius = MegaHitbox.SizeMultiplier * 1.2835
     HitboxVisual.Radius = HitboxVisual.Radius + (desiredRadius - HitboxVisual.Radius) * math.min(dt * 8, 1)
 
-    HitboxVisual.PulseTime = HitboxVisual.PulseTime + dt
-    HitboxVisual.RotateAngle = HitboxVisual.RotateAngle + dt * 90
-
-    local pulse = 1 + math.sin(HitboxVisual.PulseTime * 4) * 0.06
-    local r = HitboxVisual.Radius * pulse
+    local r = HitboxVisual.Radius
 
     local ring = HitboxVisual.Ring
     ring.Size = Vector3.new(0.15, r * 2, r * 2)
-    ring.CFrame = CFrame.new(ballPos)
-        * CFrame.Angles(0, 0, math.rad(90))
-        * CFrame.Angles(math.rad(HitboxVisual.RotateAngle), math.rad(HitboxVisual.RotateAngle * 0.6), 0)
+    ring.CFrame = CFrame.new(ballPos) * CFrame.Angles(0, 0, math.rad(90))
 
     if RangeGuard.Enabled then
         local char = LocalPlayer.Character
@@ -2302,12 +2322,6 @@ local function _UpdateHitboxVisual(dt)
         ring.Color = THEME.ACCENT
         ring.Transparency = 0.3
     end
-
-    local sphere = HitboxVisual.Sphere
-    sphere.Size = Vector3.new(r * 2, r * 2, r * 2)
-    sphere.CFrame = CFrame.new(ballPos)
-    sphere.Color = THEME.ACCENT_GLOW
-    sphere.Transparency = 0.8
 end
 
 -- ====================================================================
@@ -2866,9 +2880,9 @@ local function ApplyAccentColor(color)
     if MainStrokeGradient then
         MainStrokeGradient.Color = ColorSequence.new({
             ColorSequenceKeypoint.new(0, newDark),
-            ColorSequenceKeypoint.new(0.2, newHot),
+            ColorSequenceKeypoint.new(0.25, newHot),
             ColorSequenceKeypoint.new(0.5, newGlow),
-            ColorSequenceKeypoint.new(0.8, newHot),
+            ColorSequenceKeypoint.new(0.75, newHot),
             ColorSequenceKeypoint.new(1, newDark),
         })
     end
@@ -2879,9 +2893,9 @@ local function ApplyAccentColor(color)
     Divider.BackgroundColor3 = newAccent
     DividerGradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, newDark),
-        ColorSequenceKeypoint.new(0.2, newHot),
+        ColorSequenceKeypoint.new(0.25, newHot),
         ColorSequenceKeypoint.new(0.5, newGlow),
-        ColorSequenceKeypoint.new(0.8, newHot),
+        ColorSequenceKeypoint.new(0.75, newHot),
         ColorSequenceKeypoint.new(1, newDark),
     })
     AccentBar.BackgroundColor3 = newAccent
@@ -2953,6 +2967,22 @@ local function ApplyAccentColor(color)
         ColorSequenceKeypoint.new(1, newHot),
     })
 
+    if Br.TL_hg then
+        local gradSeq = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, newDark),
+            ColorSequenceKeypoint.new(0.5, newHot),
+            ColorSequenceKeypoint.new(1, newDark),
+        })
+        Br.TL_hg.Color = gradSeq
+        Br.TR_hg.Color = gradSeq
+        Br.BL_hg.Color = gradSeq
+        Br.BR_hg.Color = gradSeq
+        Br.TL_vg.Color = gradSeq
+        Br.TR_vg.Color = gradSeq
+        Br.BL_vg.Color = gradSeq
+        Br.BR_vg.Color = gradSeq
+    end
+
     for _, d in ipairs(Config.Dots) do
         if d.Frame then d.Frame.BackgroundColor3 = newHot end
     end
@@ -2982,15 +3012,6 @@ local function ApplyAccentColor(color)
     previewStroke.Color = newHot
     hexLabel.Text = ColorToHex(newAccent)
 
-    Br.TL_h.BackgroundColor3 = newHot
-    Br.TL_v.BackgroundColor3 = newHot
-    Br.TR_h.BackgroundColor3 = newHot
-    Br.TR_v.BackgroundColor3 = newHot
-    Br.BL_h.BackgroundColor3 = newHot
-    Br.BL_v.BackgroundColor3 = newHot
-    Br.BR_h.BackgroundColor3 = newHot
-    Br.BR_v.BackgroundColor3 = newHot
-
     if BallESP.highlight then
         BallESP.highlight.FillColor = newAccent
         BallESP.highlight.OutlineColor = newHot
@@ -3012,7 +3033,6 @@ local function ApplyAccentColor(color)
     if Pred.ring then Pred.ring.Color = newHot end
     if Pred.center then Pred.center.Color = newAccent end
     if HitboxVisual.Ring and not RangeGuard.Enabled then HitboxVisual.Ring.Color = newAccent end
-    if HitboxVisual.Sphere then HitboxVisual.Sphere.Color = newGlow end
 
     for _, t in pairs(Tracers.Active) do
         if t.beam then t.beam.Color = ColorSequence.new(newHot) end
@@ -3259,4 +3279,4 @@ HeaderBaseLine.BackgroundTransparency = 0.7
 HeaderRunner.BackgroundTransparency = 0
 HeaderPulse.BackgroundTransparency = 0.6
 
-print("[VL] Loaded: Menu + Mega Hitbox + Ball ESP + Trail + Tracers + Range Guard + Predictor")
+print("[VL] Loaded v1.3: Ring-Only Hitbox + Range Guard + Tracers + Ball ESP")
