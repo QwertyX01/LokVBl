@@ -1043,13 +1043,13 @@ end
 -- MAIN PAGE CONTENT
 -- ====================================================================
 local mainPage = TabPages["Main"]
-mainPage.CanvasSize = UDim2.new(0, 0, 0, 500)
+mainPage.CanvasSize = UDim2.new(0, 0, 0, 420)
 
--- БАННЕР
+-- БАННЕР (без текста внутри)
 local bannerFrame = Instance.new("Frame")
-bannerFrame.Size = UDim2.new(1, 0, 0, 180)
+bannerFrame.Size = UDim2.new(1, 0, 0, 130)
 bannerFrame.Position = UDim2.new(0, 0, 0, 5)
-bannerFrame.BackgroundColor3 = Color3.fromRGB(15, 12, 22)
+bannerFrame.BackgroundColor3 = THEME.BG_DARK
 bannerFrame.BorderSizePixel = 0
 bannerFrame.ClipsDescendants = true
 bannerFrame.ZIndex = 6
@@ -1074,94 +1074,6 @@ local bannerImgCorner = Instance.new("UICorner", bannerImage)
 bannerImgCorner.CornerRadius = UDim.new(0, Config.CornerRadius)
 RegisterCorner(bannerImgCorner, Config.CornerRadius)
 
-local bannerOverlay = Instance.new("Frame")
-bannerOverlay.Size = UDim2.new(1, 0, 0.55, 0)
-bannerOverlay.Position = UDim2.new(0, 0, 0.45, 0)
-bannerOverlay.BackgroundColor3 = Color3.fromRGB(8, 6, 14)
-bannerOverlay.BorderSizePixel = 0
-bannerOverlay.BackgroundTransparency = 0.3
-bannerOverlay.ZIndex = 8
-bannerOverlay.Parent = bannerFrame
-
-local overlayGradient = Instance.new("UIGradient", bannerOverlay)
-overlayGradient.Rotation = 90
-overlayGradient.Transparency = NumberSequence.new({
-    NumberSequenceKeypoint.new(0, 1),
-    NumberSequenceKeypoint.new(1, 0.15),
-})
-overlayGradient.Color = ColorSequence.new(Color3.fromRGB(8, 6, 14))
-
-local bannerBadge = Instance.new("Frame")
-bannerBadge.Size = UDim2.new(0, 110, 0, 26)
-bannerBadge.Position = UDim2.new(0, 12, 0, 12)
-bannerBadge.BackgroundColor3 = Color3.fromRGB(10, 8, 16)
-bannerBadge.BackgroundTransparency = 0.2
-bannerBadge.BorderSizePixel = 0
-bannerBadge.ZIndex = 10
-bannerBadge.Parent = bannerFrame
-local badgeCorner = Instance.new("UICorner", bannerBadge)
-badgeCorner.CornerRadius = UDim.new(0, 6)
-RegisterCorner(badgeCorner, 6)
-
-local badgeStroke = Instance.new("UIStroke", bannerBadge)
-badgeStroke.Thickness = 1
-badgeStroke.Color = THEME.ACCENT_HOT
-badgeStroke.Transparency = 0.2
-
-local badgeLabel = Instance.new("TextLabel")
-badgeLabel.Size = UDim2.new(1, 0, 1, 0)
-badgeLabel.BackgroundTransparency = 1
-badgeLabel.Text = "◈  AGGRESSIVE"
-badgeLabel.TextColor3 = THEME.ACCENT_HOT
-badgeLabel.TextSize = 11
-badgeLabel.Font = Enum.Font.Gotham
-badgeLabel.ZIndex = 11
-badgeLabel.Parent = bannerBadge
-
-local bannerTitle = Instance.new("TextLabel")
-bannerTitle.Size = UDim2.new(1, -24, 0, 34)
-bannerTitle.Position = UDim2.new(0, 12, 1, -46)
-bannerTitle.BackgroundTransparency = 1
-bannerTitle.Text = "VOLLEYBALL LEGENDS"
-bannerTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-bannerTitle.TextSize = 22
-bannerTitle.Font = Enum.Font.GothamBold
-bannerTitle.TextXAlignment = Enum.TextXAlignment.Left
-bannerTitle.ZIndex = 11
-bannerTitle.Parent = bannerFrame
-
-local bannerTitleGradient = Instance.new("UIGradient", bannerTitle)
-bannerTitleGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, THEME.ACCENT_GLOW),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
-    ColorSequenceKeypoint.new(1, THEME.ACCENT_HOT),
-})
-
-task.spawn(function()
-    while bannerTitleGradient.Parent do
-        for i = -1, 1, 0.03 do
-            bannerTitleGradient.Offset = Vector2.new(i, 0)
-            task.wait(0.04)
-        end
-        for i = 1, -1, -0.03 do
-            bannerTitleGradient.Offset = Vector2.new(i, 0)
-            task.wait(0.04)
-        end
-    end
-end)
-
-local bannerSub = Instance.new("TextLabel")
-bannerSub.Size = UDim2.new(1, -24, 0, 16)
-bannerSub.Position = UDim2.new(0, 12, 1, -14)
-bannerSub.BackgroundTransparency = 1
-bannerSub.Text = "// THE PREMIUM TRAINING SUITE"
-bannerSub.TextColor3 = THEME.TEXT_MID
-bannerSub.TextSize = 10
-bannerSub.Font = Enum.Font.Code
-bannerSub.TextXAlignment = Enum.TextXAlignment.Left
-bannerSub.ZIndex = 11
-bannerSub.Parent = bannerFrame
-
 task.spawn(function()
     while bannerStroke.Parent do
         TweenService:Create(bannerStroke, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.05}):Play()
@@ -1171,29 +1083,47 @@ task.spawn(function()
     end
 end)
 
--- ЦИТАТА
-local quoteFrame = Instance.new("Frame")
-quoteFrame.Size = UDim2.new(1, 0, 0, 76)
-quoteFrame.Position = UDim2.new(0, 0, 0, 200)
-quoteFrame.BackgroundTransparency = 1
-quoteFrame.Parent = mainPage
+-- ПРИВЕТСТВИЕ ПОД БАННЕРОМ
+local greetFrame = Instance.new("Frame")
+greetFrame.Size = UDim2.new(1, 0, 0, 74)
+greetFrame.Position = UDim2.new(0, 0, 0, 145)
+greetFrame.BackgroundTransparency = 1
+greetFrame.Parent = mainPage
 
-local quoteText = Instance.new("TextLabel")
-quoteText.Size = UDim2.new(1, 0, 1, 0)
-quoteText.BackgroundTransparency = 1
-quoteText.Text = "\"still learning every day - building my own dream piece by piece\"\n- code is the canvas, and the game is the art\n\"someday this menu will be in every player's hands\""
-quoteText.TextColor3 = Color3.fromRGB(255, 255, 255)
-quoteText.TextSize = 12
-quoteText.Font = Enum.Font.Gotham
-quoteText.TextWrapped = true
-quoteText.TextXAlignment = Enum.TextXAlignment.Left
-quoteText.TextYAlignment = Enum.TextYAlignment.Top
-quoteText.LineHeight = 1.15
-quoteText.Parent = quoteFrame
+local greetTitle = Instance.new("TextLabel")
+greetTitle.Size = UDim2.new(1, 0, 0, 20)
+greetTitle.BackgroundTransparency = 1
+greetTitle.Text = "// HEY, I'M A BEGINNER CODER"
+greetTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+greetTitle.TextSize = 12
+greetTitle.Font = Enum.Font.Code
+greetTitle.TextXAlignment = Enum.TextXAlignment.Left
+greetTitle.Parent = greetFrame
 
-local quoteGradient = Instance.new("UIGradient", quoteText)
-quoteGradient.Rotation = 25
-quoteGradient.Color = ColorSequence.new({
+local greetTitleGradient = Instance.new("UIGradient", greetTitle)
+greetTitleGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, THEME.ACCENT_GLOW),
+    ColorSequenceKeypoint.new(0.5, THEME.TEXT_HI),
+    ColorSequenceKeypoint.new(1, THEME.ACCENT_HOT),
+})
+
+local greetBody = Instance.new("TextLabel")
+greetBody.Size = UDim2.new(1, 0, 0, 50)
+greetBody.Position = UDim2.new(0, 0, 0, 22)
+greetBody.BackgroundTransparency = 1
+greetBody.Text = "still learning every day - building my own dream piece by piece.\ncode is the canvas, and the game is the art.\nsomeday this menu will be in every player's hands."
+greetBody.TextColor3 = Color3.fromRGB(255, 255, 255)
+greetBody.TextSize = 11
+greetBody.Font = Enum.Font.Gotham
+greetBody.TextWrapped = true
+greetBody.TextXAlignment = Enum.TextXAlignment.Left
+greetBody.TextYAlignment = Enum.TextYAlignment.Top
+greetBody.LineHeight = 1.15
+greetBody.Parent = greetFrame
+
+local greetBodyGradient = Instance.new("UIGradient", greetBody)
+greetBodyGradient.Rotation = 25
+greetBodyGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0, THEME.ACCENT_GLOW),
     ColorSequenceKeypoint.new(0.4, THEME.TEXT_HI),
     ColorSequenceKeypoint.new(0.7, THEME.ACCENT_HOT),
@@ -1201,13 +1131,26 @@ quoteGradient.Color = ColorSequence.new({
 })
 
 task.spawn(function()
-    while quoteGradient.Parent do
+    while greetTitleGradient.Parent do
+        for i = -1, 1, 0.03 do
+            greetTitleGradient.Offset = Vector2.new(i, 0)
+            task.wait(0.04)
+        end
+        for i = 1, -1, -0.03 do
+            greetTitleGradient.Offset = Vector2.new(i, 0)
+            task.wait(0.04)
+        end
+    end
+end)
+
+task.spawn(function()
+    while greetBodyGradient.Parent do
         for i = -1.2, 1.2, 0.02 do
-            quoteGradient.Offset = Vector2.new(i, 0)
+            greetBodyGradient.Offset = Vector2.new(i, 0)
             task.wait(0.035)
         end
         for i = 1.2, -1.2, -0.02 do
-            quoteGradient.Offset = Vector2.new(i, 0)
+            greetBodyGradient.Offset = Vector2.new(i, 0)
             task.wait(0.035)
         end
     end
@@ -1216,7 +1159,7 @@ end)
 -- LIVE STATUS
 local statusSection = Instance.new("Frame")
 statusSection.Size = UDim2.new(1, 0, 0, 24)
-statusSection.Position = UDim2.new(0, 0, 0, 290)
+statusSection.Position = UDim2.new(0, 0, 0, 232)
 statusSection.BackgroundTransparency = 1
 statusSection.Parent = mainPage
 
@@ -1241,7 +1184,7 @@ statusSectionLabel.Parent = statusSection
 
 local gridFrame = Instance.new("Frame")
 gridFrame.Size = UDim2.new(1, 0, 0, 156)
-gridFrame.Position = UDim2.new(0, 0, 0, 322)
+gridFrame.Position = UDim2.new(0, 0, 0, 262)
 gridFrame.BackgroundTransparency = 1
 gridFrame.Parent = mainPage
 
@@ -2219,14 +2162,12 @@ local function ApplyAccentColor(color)
     paletteStroke.Color = newDark
 
     bannerStroke.Color = newAccent
-    badgeStroke.Color = newHot
-    badgeLabel.TextColor3 = newHot
-    bannerTitleGradient.Color = ColorSequence.new({
+    greetTitleGradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, newGlow),
         ColorSequenceKeypoint.new(0.5, THEME.TEXT_HI),
         ColorSequenceKeypoint.new(1, newHot),
     })
-    quoteGradient.Color = ColorSequence.new({
+    greetBodyGradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, newGlow),
         ColorSequenceKeypoint.new(0.4, THEME.TEXT_HI),
         ColorSequenceKeypoint.new(0.7, newHot),
