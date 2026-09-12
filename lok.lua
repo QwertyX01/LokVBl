@@ -1043,9 +1043,9 @@ end
 -- MAIN PAGE CONTENT
 -- ====================================================================
 local mainPage = TabPages["Main"]
-mainPage.CanvasSize = UDim2.new(0, 0, 0, 420)
+mainPage.CanvasSize = UDim2.new(0, 0, 0, 450)
 
--- БАННЕР (без текста внутри)
+-- БАННЕР
 local bannerFrame = Instance.new("Frame")
 bannerFrame.Size = UDim2.new(1, 0, 0, 130)
 bannerFrame.Position = UDim2.new(0, 0, 0, 5)
@@ -1156,7 +1156,9 @@ task.spawn(function()
     end
 end)
 
--- LIVE STATUS
+-- ====================================================================
+-- LIVE STATUS (ИСПРАВЛЕНО)
+-- ====================================================================
 local statusSection = Instance.new("Frame")
 statusSection.Size = UDim2.new(1, 0, 0, 24)
 statusSection.Position = UDim2.new(0, 0, 0, 232)
@@ -1183,14 +1185,20 @@ statusSectionLabel.TextXAlignment = Enum.TextXAlignment.Left
 statusSectionLabel.Parent = statusSection
 
 local gridFrame = Instance.new("Frame")
-gridFrame.Size = UDim2.new(1, 0, 0, 156)
+gridFrame.Size = UDim2.new(1, 0, 0, 170)
 gridFrame.Position = UDim2.new(0, 0, 0, 262)
 gridFrame.BackgroundTransparency = 1
 gridFrame.Parent = mainPage
 
+local gridPadding = Instance.new("UIPadding", gridFrame)
+gridPadding.PaddingLeft = UDim.new(0, 4)
+gridPadding.PaddingRight = UDim.new(0, 4)
+gridPadding.PaddingTop = UDim.new(0, 4)
+gridPadding.PaddingBottom = UDim.new(0, 4)
+
 local gridLayout = Instance.new("UIGridLayout", gridFrame)
-gridLayout.CellSize = UDim2.new(0.5, -4, 0, 72)
-gridLayout.CellPadding = UDim2.new(0, 8, 0, 8)
+gridLayout.CellSize = UDim2.new(0.5, -12, 0, 75)
+gridLayout.CellPadding = UDim.new(0, 8, 0, 8)
 gridLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
 local statTiles = {}
@@ -1203,7 +1211,7 @@ local statConfigs = {
 
 for _, cfg in ipairs(statConfigs) do
     local tile = Instance.new("Frame")
-    tile.Size = UDim2.new(0.5, -4, 0, 72)
+    tile.Size = UDim2.new(0.5, -12, 0, 75)
     tile.BackgroundColor3 = Color3.fromRGB(14, 11, 22)
     tile.BackgroundTransparency = 0.15
     tile.BorderSizePixel = 0
