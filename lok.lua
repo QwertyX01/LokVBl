@@ -338,8 +338,9 @@ BarFillGlow.Thickness = 3
 BarFillGlow.Color = THEME.ACCENT_GLOW
 BarFillGlow.Transparency = 0.5
 
+-- ИСПРАВЛЕНИЕ 1: BarFill.Parent вместо LoadGui.BarFill
 task.spawn(function()
-    while LoadGui.BarFill and LoadGui.Parent do
+    while BarFill.Parent and LoadGui.Parent do
         TweenService:Create(BarFillGlow, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.2}):Play()
         task.wait(0.8)
         TweenService:Create(BarFillGlow, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.6}):Play()
@@ -1198,7 +1199,7 @@ gridPadding.PaddingBottom = UDim.new(0, 4)
 
 local gridLayout = Instance.new("UIGridLayout", gridFrame)
 gridLayout.CellSize = UDim2.new(0.5, -12, 0, 75)
-gridLayout.CellPadding = UDim.new(0, 8, 0, 8)
+gridLayout.CellPadding = UDim2.new(0, 8, 0, 8)
 gridLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
 local statTiles = {}
