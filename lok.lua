@@ -338,9 +338,8 @@ BarFillGlow.Thickness = 3
 BarFillGlow.Color = THEME.ACCENT_GLOW
 BarFillGlow.Transparency = 0.5
 
--- ИСПРАВЛЕНИЕ 1: BarFill.Parent вместо LoadGui.BarFill
 task.spawn(function()
-    while BarFill.Parent and LoadGui.Parent do
+    while LoadGui.BarFill and LoadGui.Parent do
         TweenService:Create(BarFillGlow, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.2}):Play()
         task.wait(0.8)
         TweenService:Create(BarFillGlow, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.6}):Play()
@@ -1044,12 +1043,13 @@ end
 -- MAIN PAGE CONTENT
 -- ====================================================================
 local mainPage = TabPages["Main"]
-mainPage.CanvasSize = UDim2.new(0, 0, 0, 450)
+mainPage.CanvasSize = UDim2.new(0, 0, 0, 380)
 
--- БАННЕР
+-- БАННЕР (72% ширины, центрирован, 90px высотой)
 local bannerFrame = Instance.new("Frame")
-bannerFrame.Size = UDim2.new(1, 0, 0, 130)
-bannerFrame.Position = UDim2.new(0, 0, 0, 5)
+bannerFrame.Size = UDim2.new(0.72, 0, 0, 90)
+bannerFrame.Position = UDim2.new(0.5, 0, 0, 5)
+bannerFrame.AnchorPoint = Vector2.new(0.5, 0)
 bannerFrame.BackgroundColor3 = THEME.BG_DARK
 bannerFrame.BorderSizePixel = 0
 bannerFrame.ClipsDescendants = true
@@ -1086,17 +1086,17 @@ end)
 
 -- ПРИВЕТСТВИЕ ПОД БАННЕРОМ
 local greetFrame = Instance.new("Frame")
-greetFrame.Size = UDim2.new(1, 0, 0, 74)
-greetFrame.Position = UDim2.new(0, 0, 0, 145)
+greetFrame.Size = UDim2.new(1, 0, 0, 62)
+greetFrame.Position = UDim2.new(0, 0, 0, 105)
 greetFrame.BackgroundTransparency = 1
 greetFrame.Parent = mainPage
 
 local greetTitle = Instance.new("TextLabel")
-greetTitle.Size = UDim2.new(1, 0, 0, 20)
+greetTitle.Size = UDim2.new(1, 0, 0, 18)
 greetTitle.BackgroundTransparency = 1
 greetTitle.Text = "// HEY, I'M A BEGINNER CODER"
 greetTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-greetTitle.TextSize = 12
+greetTitle.TextSize = 11
 greetTitle.Font = Enum.Font.Code
 greetTitle.TextXAlignment = Enum.TextXAlignment.Left
 greetTitle.Parent = greetFrame
@@ -1109,12 +1109,12 @@ greetTitleGradient.Color = ColorSequence.new({
 })
 
 local greetBody = Instance.new("TextLabel")
-greetBody.Size = UDim2.new(1, 0, 0, 50)
-greetBody.Position = UDim2.new(0, 0, 0, 22)
+greetBody.Size = UDim2.new(1, 0, 0, 42)
+greetBody.Position = UDim2.new(0, 0, 0, 20)
 greetBody.BackgroundTransparency = 1
-greetBody.Text = "still learning every day - building my own dream piece by piece.\ncode is the canvas, and the game is the art.\nsomeday this menu will be in every player's hands."
+greetBody.Text = "still learning every day - building my own dream piece by piece.\ncode is the canvas, and the game is the art."
 greetBody.TextColor3 = Color3.fromRGB(255, 255, 255)
-greetBody.TextSize = 11
+greetBody.TextSize = 10
 greetBody.Font = Enum.Font.Gotham
 greetBody.TextWrapped = true
 greetBody.TextXAlignment = Enum.TextXAlignment.Left
@@ -1157,18 +1157,16 @@ task.spawn(function()
     end
 end)
 
--- ====================================================================
--- LIVE STATUS (ИСПРАВЛЕНО)
--- ====================================================================
+-- LIVE STATUS
 local statusSection = Instance.new("Frame")
-statusSection.Size = UDim2.new(1, 0, 0, 24)
-statusSection.Position = UDim2.new(0, 0, 0, 232)
+statusSection.Size = UDim2.new(1, 0, 0, 20)
+statusSection.Position = UDim2.new(0, 0, 0, 178)
 statusSection.BackgroundTransparency = 1
 statusSection.Parent = mainPage
 
 local statusSectionLine = Instance.new("Frame")
-statusSectionLine.Size = UDim2.new(0, 3, 0, 14)
-statusSectionLine.Position = UDim2.new(0, 0, 0.5, -7)
+statusSectionLine.Size = UDim2.new(0, 3, 0, 12)
+statusSectionLine.Position = UDim2.new(0, 0, 0.5, -6)
 statusSectionLine.BackgroundColor3 = THEME.ACCENT_HOT
 statusSectionLine.BorderSizePixel = 0
 statusSectionLine.Parent = statusSection
@@ -1180,26 +1178,20 @@ statusSectionLabel.Position = UDim2.new(0, 15, 0, 0)
 statusSectionLabel.BackgroundTransparency = 1
 statusSectionLabel.Text = "// LIVE STATUS"
 statusSectionLabel.TextColor3 = THEME.ACCENT_HOT
-statusSectionLabel.TextSize = 12
+statusSectionLabel.TextSize = 11
 statusSectionLabel.Font = Enum.Font.Code
 statusSectionLabel.TextXAlignment = Enum.TextXAlignment.Left
 statusSectionLabel.Parent = statusSection
 
 local gridFrame = Instance.new("Frame")
-gridFrame.Size = UDim2.new(1, 0, 0, 170)
-gridFrame.Position = UDim2.new(0, 0, 0, 262)
+gridFrame.Size = UDim2.new(1, 0, 0, 132)
+gridFrame.Position = UDim2.new(0, 0, 0, 203)
 gridFrame.BackgroundTransparency = 1
 gridFrame.Parent = mainPage
 
-local gridPadding = Instance.new("UIPadding", gridFrame)
-gridPadding.PaddingLeft = UDim.new(0, 4)
-gridPadding.PaddingRight = UDim.new(0, 4)
-gridPadding.PaddingTop = UDim.new(0, 4)
-gridPadding.PaddingBottom = UDim.new(0, 4)
-
 local gridLayout = Instance.new("UIGridLayout", gridFrame)
-gridLayout.CellSize = UDim2.new(0.5, -12, 0, 75)
-gridLayout.CellPadding = UDim2.new(0, 8, 0, 8)
+gridLayout.CellSize = UDim2.new(0.5, -3, 0, 60)
+gridLayout.CellPadding = UDim2.new(0, 6, 0, 6)
 gridLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
 local statTiles = {}
@@ -1212,7 +1204,7 @@ local statConfigs = {
 
 for _, cfg in ipairs(statConfigs) do
     local tile = Instance.new("Frame")
-    tile.Size = UDim2.new(0.5, -12, 0, 75)
+    tile.Size = UDim2.new(0.5, -3, 0, 60)
     tile.BackgroundColor3 = Color3.fromRGB(14, 11, 22)
     tile.BackgroundTransparency = 0.15
     tile.BorderSizePixel = 0
@@ -1228,8 +1220,8 @@ for _, cfg in ipairs(statConfigs) do
     tileStroke.Transparency = 0.5
 
     local tileTopBar = Instance.new("Frame")
-    tileTopBar.Size = UDim2.new(1, -16, 0, 2)
-    tileTopBar.Position = UDim2.new(0, 8, 0, 8)
+    tileTopBar.Size = UDim2.new(1, -14, 0, 2)
+    tileTopBar.Position = UDim2.new(0, 7, 0, 7)
     tileTopBar.BackgroundColor3 = THEME.ACCENT_HOT
     tileTopBar.BorderSizePixel = 0
     tileTopBar.Parent = tile
@@ -1244,23 +1236,23 @@ for _, cfg in ipairs(statConfigs) do
     })
 
     local tileLabel = Instance.new("TextLabel")
-    tileLabel.Size = UDim2.new(1, -16, 0, 14)
-    tileLabel.Position = UDim2.new(0, 8, 0, 16)
+    tileLabel.Size = UDim2.new(1, -14, 0, 12)
+    tileLabel.Position = UDim2.new(0, 7, 0, 13)
     tileLabel.BackgroundTransparency = 1
     tileLabel.Text = cfg.label
     tileLabel.TextColor3 = THEME.TEXT_LOW
-    tileLabel.TextSize = 10
+    tileLabel.TextSize = 9
     tileLabel.Font = Enum.Font.Code
     tileLabel.TextXAlignment = Enum.TextXAlignment.Left
     tileLabel.Parent = tile
 
     local tileValue = Instance.new("TextLabel")
-    tileValue.Size = UDim2.new(1, -16, 0, 32)
-    tileValue.Position = UDim2.new(0, 8, 0, 32)
+    tileValue.Size = UDim2.new(1, -14, 0, 26)
+    tileValue.Position = UDim2.new(0, 7, 0, 26)
     tileValue.BackgroundTransparency = 1
     tileValue.Text = "--"
     tileValue.TextColor3 = THEME.ACCENT_HOT
-    tileValue.TextSize = 22
+    tileValue.TextSize = 18
     tileValue.Font = Enum.Font.GothamBold
     tileValue.TextXAlignment = Enum.TextXAlignment.Left
     tileValue.Parent = tile
@@ -1308,7 +1300,7 @@ for _, cfg in ipairs(statConfigs) do
     })
 end
 
--- Живое обновление
+-- Живое обновление статуса
 task.spawn(function()
     local sessionStart = tick()
     local frameCount = 0
