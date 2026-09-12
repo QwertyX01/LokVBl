@@ -1,7 +1,5 @@
 -- ====================================================================
--- VOLLEYBALL LEGENDS - AGGRESSIVE SPORT EDITION (PREMIUM v1.3)
--- + COLOR PICKER + CORNER RADIUS + MEGA HITBOX + BALL ESP + TRAIL
--- + PLAYER TRACERS + RANGE GUARD
+-- VOLLEYBALL LEGENDS - AGGRESSIVE SPORT EDITION (PREMIUM v1.5)
 -- ====================================================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -68,8 +66,8 @@ local SliderRegistry = {}
 local ToggleRegistry = {}
 local Br = {}
 local BallESP = { model = nil, highlight = nil, particles = nil, light = nil, trail = nil, trailAtt0 = nil, trailAtt1 = nil }
-local Pred = { ring = nil, center = nil, lastPos = nil, lastTime = nil, smoothVel = nil, smoothLand = nil }
-local HitboxVisual = { Ring = nil, Radius = 0 }
+local Pred = { ring = nil, lastPos = nil, lastTime = nil, smoothVel = nil, smoothLand = nil }
+local HitboxVisual = { Sphere = nil, Radius = 0 }
 
 local MegaHitbox = {
     Enabled = false,
@@ -79,6 +77,8 @@ local MegaHitbox = {
 }
 
 local RangeGuard = { Enabled = false, Radius = 8 }
+
+local HitBlocker = { LastBlockTime = 0 }
 
 local Tracers = {
     Enabled = false,
@@ -730,7 +730,7 @@ local LogoVersion = Instance.new("TextLabel")
 LogoVersion.Size = UDim2.new(1, -65, 0, 14)
 LogoVersion.Position = UDim2.new(0, 65, 0, 48)
 LogoVersion.BackgroundTransparency = 1
-LogoVersion.Text = "// FREE 1.3.0"
+LogoVersion.Text = "// FREE 1.5.0"
 LogoVersion.TextColor3 = THEME.TEXT_LOW
 LogoVersion.TextSize = 10
 LogoVersion.Font = Enum.Font.Code
@@ -2216,7 +2216,6 @@ end
 
 local function _CreatePredictorVisuals()
     if Pred.ring then Pred.ring:Destroy() end
-    if Pred.center then Pred.center:Destroy() end
 
     Pred.ring = Instance.new("Part")
     Pred.ring.Name = "VL_PredRing"
@@ -2230,66 +2229,54 @@ local function _CreatePredictorVisuals()
     Pred.ring.Color = THEME.ACCENT_HOT
     Pred.ring.Transparency = 1
     Pred.ring.Parent = workspace
-
-    Pred.center = Instance.new("Part")
-    Pred.center.Name = "VL_PredCenter"
-    Pred.center.Shape = Enum.PartType.Cylinder
-    Pred.center.Size = Vector3.new(0.15, 0.8, 0.8)
-    Pred.center.Anchored = true
-    Pred.center.CanCollide = false
-    Pred.center.CanQuery = false
-    Pred.center.CanTouch = false
-    Pred.center.Material = Enum.Material.Neon
-    Pred.center.Color = THEME.ACCENT
-    Pred.center.Transparency = 1
-    Pred.center.Parent = workspace
 end
 
 _CreatePredictorVisuals()
 
 -- ====================================================================
--- HITBOX VISUAL (кольцо, без сферы, без вращения, без пульсации)
+-- HITBOX VISUAL (только сфера, без кольца)
 -- ====================================================================
 local function _DestroyHitboxVisual()
+    if HitboxVisual.Sphere then pcall(function() HitboxVisual.Sphere:Destroy() end) HitboxVisual.Sphere = nil end
     if HitboxVisual.Ring then pcall(function() HitboxVisual.Ring:Destroy() end) HitboxVisual.Ring = nil end
 end
 
 local function _CreateHitboxVisual()
     _DestroyHitboxVisual()
 
-    local ring = Instance.new("Part")
-    ring.Name = "VL_HitboxRing"
-    ring.Shape = Enum.PartType.Cylinder
-    ring.Size = Vector3.new(0.15, 6, 6)
-    ring.Anchored = true
-    ring.CanCollide = false
-    ring.CanQuery = false
-    ring.CanTouch = false
-    ring.CastShadow = false
-    ring.Material = Enum.Material.Neon
-    ring.Color = THEME.ACCENT
-    ring.Transparency = 0.3
-    ring.Parent = workspace
-    HitboxVisual.Ring = ring
+    local sphere = Instance.new("Part")
+    sphere.Name = "VL_HitboxSphere"
+    sphere.Shape = Enum.PartType.Ball
+    sphere.Size = Vector3.new(6, 6, 6)
+    sphere.Anchored = true
+    sphere.CanCollide = false
+    sphere.CanQuery = false
+    sphere.CanTouch = false
+    sphere.CastShadow = false
+    sphere.Material = Enum.Material.ForceField
+    sphere.Color = THEME.ACCENT
+    sphere.Transparency = 0.75
+    sphere.Parent = workspace
+    HitboxVisual.Sphere = sphere
 
     HitboxVisual.Radius = MegaHitbox.SizeMultiplier * 1.2835
 end
 
 local function _UpdateHitboxVisual(dt)
     if not MegaHitbox.Enabled then
-        if HitboxVisual.Ring then _DestroyHitboxVisual() end
+        if HitboxVisual.Sphere then _DestroyHitboxVisual() end
         return
     end
 
     local ball = _FindBall()
     if not ball or not ball.PrimaryPart then
-        if HitboxVisual.Ring then
-            HitboxVisual.Ring.Transparency = 1
+        if HitboxVisual.Sphere then
+            HitboxVisual.Sphere.Transparency = 1
         end
         return
     end
 
-    if not HitboxVisual.Ring or not HitboxVisual.Ring.Parent then
+    if not HitboxVisual.Sphere or not HitboxVisual.Sphere.Parent then
         _CreateHitboxVisual()
     end
 
@@ -2298,29 +2285,29 @@ local function _UpdateHitboxVisual(dt)
     HitboxVisual.Radius = HitboxVisual.Radius + (desiredRadius - HitboxVisual.Radius) * math.min(dt * 8, 1)
 
     local r = HitboxVisual.Radius
+    local sphere = HitboxVisual.Sphere
 
-    local ring = HitboxVisual.Ring
-    ring.Size = Vector3.new(0.15, r * 2, r * 2)
-    ring.CFrame = CFrame.new(ballPos) * CFrame.Angles(0, 0, math.rad(90))
+    sphere.Size = Vector3.new(r * 2, r * 2, r * 2)
+    sphere.CFrame = CFrame.new(ballPos)
 
     if RangeGuard.Enabled then
         local char = LocalPlayer.Character
         if char and char:FindFirstChild("HumanoidRootPart") then
             local dist = (ballPos - char.HumanoidRootPart.Position).Magnitude
             if dist <= RangeGuard.Radius then
-                ring.Color = Color3.fromRGB(80, 255, 130)
-                ring.Transparency = 0.25
+                sphere.Color = Color3.fromRGB(80, 255, 130)
+                sphere.Transparency = 0.65
             else
-                ring.Color = Color3.fromRGB(255, 80, 80)
-                ring.Transparency = 0.5
+                sphere.Color = Color3.fromRGB(255, 80, 80)
+                sphere.Transparency = 0.8
             end
         else
-            ring.Color = THEME.ACCENT
-            ring.Transparency = 0.3
+            sphere.Color = THEME.ACCENT
+            sphere.Transparency = 0.75
         end
     else
-        ring.Color = THEME.ACCENT
-        ring.Transparency = 0.3
+        sphere.Color = THEME.ACCENT
+        sphere.Transparency = 0.75
     end
 end
 
@@ -2537,6 +2524,57 @@ Players.PlayerRemoving:Connect(function(player)
 end)
 
 -- ====================================================================
+-- HIT BLOCKER — блокирует удар если мяч вне Guard Radius
+-- ====================================================================
+local function _IsBallInGuardRange()
+    if not RangeGuard.Enabled then return true end
+    local ball = _FindBall()
+    if not ball or not ball.PrimaryPart then return true end
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return true end
+    local dist = (ball.PrimaryPart.Position - char.HumanoidRootPart.Position).Magnitude
+    return dist <= RangeGuard.Radius
+end
+
+pcall(function()
+    local CAS = game:GetService("ContextActionService")
+    CAS:BindActionAtPriority("VL_HitBlock", function(_, state)
+        if state ~= Enum.UserInputState.Begin then
+            return Enum.ContextActionResult.Pass
+        end
+        if not RangeGuard.Enabled then
+            return Enum.ContextActionResult.Pass
+        end
+        if not _IsBallInGuardRange() then
+            local now = tick()
+            if now - HitBlocker.LastBlockTime > 0.1 then
+                HitBlocker.LastBlockTime = now
+                warn("[VL] Удар заблокирован — мяч вне Guard Radius " .. RangeGuard.Radius .. " studs")
+            end
+            return Enum.ContextActionResult.Sink
+        end
+        return Enum.ContextActionResult.Pass
+    end, false, 9999, Enum.UserInputType.MouseButton1, Enum.UserInputType.Touch)
+end)
+
+pcall(function()
+    local oldIsMousePressed = UserInputService.IsMouseButtonPressed
+    hookfunction(UserInputService.IsMouseButtonPressed, function(self, button)
+        if RangeGuard.Enabled and button == Enum.UserInputType.MouseButton1 then
+            if not _IsBallInGuardRange() then
+                local now = tick()
+                if now - HitBlocker.LastBlockTime > 0.1 then
+                    HitBlocker.LastBlockTime = now
+                    warn("[VL] IsMouseButtonPressed заблокирован")
+                end
+                return false
+            end
+        end
+        return oldIsMousePressed(self, button)
+    end)
+end)
+
+-- ====================================================================
 -- MAIN UPDATE LOOP
 -- ====================================================================
 task.spawn(function()
@@ -2596,21 +2634,15 @@ task.spawn(function()
                     Pred.ring.CFrame = CFrame.new(fp.X, fp.Y + 0.05, fp.Z) * CFrame.Angles(0, 0, math.rad(90))
                     Pred.ring.Transparency = 0.3
                     Pred.ring.Color = THEME.ACCENT_HOT
-                    Pred.center.CFrame = CFrame.new(fp.X, fp.Y + 0.1, fp.Z) * CFrame.Angles(0, 0, math.rad(90))
-                    Pred.center.Transparency = 0.1
-                    Pred.center.Color = THEME.ACCENT
                 else
                     Pred.ring.Transparency = 1
-                    Pred.center.Transparency = 1
                 end
             else
                 Pred.ring.Transparency = 1
-                Pred.center.Transparency = 1
             end
         else
             if BallESP.highlight then _DestroyBallESP() end
             if Pred.ring then Pred.ring.Transparency = 1 end
-            if Pred.center then Pred.center.Transparency = 1 end
         end
 
         pcall(_UpdateHitboxVisual, 0.03)
@@ -2637,7 +2669,7 @@ combatPage.CanvasSize = UDim2.new(0, 0, 0, 500)
 
 CreateSection(combatPage, "// HITBOX EXPANDER", 10, THEME.ACCENT_HOT)
 
-CreateToggle(combatPage, "Hitbox Expander", "Expands the impact area + hitbox ring around the ball", 40, MegaHitbox.Enabled, function(v)
+CreateToggle(combatPage, "Hitbox Expander", "Expands impact area + shows sphere around ball", 40, MegaHitbox.Enabled, function(v)
     MegaHitbox.Enabled = v
     Config.HitboxEnabled = v
     if v then
@@ -2650,7 +2682,7 @@ CreateToggle(combatPage, "Hitbox Expander", "Expands the impact area + hitbox ri
                 task.wait(0.03)
             end
         end)
-        print("[VL] Hitbox ENABLED | multiplier x" .. MegaHitbox.SizeMultiplier .. " | " .. MegaHitbox.ExpandedCount .. " templates")
+        print("[VL] Hitbox ENABLED | x" .. MegaHitbox.SizeMultiplier .. " | " .. MegaHitbox.ExpandedCount .. " templates")
     else
         RestoreAllHitboxes()
         _DestroyHitboxVisual()
@@ -2663,11 +2695,11 @@ CreateSlider(combatPage, "Hitbox Size", "Impact area multiplier (x1 - x20)", 95,
     MegaHitbox.SizeMultiplier = v / 10
     if MegaHitbox.Enabled then
         MegaHitbox.ExpandedCount = ExpandAllHitboxTemplates()
-        print("[VL] Hitbox size x" .. MegaHitbox.SizeMultiplier .. " | " .. MegaHitbox.ExpandedCount .. " templates")
+        print("[VL] Hitbox size x" .. MegaHitbox.SizeMultiplier)
     end
 end)
 
-CreateToggle(combatPage, "Range Guard", "Colors the ring green if ball is in range, red if not", 160, RangeGuard.Enabled, function(v)
+CreateToggle(combatPage, "Range Guard", "Blocks hit when ball is outside guard radius", 160, RangeGuard.Enabled, function(v)
     RangeGuard.Enabled = v
     print("[VL] Range Guard: " .. (v and "ON" or "OFF"))
 end)
@@ -2699,7 +2731,6 @@ CreateToggle(visualsPage, "Ball Predictor", "Shows landing point of the ball on 
         Pred.smoothVel = nil
         Pred.smoothLand = nil
         if Pred.ring then Pred.ring.Transparency = 1 end
-        if Pred.center then Pred.center.Transparency = 1 end
     end
 end)
 
@@ -3012,6 +3043,15 @@ local function ApplyAccentColor(color)
     previewStroke.Color = newHot
     hexLabel.Text = ColorToHex(newAccent)
 
+    Br.TL_h.BackgroundColor3 = newHot
+    Br.TL_v.BackgroundColor3 = newHot
+    Br.TR_h.BackgroundColor3 = newHot
+    Br.TR_v.BackgroundColor3 = newHot
+    Br.BL_h.BackgroundColor3 = newHot
+    Br.BL_v.BackgroundColor3 = newHot
+    Br.BR_h.BackgroundColor3 = newHot
+    Br.BR_v.BackgroundColor3 = newHot
+
     if BallESP.highlight then
         BallESP.highlight.FillColor = newAccent
         BallESP.highlight.OutlineColor = newHot
@@ -3031,8 +3071,7 @@ local function ApplyAccentColor(color)
         })
     end
     if Pred.ring then Pred.ring.Color = newHot end
-    if Pred.center then Pred.center.Color = newAccent end
-    if HitboxVisual.Ring and not RangeGuard.Enabled then HitboxVisual.Ring.Color = newAccent end
+    if HitboxVisual.Sphere and not RangeGuard.Enabled then HitboxVisual.Sphere.Color = newAccent end
 
     for _, t in pairs(Tracers.Active) do
         if t.beam then t.beam.Color = ColorSequence.new(newHot) end
@@ -3219,7 +3258,6 @@ MakeActionButton("Unload Script", 775, Color3.fromRGB(255, 80, 100), function()
     _DestroyBallESP()
     _DestroyHitboxVisual()
     if Pred.ring then Pred.ring:Destroy() end
-    if Pred.center then Pred.center:Destroy() end
     for player, _ in pairs(Tracers.Active) do
         _TracerDestroy(player)
     end
@@ -3279,4 +3317,4 @@ HeaderBaseLine.BackgroundTransparency = 0.7
 HeaderRunner.BackgroundTransparency = 0
 HeaderPulse.BackgroundTransparency = 0.6
 
-print("[VL] Loaded v1.3: Ring-Only Hitbox + Range Guard + Tracers + Ball ESP")
+print("[VL] Loaded v1.5: Sphere Hitbox + Range Guard Blocker + Tracers")
