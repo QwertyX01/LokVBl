@@ -1,6 +1,7 @@
 -- ====================================================================
 -- VOLLEYBALL LEGENDS - AGGRESSIVE SPORT EDITION (PREMIUM)
 -- + COLOR PICKER + CORNER RADIUS + MEGA HITBOX + BALL ESP + TRAIL
+-- + PLAYER TRACERS + RANGE GUARD
 -- ====================================================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -67,7 +68,7 @@ local SliderRegistry = {}
 local ToggleRegistry = {}
 local Br = {}
 local BallESP = { model = nil, highlight = nil, particles = nil, light = nil, trail = nil, trailAtt0 = nil, trailAtt1 = nil }
-local Pred = { ring = nil, center = nil, tracer = nil, lastPos = nil, lastTime = nil, smoothVel = nil, smoothLand = nil }
+local Pred = { ring = nil, center = nil, lastPos = nil, lastTime = nil, smoothVel = nil, smoothLand = nil }
 local HitboxVisual = { Sphere = nil, Ring = nil, Radius = 0, PulseTime = 0, RotateAngle = 0 }
 
 local MegaHitbox = {
@@ -75,6 +76,16 @@ local MegaHitbox = {
     SizeMultiplier = 3,
     UpdateInterval = 0.05,
     ExpandedCount = 0,
+}
+
+local RangeGuard = { Enabled = false, Radius = 8 }
+
+local Tracers = {
+    Enabled = false,
+    Length = 25,
+    OnlyEnemies = false,
+    Folder = nil,
+    Active = {},
 }
 
 local function RegisterCorner(uiCorner, baseRadius)
@@ -499,13 +510,42 @@ RegisterCorner(OuterBorderCorner, Config.CornerRadius)
 local MainStroke = Instance.new("UIStroke", OuterBorder)
 MainStroke.Thickness = 2
 MainStroke.Color = THEME.ACCENT
-MainStroke.Transparency = 0.3
+MainStroke.Transparency = 0
 MainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+local MainStrokeGradient = Instance.new("UIGradient", MainStroke)
+MainStrokeGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, THEME.ACCENT_DARK),
+    ColorSequenceKeypoint.new(0.2, THEME.ACCENT_HOT),
+    ColorSequenceKeypoint.new(0.5, THEME.ACCENT_GLOW),
+    ColorSequenceKeypoint.new(0.8, THEME.ACCENT_HOT),
+    ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
+})
+MainStrokeGradient.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 0.2),
+    NumberSequenceKeypoint.new(0.5, 0),
+    NumberSequenceKeypoint.new(1, 0.2),
+})
+
+task.spawn(function()
+    while MainStrokeGradient.Parent do
+        for i = -1, 1, 0.02 do
+            if not MainStrokeGradient.Parent then break end
+            MainStrokeGradient.Offset = Vector2.new(i, 0)
+            task.wait(0.03)
+        end
+        for i = 1, -1, -0.02 do
+            if not MainStrokeGradient.Parent then break end
+            MainStrokeGradient.Offset = Vector2.new(i, 0)
+            task.wait(0.03)
+        end
+    end
+end)
 
 local MainGlow = Instance.new("UIStroke", OuterBorder)
 MainGlow.Thickness = 4
 MainGlow.Color = THEME.ACCENT_GLOW
-MainGlow.Transparency = 0.9
+MainGlow.Transparency = 0.85
 MainGlow.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
 local PanelHolder = Instance.new("Frame")
@@ -577,8 +617,8 @@ for i = 1, 12 do
 end
 
 local Divider = Instance.new("Frame")
-Divider.Size = UDim2.new(0, 2, 1, 0)
-Divider.Position = UDim2.new(0.3, -1, 0, 0)
+Divider.Size = UDim2.new(0, 3, 1, 0)
+Divider.Position = UDim2.new(0.3, -1.5, 0, 0)
 Divider.BackgroundColor3 = THEME.ACCENT
 Divider.BorderSizePixel = 0
 Divider.ZIndex = 5
@@ -589,7 +629,9 @@ local DividerGradient = Instance.new("UIGradient", Divider)
 DividerGradient.Rotation = 90
 DividerGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0, THEME.ACCENT_DARK),
-    ColorSequenceKeypoint.new(0.5, THEME.ACCENT_HOT),
+    ColorSequenceKeypoint.new(0.2, THEME.ACCENT_HOT),
+    ColorSequenceKeypoint.new(0.5, THEME.ACCENT_GLOW),
+    ColorSequenceKeypoint.new(0.8, THEME.ACCENT_HOT),
     ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
 })
 
@@ -598,12 +640,12 @@ task.spawn(function()
         for i = -1, 1, 0.02 do
             if not DividerGradient.Parent then break end
             DividerGradient.Offset = Vector2.new(0, i)
-            task.wait(0.05)
+            task.wait(0.025)
         end
         for i = 1, -1, -0.02 do
             if not DividerGradient.Parent then break end
             DividerGradient.Offset = Vector2.new(0, i)
-            task.wait(0.05)
+            task.wait(0.025)
         end
     end
 end)
@@ -688,7 +730,7 @@ local LogoVersion = Instance.new("TextLabel")
 LogoVersion.Size = UDim2.new(1, -65, 0, 14)
 LogoVersion.Position = UDim2.new(0, 65, 0, 48)
 LogoVersion.BackgroundTransparency = 1
-LogoVersion.Text = "// FREE 1.1.0"
+LogoVersion.Text = "// FREE 1.2.0"
 LogoVersion.TextColor3 = THEME.TEXT_LOW
 LogoVersion.TextSize = 10
 LogoVersion.Font = Enum.Font.Code
@@ -719,8 +761,8 @@ PageHeader.Parent = RightPanel
 PageHeader.Visible = false
 
 local AccentBar = Instance.new("Frame")
-AccentBar.Size = UDim2.new(0, 4, 0, 22)
-AccentBar.Position = UDim2.new(0, 20, 0, 16)
+AccentBar.Size = UDim2.new(0, 3, 0, 26)
+AccentBar.Position = UDim2.new(0, 20, 0, 14)
 AccentBar.BackgroundColor3 = THEME.ACCENT
 AccentBar.BorderSizePixel = 0
 AccentBar.ZIndex = 11
@@ -728,24 +770,26 @@ AccentBar.Parent = PageHeader
 Instance.new("UICorner", AccentBar).CornerRadius = UDim.new(0, 1)
 
 local AccentGradient = Instance.new("UIGradient", AccentBar)
-AccentGradient.Rotation = 90
+AccentGradient.Rotation = 0
 AccentGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0, THEME.ACCENT_DARK),
-    ColorSequenceKeypoint.new(0.5, THEME.ACCENT_HOT),
+    ColorSequenceKeypoint.new(0.25, THEME.ACCENT_HOT),
+    ColorSequenceKeypoint.new(0.5, THEME.ACCENT_GLOW),
+    ColorSequenceKeypoint.new(0.75, THEME.ACCENT_HOT),
     ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
 })
 
 task.spawn(function()
     while AccentGradient.Parent do
-        for i = -1, 1, 0.03 do
+        for i = -1, 1, 0.04 do
             if not AccentGradient.Parent then break end
-            AccentGradient.Offset = Vector2.new(0, i)
-            task.wait(0.05)
+            AccentGradient.Offset = Vector2.new(i, 0)
+            task.wait(0.03)
         end
-        for i = 1, -1, -0.03 do
+        for i = 1, -1, -0.04 do
             if not AccentGradient.Parent then break end
-            AccentGradient.Offset = Vector2.new(0, i)
-            task.wait(0.05)
+            AccentGradient.Offset = Vector2.new(i, 0)
+            task.wait(0.03)
         end
     end
 end)
@@ -2128,7 +2172,6 @@ end
 local function _CreatePredictorVisuals()
     if Pred.ring then Pred.ring:Destroy() end
     if Pred.center then Pred.center:Destroy() end
-    if Pred.tracer then Pred.tracer:Destroy() end
 
     Pred.ring = Instance.new("Part")
     Pred.ring.Name = "VL_PredRing"
@@ -2155,17 +2198,6 @@ local function _CreatePredictorVisuals()
     Pred.center.Color = THEME.ACCENT
     Pred.center.Transparency = 1
     Pred.center.Parent = workspace
-
-    Pred.tracer = Instance.new("Frame")
-    Pred.tracer.Name = "VL_PredTracer"
-    Pred.tracer.AnchorPoint = Vector2.new(0, 0.5)
-    Pred.tracer.Size = UDim2.new(0, 0, 0, 1.5)
-    Pred.tracer.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    Pred.tracer.BackgroundTransparency = 0.1
-    Pred.tracer.BorderSizePixel = 0
-    Pred.tracer.ZIndex = 85
-    Pred.tracer.Visible = false
-    Pred.tracer.Parent = ScreenGui
 end
 
 _CreatePredictorVisuals()
@@ -2250,8 +2282,26 @@ local function _UpdateHitboxVisual(dt)
     ring.CFrame = CFrame.new(ballPos)
         * CFrame.Angles(0, 0, math.rad(90))
         * CFrame.Angles(math.rad(HitboxVisual.RotateAngle), math.rad(HitboxVisual.RotateAngle * 0.6), 0)
-    ring.Color = THEME.ACCENT
-    ring.Transparency = 0.3
+
+    if RangeGuard.Enabled then
+        local char = LocalPlayer.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            local dist = (ballPos - char.HumanoidRootPart.Position).Magnitude
+            if dist <= RangeGuard.Radius then
+                ring.Color = Color3.fromRGB(80, 255, 130)
+                ring.Transparency = 0.25
+            else
+                ring.Color = Color3.fromRGB(255, 80, 80)
+                ring.Transparency = 0.5
+            end
+        else
+            ring.Color = THEME.ACCENT
+            ring.Transparency = 0.3
+        end
+    else
+        ring.Color = THEME.ACCENT
+        ring.Transparency = 0.3
+    end
 
     local sphere = HitboxVisual.Sphere
     sphere.Size = Vector3.new(r * 2, r * 2, r * 2)
@@ -2319,6 +2369,160 @@ local function RestoreAllHitboxes()
 end
 
 -- ====================================================================
+-- PLAYER FACING ESP — 3D BEAM TRACERS
+-- ====================================================================
+local function _TracerGetHead(player)
+    local char = player.Character
+    if not char then return nil end
+    local head = char:FindFirstChild("Head")
+    if head and head:IsA("BasePart") then return head end
+    for _, obj in ipairs(char:GetDescendants()) do
+        if obj:IsA("BasePart") and string.lower(obj.Name) == "head" then
+            return obj
+        end
+    end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if hrp and hrp:IsA("BasePart") then return hrp end
+    return nil
+end
+
+local function _TracerIsEnemy(player)
+    if player == LocalPlayer then return false end
+    if not LocalPlayer.Team then return true end
+    if not player.Team then return true end
+    return player.Team ~= LocalPlayer.Team
+end
+
+local function _TracerEnsureFolder()
+    if Tracers.Folder and Tracers.Folder.Parent then return end
+    Tracers.Folder = Instance.new("Folder")
+    Tracers.Folder.Name = "VL_BeamTracers"
+    Tracers.Folder.Parent = workspace
+end
+
+local function _TracerDestroy(player)
+    local t = Tracers.Active[player]
+    if not t then return end
+    if t.att0 then pcall(function() t.att0:Destroy() end) end
+    if t.endPart then pcall(function() t.endPart:Destroy() end) end
+    Tracers.Active[player] = nil
+end
+
+local function _TracerCreate(player)
+    local head = _TracerGetHead(player)
+    if not head then return nil end
+    _TracerEnsureFolder()
+
+    local att0 = Instance.new("Attachment")
+    att0.Name = "VL_BeamStart"
+    att0.Parent = head
+
+    local endPart = Instance.new("Part")
+    endPart.Name = "VL_BeamEnd_" .. player.Name
+    endPart.Size = Vector3.new(0.6, 0.6, 0.6)
+    endPart.Shape = Enum.PartType.Ball
+    endPart.Anchored = true
+    endPart.CanCollide = false
+    endPart.CanQuery = false
+    endPart.CanTouch = false
+    endPart.CastShadow = false
+    endPart.Material = Enum.Material.Neon
+    endPart.Color = THEME.ACCENT_HOT
+    endPart.Transparency = 0.2
+    endPart.Parent = Tracers.Folder
+
+    local att1 = Instance.new("Attachment")
+    att1.Name = "VL_BeamEnd"
+    att1.Parent = endPart
+
+    local beam = Instance.new("Beam")
+    beam.Name = "VL_Beam"
+    beam.Attachment0 = att0
+    beam.Attachment1 = att1
+    beam.Width0 = 0.3
+    beam.Width1 = 0.3
+    beam.FaceCamera = true
+    beam.LightEmission = 1
+    beam.LightInfluence = 0
+    beam.Color = ColorSequence.new(THEME.ACCENT_HOT)
+    beam.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.1),
+        NumberSequenceKeypoint.new(0.5, 0.3),
+        NumberSequenceKeypoint.new(1, 0.6),
+    })
+    beam.Segments = 1
+    beam.Parent = endPart
+
+    return {
+        att0 = att0,
+        att1 = att1,
+        beam = beam,
+        endPart = endPart,
+        head = head,
+    }
+end
+
+local function _TracerUpdate()
+    if not Tracers.Enabled then
+        for player, _ in pairs(Tracers.Active) do
+            _TracerDestroy(player)
+        end
+        if Tracers.Folder then
+            pcall(function() Tracers.Folder:Destroy() end)
+            Tracers.Folder = nil
+        end
+        return
+    end
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            local isEnemy = _TracerIsEnemy(player)
+            local shouldShow = true
+            if Tracers.OnlyEnemies and not isEnemy then shouldShow = false end
+
+            if shouldShow then
+                local head = _TracerGetHead(player)
+                if head then
+                    local t = Tracers.Active[player]
+                    local valid = t and t.att0 and t.att0.Parent and t.endPart and t.endPart.Parent and t.head == head
+                    if not valid then
+                        _TracerDestroy(player)
+                        t = _TracerCreate(player)
+                        if t then Tracers.Active[player] = t end
+                    end
+                    if t and t.endPart then
+                        local endPos = head.Position + head.CFrame.LookVector * Tracers.Length
+                        t.endPart.CFrame = CFrame.new(endPos)
+                        if t.att0.Parent ~= head then t.att0.Parent = head end
+                    end
+                else
+                    _TracerDestroy(player)
+                end
+            else
+                _TracerDestroy(player)
+            end
+        end
+    end
+
+    for player, _ in pairs(Tracers.Active) do
+        if not player.Parent then
+            _TracerDestroy(player)
+        end
+    end
+end
+
+task.spawn(function()
+    while ScreenGui.Parent do
+        pcall(_TracerUpdate)
+        task.wait(0.03)
+    end
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    _TracerDestroy(player)
+end)
+
+-- ====================================================================
 -- MAIN UPDATE LOOP
 -- ====================================================================
 task.spawn(function()
@@ -2381,41 +2585,18 @@ task.spawn(function()
                     Pred.center.CFrame = CFrame.new(fp.X, fp.Y + 0.1, fp.Z) * CFrame.Angles(0, 0, math.rad(90))
                     Pred.center.Transparency = 0.1
                     Pred.center.Color = THEME.ACCENT
-                    local cam = workspace.CurrentCamera
-                    if cam then
-                        local bs, bsOn = cam:WorldToViewportPoint(ballPos)
-                        local ls, lsOn = cam:WorldToViewportPoint(fp)
-                        if bsOn and lsOn and bs.Z > 0 and ls.Z > 0 then
-                            local dx = ls.X - bs.X
-                            local dy = ls.Y - bs.Y
-                            local len = math.sqrt(dx*dx + dy*dy)
-                            if len > 5 then
-                                Pred.tracer.Position = UDim2.new(0, bs.X, 0, bs.Y)
-                                Pred.tracer.Size = UDim2.new(0, len, 0, 1.5)
-                                Pred.tracer.Rotation = math.deg(math.atan2(dy, dx))
-                                Pred.tracer.Visible = true
-                            else
-                                Pred.tracer.Visible = false
-                            end
-                        else
-                            Pred.tracer.Visible = false
-                        end
-                    end
                 else
                     Pred.ring.Transparency = 1
                     Pred.center.Transparency = 1
-                    Pred.tracer.Visible = false
                 end
             else
                 Pred.ring.Transparency = 1
                 Pred.center.Transparency = 1
-                Pred.tracer.Visible = false
             end
         else
             if BallESP.highlight then _DestroyBallESP() end
             if Pred.ring then Pred.ring.Transparency = 1 end
             if Pred.center then Pred.center.Transparency = 1 end
-            if Pred.tracer then Pred.tracer.Visible = false end
         end
 
         pcall(_UpdateHitboxVisual, 0.03)
@@ -2438,7 +2619,7 @@ end)
 -- COMBAT PAGE
 -- ====================================================================
 local combatPage = TabPages["Combat"]
-combatPage.CanvasSize = UDim2.new(0, 0, 0, 400)
+combatPage.CanvasSize = UDim2.new(0, 0, 0, 500)
 
 CreateSection(combatPage, "// HITBOX EXPANDER", 10, THEME.ACCENT_HOT)
 
@@ -2472,11 +2653,20 @@ CreateSlider(combatPage, "Hitbox Size", "Impact area multiplier (x1 - x20)", 95,
     end
 end)
 
+CreateToggle(combatPage, "Range Guard", "Colors the ring green if ball is in range, red if not", 160, RangeGuard.Enabled, function(v)
+    RangeGuard.Enabled = v
+    print("[VL] Range Guard: " .. (v and "ON" or "OFF"))
+end)
+
+CreateSlider(combatPage, "Guard Radius", "Distance limit in studs", 215, 3, 30, 8, " studs", function(v)
+    RangeGuard.Radius = v
+end)
+
 -- ====================================================================
 -- VISUALS PAGE
 -- ====================================================================
 local visualsPage = TabPages["Visuals"]
-visualsPage.CanvasSize = UDim2.new(0, 0, 0, 400)
+visualsPage.CanvasSize = UDim2.new(0, 0, 0, 500)
 
 CreateSection(visualsPage, "// BALL VISUALS", 10, Color3.fromRGB(120, 220, 255))
 
@@ -2489,15 +2679,29 @@ CreateToggle(visualsPage, "Ball ESP", "Highlights the ball with aura, sparks and
     end
 end)
 
-CreateToggle(visualsPage, "Ball Predictor", "Shows landing point and trajectory line of the ball", 95, Config.BallPredictorEnabled, function(v)
+CreateToggle(visualsPage, "Ball Predictor", "Shows landing point of the ball on the ground", 95, Config.BallPredictorEnabled, function(v)
     Config.BallPredictorEnabled = v
     if not v then
         Pred.smoothVel = nil
         Pred.smoothLand = nil
         if Pred.ring then Pred.ring.Transparency = 1 end
         if Pred.center then Pred.center.Transparency = 1 end
-        if Pred.tracer then Pred.tracer.Visible = false end
     end
+end)
+
+CreateSection(visualsPage, "// PLAYER TRACERS", 155, Color3.fromRGB(255, 100, 180))
+
+CreateToggle(visualsPage, "Player Tracers", "3D beam from each player head showing look direction", 185, Tracers.Enabled, function(v)
+    Tracers.Enabled = v
+    print("[VL] Player Tracers: " .. (v and "ON" or "OFF"))
+end)
+
+CreateToggle(visualsPage, "Enemies Only", "Show tracers only for enemy team", 235, Tracers.OnlyEnemies, function(v)
+    Tracers.OnlyEnemies = v
+end)
+
+CreateSlider(visualsPage, "Tracer Length", "Beam length in studs", 285, 5, 80, 25, " studs", function(v)
+    Tracers.Length = v
 end)
 
 -- ====================================================================
@@ -2659,6 +2863,15 @@ local function ApplyAccentColor(color)
     THEME.ACCENT_GLOW = newGlow
 
     MainStroke.Color = newAccent
+    if MainStrokeGradient then
+        MainStrokeGradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, newDark),
+            ColorSequenceKeypoint.new(0.2, newHot),
+            ColorSequenceKeypoint.new(0.5, newGlow),
+            ColorSequenceKeypoint.new(0.8, newHot),
+            ColorSequenceKeypoint.new(1, newDark),
+        })
+    end
     MainGlow.Color = newGlow
     LogoBadgeGlow.Color = newGlow
     AvatarStroke.Color = newHot
@@ -2666,13 +2879,17 @@ local function ApplyAccentColor(color)
     Divider.BackgroundColor3 = newAccent
     DividerGradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, newDark),
-        ColorSequenceKeypoint.new(0.5, newHot),
+        ColorSequenceKeypoint.new(0.2, newHot),
+        ColorSequenceKeypoint.new(0.5, newGlow),
+        ColorSequenceKeypoint.new(0.8, newHot),
         ColorSequenceKeypoint.new(1, newDark),
     })
     AccentBar.BackgroundColor3 = newAccent
     AccentGradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, newDark),
-        ColorSequenceKeypoint.new(0.5, newHot),
+        ColorSequenceKeypoint.new(0.25, newHot),
+        ColorSequenceKeypoint.new(0.5, newGlow),
+        ColorSequenceKeypoint.new(0.75, newHot),
         ColorSequenceKeypoint.new(1, newDark),
     })
     HeaderBaseLine.BackgroundColor3 = newDark
@@ -2701,11 +2918,6 @@ local function ApplyAccentColor(color)
         ColorSequenceKeypoint.new(1, newDark),
     })
     splitGrad.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, newDark),
-        ColorSequenceKeypoint.new(0.5, newHot),
-        ColorSequenceKeypoint.new(1, newDark),
-    })
-    DividerGradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, newDark),
         ColorSequenceKeypoint.new(0.5, newHot),
         ColorSequenceKeypoint.new(1, newDark),
@@ -2799,8 +3011,13 @@ local function ApplyAccentColor(color)
     end
     if Pred.ring then Pred.ring.Color = newHot end
     if Pred.center then Pred.center.Color = newAccent end
-    if HitboxVisual.Ring then HitboxVisual.Ring.Color = newAccent end
+    if HitboxVisual.Ring and not RangeGuard.Enabled then HitboxVisual.Ring.Color = newAccent end
     if HitboxVisual.Sphere then HitboxVisual.Sphere.Color = newGlow end
+
+    for _, t in pairs(Tracers.Active) do
+        if t.beam then t.beam.Color = ColorSequence.new(newHot) end
+        if t.endPart then t.endPart.Color = newHot end
+    end
 
     for _, el in ipairs(ColorSyncedElements) do
         if el.Kind == "Toggle" then
@@ -2937,9 +3154,14 @@ MakeActionButton("Reset Settings", 730, Color3.fromRGB(255, 180, 100), function(
     if ToggleRegistry["Hitbox Expander"] then ToggleRegistry["Hitbox Expander"](false, true) end
     if ToggleRegistry["Ball ESP"] then ToggleRegistry["Ball ESP"](false, true) end
     if ToggleRegistry["Ball Predictor"] then ToggleRegistry["Ball Predictor"](false, true) end
+    if ToggleRegistry["Player Tracers"] then ToggleRegistry["Player Tracers"](false, true) end
+    if ToggleRegistry["Enemies Only"] then ToggleRegistry["Enemies Only"](false, true) end
+    if ToggleRegistry["Range Guard"] then ToggleRegistry["Range Guard"](false, true) end
     if SliderRegistry["Menu Scale"] then SliderRegistry["Menu Scale"](100, true) end
     if SliderRegistry["Corner Radius"] then SliderRegistry["Corner Radius"](8, true) end
     if SliderRegistry["Hitbox Size"] then SliderRegistry["Hitbox Size"](30, true) end
+    if SliderRegistry["Guard Radius"] then SliderRegistry["Guard Radius"](8, true) end
+    if SliderRegistry["Tracer Length"] then SliderRegistry["Tracer Length"](25, true) end
     Config.FlyingDotsEnabled = true
     Config.SoundEnabled = true
     Config.ScanLineEnabled = true
@@ -2952,9 +3174,18 @@ MakeActionButton("Reset Settings", 730, Color3.fromRGB(255, 180, 100), function(
     Config.BallPredictorEnabled = false
     MegaHitbox.Enabled = false
     MegaHitbox.SizeMultiplier = 3
+    RangeGuard.Enabled = false
+    RangeGuard.Radius = 8
+    Tracers.Enabled = false
+    Tracers.Length = 25
+    Tracers.OnlyEnemies = false
     RestoreAllHitboxes()
     _DestroyHitboxVisual()
     _DestroyBallESP()
+    for player, _ in pairs(Tracers.Active) do
+        _TracerDestroy(player)
+    end
+    if Tracers.Folder then pcall(function() Tracers.Folder:Destroy() end) Tracers.Folder = nil end
     FpsFrame.Visible = false
     TweenService:Create(MainScale, TweenInfo.new(0.2), {Scale = 1}):Play()
     RebuildDots()
@@ -2969,7 +3200,10 @@ MakeActionButton("Unload Script", 775, Color3.fromRGB(255, 80, 100), function()
     _DestroyHitboxVisual()
     if Pred.ring then Pred.ring:Destroy() end
     if Pred.center then Pred.center:Destroy() end
-    if Pred.tracer then Pred.tracer:Destroy() end
+    for player, _ in pairs(Tracers.Active) do
+        _TracerDestroy(player)
+    end
+    if Tracers.Folder then pcall(function() Tracers.Folder:Destroy() end) end
     RestoreAllHitboxes()
     pcall(function() ScreenGui:Destroy() end)
     pcall(function() LoadGui:Destroy() end)
@@ -3025,4 +3259,4 @@ HeaderBaseLine.BackgroundTransparency = 0.7
 HeaderRunner.BackgroundTransparency = 0
 HeaderPulse.BackgroundTransparency = 0.6
 
-print("[VL] Loaded: Menu + Mega Hitbox + Hitbox Visual + Ball ESP + Trail + Predictor")
+print("[VL] Loaded: Menu + Mega Hitbox + Ball ESP + Trail + Tracers + Range Guard + Predictor")
