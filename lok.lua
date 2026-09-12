@@ -1,5 +1,5 @@
 -- ====================================================================
--- VOLLEYBALL LEGENDS - AGGRESSIVE SPORT EDITION (PREMIUM v1.5)
+-- VOLLEYBALL LEGENDS - AGGRESSIVE SPORT EDITION (PREMIUM v1.6)
 -- ====================================================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -58,6 +58,7 @@ local Config = {
     FpsCounterEnabled = false, MenuScale = 100, CornerRadius = 8, Dots = {},
     HitboxEnabled = false, HitboxSize = 30,
     BallESPEnabled = false, BallPredictorEnabled = false,
+    FOV = 70,
 }
 
 local CornerElements = {}
@@ -68,25 +69,12 @@ local Br = {}
 local BallESP = { model = nil, highlight = nil, particles = nil, light = nil, trail = nil, trailAtt0 = nil, trailAtt1 = nil }
 local Pred = { ring = nil, lastPos = nil, lastTime = nil, smoothVel = nil, smoothLand = nil }
 local HitboxVisual = { Sphere = nil, Radius = 0 }
-
-local MegaHitbox = {
-    Enabled = false,
-    SizeMultiplier = 3,
-    UpdateInterval = 0.05,
-    ExpandedCount = 0,
-}
-
+local MegaHitbox = { Enabled = false, SizeMultiplier = 3, UpdateInterval = 0.05, ExpandedCount = 0 }
 local RangeGuard = { Enabled = false, Radius = 8 }
-
 local HitBlocker = { LastBlockTime = 0 }
-
-local Tracers = {
-    Enabled = false,
-    Length = 25,
-    OnlyEnemies = false,
-    Folder = nil,
-    Active = {},
-}
+local Tracers = { Enabled = false, Length = 25, OnlyEnemies = false, Folder = nil, Active = {} }
+local ClothesWiper = { Enabled = false, Wiped = {} }
+local Sky = { Current = nil, Connection = nil, Objects = {}, Presets = {}, Buttons = {} }
 
 local function RegisterCorner(uiCorner, baseRadius)
     table.insert(CornerElements, { Corner = uiCorner, BaseRadius = baseRadius or Config.CornerRadius })
@@ -479,9 +467,7 @@ task.spawn(function()
     pcall(function() Sound:Play() end)
 end)
 
--- ====================================================================
 -- MAIN PANEL
--- ====================================================================
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 680, 0, 490)
@@ -730,7 +716,7 @@ local LogoVersion = Instance.new("TextLabel")
 LogoVersion.Size = UDim2.new(1, -65, 0, 14)
 LogoVersion.Position = UDim2.new(0, 65, 0, 48)
 LogoVersion.BackgroundTransparency = 1
-LogoVersion.Text = "// FREE 1.5.0"
+LogoVersion.Text = "// FREE 1.6.0"
 LogoVersion.TextColor3 = THEME.TEXT_LOW
 LogoVersion.TextSize = 10
 LogoVersion.Font = Enum.Font.Code
@@ -990,14 +976,14 @@ Br.TR_h, Br.TR_v, Br.TR_hg, Br.TR_vg = CreateBracket(UDim2.new(1, 6, 0, -6), UDi
 Br.BL_h, Br.BL_v, Br.BL_hg, Br.BL_vg = CreateBracket(UDim2.new(0, -6, 1, 6), UDim2.new(0, 22, 0, 22), Vector2.new(0, 1), false, true)
 Br.BR_h, Br.BR_v, Br.BR_hg, Br.BR_vg = CreateBracket(UDim2.new(1, 6, 1, 6), UDim2.new(0, 22, 0, 22), Vector2.new(1, 1), true, true)
 
-local TabNames = {"Main", "Visuals", "Combat", "Settings"}
-local TabIndexes = { "01", "02", "03", "04" }
+local TabNames = {"Main", "Visuals", "Combat", "Sky", "Settings"}
+local TabIndexes = { "01", "02", "03", "04", "05" }
 local Tabs = {}
 local TabPages = {}
 local ActiveTab = nil
-local TabBaseY = 100
-local TabHeight = 42
-local TabSpacing = 48
+local TabBaseY = 95
+local TabHeight = 38
+local TabSpacing = 44
 
 local function CreatePage(name)
     local page = Instance.new("ScrollingFrame")
@@ -2047,9 +2033,85 @@ local function CreateSlider(parent, name, descText, yPos, minVal, maxVal, defaul
     SliderRegistry[name] = SetValue
 end
 
--- ====================================================================
 -- BALL FUNCTIONS
--- ====================================================================
+local WIPER_GRAY = Color3.fromRGB(163, 162, 165)
+
+local function _WipeCharacter(char)
+    if not char then return end
+    if ClothesWiper.Wiped[char] then return end
+    ClothesWiper.Wiped[char] = true
+
+    local shirt = char:FindFirstChildOfClass("Shirt")
+    if shirt then pcall(function() shirt.ShirtTemplate = "" end) end
+
+    local pants = char:FindFirstChildOfClass("Pants")
+    if pants then pcall(function() pants.PantsTemplate = "" end) end
+
+    local shirtGraphic = char:FindFirstChildOfClass("ShirtGraphic")
+    if shirtGraphic then pcall(function() shirtGraphic.Graphic = "" end) end
+
+    local bc = char:FindFirstChildOfClass("BodyColors")
+    if bc then
+        pcall(function()
+            bc.HeadColor3 = WIPER_GRAY
+            bc.TorsoColor3 = WIPER_GRAY
+            bc.LeftArmColor3 = WIPER_GRAY
+            bc.RightArmColor3 = WIPER_GRAY
+            bc.LeftLegColor3 = WIPER_GRAY
+            bc.RightLegColor3 = WIPER_GRAY
+        end)
+    end
+
+    for _, obj in ipairs(char:GetDescendants()) do
+        if obj:IsA("Accessory") or obj:IsA("Hat") then
+            for _, part in ipairs(obj:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    pcall(function() part.Transparency = 1 end)
+                elseif part:IsA("Decal") or part:IsA("Texture") then
+                    pcall(function() part.Transparency = 1 end)
+                end
+            end
+        end
+    end
+
+    local head = char:FindFirstChild("Head")
+    if head then
+        local face = head:FindFirstChildOfClass("Decal")
+        if face then pcall(function() face.Transparency = 1 end) end
+    end
+end
+
+local function _WiperUpdate()
+    if not ClothesWiper.Enabled then return end
+    for _, player in ipairs(Players:GetPlayers()) do
+        local char = player.Character
+        if char then
+            local bc = char:FindFirstChildOfClass("BodyColors")
+            if bc then
+                pcall(function()
+                    bc.HeadColor3 = WIPER_GRAY
+                    bc.TorsoColor3 = WIPER_GRAY
+                    bc.LeftArmColor3 = WIPER_GRAY
+                    bc.RightArmColor3 = WIPER_GRAY
+                    bc.LeftLegColor3 = WIPER_GRAY
+                    bc.RightLegColor3 = WIPER_GRAY
+                end)
+            end
+            local shirt = char:FindFirstChildOfClass("Shirt")
+            if shirt and shirt.ShirtTemplate ~= "" then
+                pcall(function() shirt.ShirtTemplate = "" end)
+            end
+            local pants = char:FindFirstChildOfClass("Pants")
+            if pants and pants.PantsTemplate ~= "" then
+                pcall(function() pants.PantsTemplate = "" end)
+            end
+            if not ClothesWiper.Wiped[char] then
+                _WipeCharacter(char)
+            end
+        end
+    end
+end
+
 local function _FindBall()
     for _, obj in ipairs(workspace:GetChildren()) do
         if obj:IsA("Model") and obj.PrimaryPart then
@@ -2233,9 +2295,7 @@ end
 
 _CreatePredictorVisuals()
 
--- ====================================================================
--- HITBOX VISUAL (только сфера, без кольца)
--- ====================================================================
+-- HITBOX VISUAL (сфера)
 local function _DestroyHitboxVisual()
     if HitboxVisual.Sphere then pcall(function() HitboxVisual.Sphere:Destroy() end) HitboxVisual.Sphere = nil end
     if HitboxVisual.Ring then pcall(function() HitboxVisual.Ring:Destroy() end) HitboxVisual.Ring = nil end
@@ -2311,9 +2371,6 @@ local function _UpdateHitboxVisual(dt)
     end
 end
 
--- ====================================================================
--- MEGA HITBOX
--- ====================================================================
 local function ExpandAllHitboxTemplates()
     local Assets = ReplicatedStorage:FindFirstChild("Assets")
     if not Assets then return 0 end
@@ -2369,9 +2426,7 @@ local function RestoreAllHitboxes()
     end
 end
 
--- ====================================================================
--- PLAYER FACING ESP — 3D BEAM TRACERS
--- ====================================================================
+-- TRACERS
 local function _TracerGetHead(player)
     local char = player.Character
     if not char then return nil end
@@ -2454,13 +2509,7 @@ local function _TracerCreate(player)
     beam.Segments = 1
     beam.Parent = endPart
 
-    return {
-        att0 = att0,
-        att1 = att1,
-        beam = beam,
-        endPart = endPart,
-        head = head,
-    }
+    return { att0 = att0, att1 = att1, beam = beam, endPart = endPart, head = head }
 end
 
 local function _TracerUpdate()
@@ -2523,9 +2572,7 @@ Players.PlayerRemoving:Connect(function(player)
     _TracerDestroy(player)
 end)
 
--- ====================================================================
--- HIT BLOCKER — блокирует удар если мяч вне Guard Radius
--- ====================================================================
+-- HIT BLOCKER
 local function _IsBallInGuardRange()
     if not RangeGuard.Enabled then return true end
     local ball = _FindBall()
@@ -2574,96 +2621,295 @@ pcall(function()
     end)
 end)
 
--- ====================================================================
--- MAIN UPDATE LOOP
--- ====================================================================
-task.spawn(function()
-    while true do
-        if not ScreenGui.Parent then
-            task.wait(0.2)
-        else
-        if not BallESP.model or not BallESP.model.Parent or not BallESP.model.PrimaryPart then
-            BallESP.model = _FindBall()
-            if BallESP.model and Config.BallESPEnabled then
-                _CreateBallESP(BallESP.model)
-            end
-        end
-        local ball = BallESP.model
-        if ball and ball.PrimaryPart then
-            local ballPos = ball.PrimaryPart.Position
-            if Config.BallESPEnabled then
-                if not BallESP.highlight or not BallESP.highlight.Parent then
-                    _CreateBallESP(ball)
-                else
-                    BallESP.highlight.Adornee = ball.PrimaryPart
-                    BallESP.highlight.FillColor = THEME.ACCENT
-                    BallESP.highlight.OutlineColor = THEME.ACCENT_HOT
-                    if BallESP.particles and BallESP.particles.Parent ~= ball.PrimaryPart then
-                        BallESP.particles.Parent = ball.PrimaryPart
-                    end
-                    if BallESP.light and BallESP.light.Parent ~= ball.PrimaryPart then
-                        BallESP.light.Parent = ball.PrimaryPart
-                    end
-                end
-            else
-                if BallESP.highlight then _DestroyBallESP() end
-            end
-            if Config.BallPredictorEnabled then
-                local now = tick()
-                if Pred.lastPos and Pred.lastTime then
-                    local dt = now - Pred.lastTime
-                    if dt > 0.001 then
-                        local rawVel = (ballPos - Pred.lastPos) / dt
-                        if Pred.smoothVel then
-                            Pred.smoothVel = Pred.smoothVel:Lerp(rawVel, 0.12)
-                        else
-                            Pred.smoothVel = rawVel
-                        end
-                    end
-                end
-                Pred.lastPos = ballPos
-                Pred.lastTime = now
-                if Pred.smoothVel and Pred.smoothVel.Magnitude >= 0.5 then
-                    local landing = _PredictLanding(ballPos, Pred.smoothVel)
-                    if Pred.smoothLand then
-                        Pred.smoothLand = Pred.smoothLand:Lerp(landing, 0.15)
-                    else
-                        Pred.smoothLand = landing
-                    end
-                    local fp = Pred.smoothLand
-                    Pred.ring.CFrame = CFrame.new(fp.X, fp.Y + 0.05, fp.Z) * CFrame.Angles(0, 0, math.rad(90))
-                    Pred.ring.Transparency = 0.3
-                    Pred.ring.Color = THEME.ACCENT_HOT
-                else
-                    Pred.ring.Transparency = 1
-                end
-            else
-                Pred.ring.Transparency = 1
-            end
-        else
-            if BallESP.highlight then _DestroyBallESP() end
-            if Pred.ring then Pred.ring.Transparency = 1 end
-        end
-
-        pcall(_UpdateHitboxVisual, 0.03)
-
-        task.wait(0.03)
+-- SKY PRESETS
+local function _SkyCleanup()
+    local Lighting = game:GetService("Lighting")
+    for _, obj in ipairs(Lighting:GetChildren()) do
+        if string.sub(obj.Name, 1, 5) == "META_" or string.sub(obj.Name, 1, 3) == "VL_" then
+            pcall(function() obj:Destroy() end)
         end
     end
-end)
-
-task.spawn(function()
-    while ScreenGui.Parent do
-        if MegaHitbox.Enabled then
-            pcall(ExpandAllHitboxTemplates)
-        end
-        task.wait(1)
+    if Sky.Connection then
+        pcall(function() Sky.Connection:Disconnect() end)
+        Sky.Connection = nil
     end
-end)
+    Sky.Objects = {}
+    Sky.Current = nil
+end
 
--- ====================================================================
+local function _SkyPinkVibe()
+    _SkyCleanup()
+    local Lighting = game:GetService("Lighting")
+    local RunService = game:GetService("RunService")
+
+    for _, obj in ipairs(Lighting:GetChildren()) do
+        if obj:IsA("Sky") or obj:IsA("Atmosphere") or obj:IsA("Clouds") or obj:IsA("BloomEffect") or obj:IsA("SunRaysEffect") or obj:IsA("ColorCorrectionEffect") then
+            pcall(function() obj:Destroy() end)
+        end
+    end
+
+    local pinkSky = Instance.new("Sky")
+    pinkSky.Name = "META_PinkSky"
+    pinkSky.SkyboxBk = "rbxassetid://159454299"
+    pinkSky.SkyboxDn = "rbxassetid://159454296"
+    pinkSky.SkyboxFt = "rbxassetid://159454293"
+    pinkSky.SkyboxLf = "rbxassetid://159454286"
+    pinkSky.SkyboxRt = "rbxassetid://159454300"
+    pinkSky.SkyboxUp = "rbxassetid://159454288"
+    pinkSky.SunAngularSize = 14
+    pinkSky.MoonAngularSize = 12
+    pinkSky.StarCount = 3000
+    pinkSky.CelestialBodiesShown = true
+    pinkSky.Parent = Lighting
+
+    local atmosphere = Instance.new("Atmosphere")
+    atmosphere.Name = "META_PinkAtmosphere"
+    atmosphere.Density = 0.4
+    atmosphere.Offset = 0.15
+    atmosphere.Color = Color3.fromRGB(255, 180, 220)
+    atmosphere.Decay = Color3.fromRGB(180, 90, 150)
+    atmosphere.Glare = 0.7
+    atmosphere.Haze = 2.5
+    atmosphere.Parent = Lighting
+
+    local cc = Instance.new("ColorCorrectionEffect")
+    cc.Name = "META_PinkFilter"
+    cc.Brightness = 0.06
+    cc.Contrast = 0.18
+    cc.Saturation = 0.6
+    cc.TintColor = Color3.fromRGB(255, 200, 230)
+    cc.Parent = Lighting
+
+    local bloom = Instance.new("BloomEffect")
+    bloom.Name = "META_PinkBloom"
+    bloom.Intensity = 0.75
+    bloom.Size = 22
+    bloom.Threshold = 0.2
+    bloom.Parent = Lighting
+
+    local rays = Instance.new("SunRaysEffect")
+    rays.Name = "META_PinkRays"
+    rays.Intensity = 0.22
+    rays.Spread = 1.2
+    rays.Parent = Lighting
+
+    Lighting.Ambient = Color3.fromRGB(140, 100, 130)
+    Lighting.OutdoorAmbient = Color3.fromRGB(200, 150, 190)
+    Lighting.Brightness = 1.8
+    Lighting.ClockTime = 16.5
+    Lighting.GeographicLatitude = 15
+    Lighting.GlobalShadows = true
+    Lighting.EnvironmentDiffuseScale = 0.7
+    Lighting.EnvironmentSpecularScale = 0.9
+    Lighting.ExposureCompensation = 0.08
+    Lighting.FogEnd = 100000
+    Lighting.FogStart = 0
+
+    Sky.Connection = RunService.Heartbeat:Connect(function()
+        if not cc or not cc.Parent then
+            if Sky.Connection then Sky.Connection:Disconnect() Sky.Connection = nil end
+            return
+        end
+        local wave = (math.sin(tick() * 0.5) + 1) / 2
+        cc.TintColor = Color3.fromRGB(240 + wave * 15, 190 + wave * 20, 220 + wave * 25)
+        atmosphere.Color = Color3.fromRGB(240 + wave * 15, 170 + wave * 25, 210 + wave * 30)
+        bloom.Intensity = 0.6 + wave * 0.3
+    end)
+
+    Sky.Current = "PinkVibe"
+    print("[VL] Sky: Pink Vibe activated")
+end
+
+local function _SkyAtmosh()
+    _SkyCleanup()
+    local Lighting = game:GetService("Lighting")
+
+    local oldSky = Lighting:FindFirstChildOfClass("Sky")
+    if oldSky then pcall(function() oldSky:Destroy() end) end
+    for _, obj in ipairs(Lighting:GetChildren()) do
+        if obj:IsA("ColorCorrectionEffect") or obj:IsA("Atmosphere") or obj:IsA("BloomEffect") then
+            pcall(function() obj:Destroy() end)
+        end
+    end
+
+    local PINK_ID = "rbxassetid://1001627653"
+
+    local sky = Instance.new("Sky")
+    sky.Name = "META_AtmoshSky"
+    sky.SkyboxBk = PINK_ID
+    sky.SkyboxDn = PINK_ID
+    sky.SkyboxFt = PINK_ID
+    sky.SkyboxLf = PINK_ID
+    sky.SkyboxRt = PINK_ID
+    sky.SkyboxUp = PINK_ID
+    sky.CelestialBodiesShown = true
+    sky.StarCount = 3000
+    sky.Parent = Lighting
+
+    local atm = Instance.new("Atmosphere")
+    atm.Name = "META_AtmoshAtmosphere"
+    atm.Density = 0.35
+    atm.Offset = 0.1
+    atm.Color = Color3.fromRGB(255, 200, 230)
+    atm.Decay = Color3.fromRGB(180, 120, 170)
+    atm.Glare = 0.4
+    atm.Haze = 2.5
+    atm.Parent = Lighting
+
+    Lighting.ClockTime = 17.5
+    Lighting.Brightness = 2.2
+    Lighting.Ambient = Color3.fromRGB(90, 60, 100)
+    Lighting.OutdoorAmbient = Color3.fromRGB(200, 140, 180)
+    Lighting.EnvironmentDiffuseScale = 1
+    Lighting.EnvironmentSpecularScale = 1
+    Lighting.FogEnd = 1000
+    Lighting.FogStart = 150
+    Lighting.FogColor = Color3.fromRGB(255, 200, 230)
+
+    local REFLECT = 0.2
+    for _, part in ipairs(workspace:GetDescendants()) do
+        if part:IsA("BasePart") and part.Name ~= "Terrain" then
+            pcall(function() part.Reflectance = REFLECT end)
+        end
+    end
+
+    workspace.DescendantAdded:Connect(function(obj)
+        if obj:IsA("BasePart") then
+            task.wait(0.1)
+            pcall(function() obj.Reflectance = REFLECT end)
+        end
+    end)
+
+    task.spawn(function()
+        local angle = 0
+        while sky.Parent do
+            angle = (angle + 0.03) % 360
+            pcall(function()
+                sky.SkyboxOrientation = Vector3.new(5, angle, 0)
+            end)
+            task.wait(0.05)
+        end
+    end)
+
+    Sky.Current = "Atmosh"
+    print("[VL] Sky: Atmosh Sky activated")
+end
+
+local function _SkyTwilight()
+    _SkyCleanup()
+    local Lighting = game:GetService("Lighting")
+
+    for _, obj in ipairs(Lighting:GetChildren()) do
+        if obj:IsA("Sky") or obj:IsA("Atmosphere") or obj:IsA("Clouds") or obj:IsA("BloomEffect") or obj:IsA("SunRaysEffect") or obj:IsA("ColorCorrectionEffect") then
+            pcall(function() obj:Destroy() end)
+        end
+    end
+
+    local sky = Instance.new("Sky")
+    sky.Name = "META_TwilightSky"
+    sky.SkyboxBk = "rbxassetid://159454299"
+    sky.SkyboxDn = "rbxassetid://159454296"
+    sky.SkyboxFt = "rbxassetid://159454293"
+    sky.SkyboxLf = "rbxassetid://159454286"
+    sky.SkyboxRt = "rbxassetid://159454300"
+    sky.SkyboxUp = "rbxassetid://159454288"
+    sky.CelestialBodiesShown = true
+    sky.StarCount = 5000
+    sky.SunAngularSize = 12
+    sky.MoonAngularSize = 6
+    sky.Parent = Lighting
+
+    local clouds = Instance.new("Clouds")
+    clouds.Name = "META_TwilightClouds"
+    clouds.Cover = 0.5
+    clouds.Density = 0.7
+    clouds.Color = Color3.fromRGB(255, 220, 235)
+    clouds.Parent = Lighting
+
+    local atm = Instance.new("Atmosphere")
+    atm.Name = "META_TwilightAtmosphere"
+    atm.Density = 0.38
+    atm.Offset = 0.12
+    atm.Color = Color3.fromRGB(255, 210, 230)
+    atm.Decay = Color3.fromRGB(140, 90, 160)
+    atm.Glare = 0.5
+    atm.Haze = 2
+    atm.Parent = Lighting
+
+    Lighting.ClockTime = 17.8
+    Lighting.Brightness = 2.5
+    Lighting.Ambient = Color3.fromRGB(80, 70, 100)
+    Lighting.OutdoorAmbient = Color3.fromRGB(200, 150, 180)
+    Lighting.EnvironmentDiffuseScale = 1
+    Lighting.EnvironmentSpecularScale = 1
+    Lighting.ExposureCompensation = 0.1
+    Lighting.GlobalShadows = true
+    Lighting.ShadowSoftness = 0.4
+
+    pcall(function()
+        Lighting.LightingStyle = Enum.LightingStyle.Realistic
+    end)
+
+    local bloom = Instance.new("BloomEffect")
+    bloom.Name = "META_TwilightBloom"
+    bloom.Intensity = 0.7
+    bloom.Size = 28
+    bloom.Threshold = 0.3
+    bloom.Parent = Lighting
+
+    local rays = Instance.new("SunRaysEffect")
+    rays.Name = "META_TwilightRays"
+    rays.Intensity = 0.3
+    rays.Spread = 1.3
+    rays.Parent = Lighting
+
+    local cc = Instance.new("ColorCorrectionEffect")
+    cc.Name = "META_TwilightFilter"
+    cc.Brightness = 0.05
+    cc.Contrast = 0.15
+    cc.Saturation = 0.2
+    cc.TintColor = Color3.fromRGB(255, 210, 230)
+    cc.Parent = Lighting
+
+    local REFLECT = 0.18
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and obj.Name ~= "Terrain" then
+            pcall(function() obj.Reflectance = REFLECT end)
+        end
+    end
+
+    workspace.DescendantAdded:Connect(function(obj)
+        if obj:IsA("BasePart") then
+            task.wait(0.1)
+            pcall(function() obj.Reflectance = REFLECT end)
+        end
+    end)
+
+    task.spawn(function()
+        local t = 0
+        while sky.Parent do
+            t = t + 0.03
+            local wave = (math.sin(t * 0.4) + 1) / 2
+            pcall(function()
+                cc.TintColor = Color3.fromRGB(245 + wave * 10, 200 + wave * 20, 225 + wave * 10)
+                clouds.Color = Color3.fromRGB(240 + wave * 15, 210 + wave * 20, 230 + wave * 15)
+                atm.Color = Color3.fromRGB(245 + wave * 10, 200 + wave * 20, 225 + wave * 10)
+            end)
+            task.wait(0.05)
+        end
+    end)
+
+    Sky.Current = "Twilight"
+    print("[VL] Sky: Twilight Bloom activated")
+end
+
+Sky.Presets = {
+    { name = "Pink Vibe", func = _SkyPinkVibe },
+    { name = "Atmosh Sky", func = _SkyAtmosh },
+    { name = "Twilight Bloom", func = _SkyTwilight },
+}
+
 -- COMBAT PAGE
--- ====================================================================
 local combatPage = TabPages["Combat"]
 combatPage.CanvasSize = UDim2.new(0, 0, 0, 500)
 
@@ -2682,7 +2928,7 @@ CreateToggle(combatPage, "Hitbox Expander", "Expands impact area + shows sphere 
                 task.wait(0.03)
             end
         end)
-        print("[VL] Hitbox ENABLED | x" .. MegaHitbox.SizeMultiplier .. " | " .. MegaHitbox.ExpandedCount .. " templates")
+        print("[VL] Hitbox ENABLED | x" .. MegaHitbox.SizeMultiplier)
     else
         RestoreAllHitboxes()
         _DestroyHitboxVisual()
@@ -2695,24 +2941,20 @@ CreateSlider(combatPage, "Hitbox Size", "Impact area multiplier (x1 - x20)", 95,
     MegaHitbox.SizeMultiplier = v / 10
     if MegaHitbox.Enabled then
         MegaHitbox.ExpandedCount = ExpandAllHitboxTemplates()
-        print("[VL] Hitbox size x" .. MegaHitbox.SizeMultiplier)
     end
 end)
 
 CreateToggle(combatPage, "Range Guard", "Blocks hit when ball is outside guard radius", 160, RangeGuard.Enabled, function(v)
     RangeGuard.Enabled = v
-    print("[VL] Range Guard: " .. (v and "ON" or "OFF"))
 end)
 
 CreateSlider(combatPage, "Guard Radius", "Distance limit in studs", 215, 3, 30, 8, " studs", function(v)
     RangeGuard.Radius = v
 end)
 
--- ====================================================================
 -- VISUALS PAGE
--- ====================================================================
 local visualsPage = TabPages["Visuals"]
-visualsPage.CanvasSize = UDim2.new(0, 0, 0, 500)
+visualsPage.CanvasSize = UDim2.new(0, 0, 0, 600)
 
 CreateSection(visualsPage, "// BALL VISUALS", 10, Color3.fromRGB(120, 220, 255))
 
@@ -2738,7 +2980,6 @@ CreateSection(visualsPage, "// PLAYER TRACERS", 155, Color3.fromRGB(255, 100, 18
 
 CreateToggle(visualsPage, "Player Tracers", "3D beam from each player head showing look direction", 185, Tracers.Enabled, function(v)
     Tracers.Enabled = v
-    print("[VL] Player Tracers: " .. (v and "ON" or "OFF"))
 end)
 
 CreateToggle(visualsPage, "Enemies Only", "Show tracers only for enemy team", 235, Tracers.OnlyEnemies, function(v)
@@ -2749,11 +2990,259 @@ CreateSlider(visualsPage, "Tracer Length", "Beam length in studs", 285, 5, 80, 2
     Tracers.Length = v
 end)
 
--- ====================================================================
+CreateSection(visualsPage, "// CAMERA", 350, Color3.fromRGB(120, 220, 255))
+
+CreateSlider(visualsPage, "Field of View", "Camera zoom out angle (70 - 200)", 380, 70, 200, Config.FOV, "deg", function(v)
+    Config.FOV = v
+    if workspace.CurrentCamera then
+        workspace.CurrentCamera.FieldOfView = v
+    end
+end)
+
+-- SKY PAGE
+local skyPage = TabPages["Sky"]
+skyPage.CanvasSize = UDim2.new(0, 0, 0, 700)
+
+CreateSection(skyPage, "// SKY SELECTOR", 10, Color3.fromRGB(255, 150, 200))
+
+local skyY = 50
+local skyButtons = {}
+
+local function CreateSkyButton(preset, yPos)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 60)
+    frame.Position = UDim2.new(0, 0, 0, yPos)
+    frame.BackgroundColor3 = Color3.fromRGB(30, 22, 50)
+    frame.BackgroundTransparency = 0.3
+    frame.BorderSizePixel = 0
+    frame.Parent = skyPage
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+
+    local stroke = Instance.new("UIStroke", frame)
+    stroke.Thickness = 1
+    stroke.Color = Color3.fromRGB(255, 150, 200)
+    stroke.Transparency = 0.5
+
+    local frameGradient = Instance.new("UIGradient", frame)
+    frameGradient.Rotation = 45
+    frameGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 25, 65)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(70, 30, 80)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 25, 65)),
+    })
+
+    task.spawn(function()
+        while frameGradient.Parent do
+            for i = -1, 1, 0.04 do
+                if not frameGradient.Parent then break end
+                frameGradient.Offset = Vector2.new(i, 0)
+                task.wait(0.05)
+            end
+            for i = 1, -1, -0.04 do
+                if not frameGradient.Parent then break end
+                frameGradient.Offset = Vector2.new(i, 0)
+                task.wait(0.05)
+            end
+        end
+    end)
+
+    local shineLine = Instance.new("Frame")
+    shineLine.Size = UDim2.new(0, 3, 1, -12)
+    shineLine.Position = UDim2.new(0, 0, 0, 6)
+    shineLine.BackgroundColor3 = Color3.fromRGB(255, 150, 200)
+    shineLine.BorderSizePixel = 0
+    shineLine.Parent = frame
+    Instance.new("UICorner", shineLine).CornerRadius = UDim.new(1, 0)
+
+    local shineGradient = Instance.new("UIGradient", shineLine)
+    shineGradient.Rotation = 90
+    shineGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(180, 80, 255)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 60, 180)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 80, 255)),
+    })
+
+    task.spawn(function()
+        while shineGradient.Parent do
+            for i = -1, 1, 0.05 do
+                if not shineGradient.Parent then break end
+                shineGradient.Offset = Vector2.new(0, i)
+                task.wait(0.04)
+            end
+            for i = 1, -1, -0.05 do
+                if not shineGradient.Parent then break end
+                shineGradient.Offset = Vector2.new(0, i)
+                task.wait(0.04)
+            end
+        end
+    end)
+
+    local iconBox = Instance.new("Frame")
+    iconBox.Size = UDim2.new(0, 36, 0, 36)
+    iconBox.Position = UDim2.new(0, 14, 0.5, -18)
+    iconBox.BackgroundColor3 = Color3.fromRGB(40, 25, 60)
+    iconBox.BackgroundTransparency = 0.2
+    iconBox.BorderSizePixel = 0
+    iconBox.Parent = frame
+    Instance.new("UICorner", iconBox).CornerRadius = UDim.new(1, 0)
+
+    local iconStroke = Instance.new("UIStroke", iconBox)
+    iconStroke.Thickness = 1.5
+    iconStroke.Color = Color3.fromRGB(255, 150, 200)
+    iconStroke.Transparency = 0.3
+
+    local iconDot = Instance.new("Frame")
+    iconDot.Size = UDim2.new(0, 14, 0, 14)
+    iconDot.Position = UDim2.new(0.5, -7, 0.5, -7)
+    iconDot.BackgroundColor3 = Color3.fromRGB(255, 150, 200)
+    iconDot.BorderSizePixel = 0
+    iconDot.Parent = iconBox
+    Instance.new("UICorner", iconDot).CornerRadius = UDim.new(1, 0)
+
+    local iconGlow = Instance.new("UIStroke", iconDot)
+    iconGlow.Thickness = 3
+    iconGlow.Color = Color3.fromRGB(255, 100, 180)
+    iconGlow.Transparency = 0.5
+
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Size = UDim2.new(1, -170, 0, 24)
+    nameLabel.Position = UDim2.new(0, 62, 0, 18)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Text = preset.name
+    nameLabel.TextColor3 = THEME.TEXT_HI
+    nameLabel.TextSize = 15
+    nameLabel.Font = Enum.Font.GothamBold
+    nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+    nameLabel.Parent = frame
+
+    local nameGradient = Instance.new("UIGradient", nameLabel)
+    nameGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 220, 240)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 150, 210)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(220, 150, 255)),
+    })
+
+    task.spawn(function()
+        while nameGradient.Parent do
+            for i = -1, 1, 0.03 do
+                if not nameGradient.Parent then break end
+                nameGradient.Offset = Vector2.new(i, 0)
+                task.wait(0.05)
+            end
+            for i = 1, -1, -0.03 do
+                if not nameGradient.Parent then break end
+                nameGradient.Offset = Vector2.new(i, 0)
+                task.wait(0.05)
+            end
+        end
+    end)
+
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 90, 0, 36)
+    btn.Position = UDim2.new(1, -102, 0.5, -18)
+    btn.BackgroundColor3 = Color3.fromRGB(255, 100, 180)
+    btn.BackgroundTransparency = 0.2
+    btn.Text = "APPLY"
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.TextSize = 13
+    btn.Font = Enum.Font.GothamBold
+    btn.AutoButtonColor = false
+    btn.Parent = frame
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+
+    local btnStroke = Instance.new("UIStroke", btn)
+    btnStroke.Thickness = 1.5
+    btnStroke.Color = Color3.fromRGB(255, 150, 200)
+    btnStroke.Transparency = 0.2
+
+    local btnGradient = Instance.new("UIGradient", btn)
+    btnGradient.Rotation = 45
+    btnGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 60, 180)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 100, 200)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 80, 255)),
+    })
+
+    task.spawn(function()
+        while btnGradient.Parent do
+            for i = -1, 1, 0.05 do
+                if not btnGradient.Parent then break end
+                btnGradient.Offset = Vector2.new(i, 0)
+                task.wait(0.04)
+            end
+            for i = 1, -1, -0.05 do
+                if not btnGradient.Parent then break end
+                btnGradient.Offset = Vector2.new(i, 0)
+                task.wait(0.04)
+            end
+        end
+    end)
+
+    btn.MouseEnter:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundTransparency = 0}):Play()
+    end)
+    btn.MouseLeave:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundTransparency = 0.2}):Play()
+    end)
+    btn.MouseButton1Click:Connect(function()
+        PlayTab()
+        preset.func()
+        for _, b in ipairs(skyButtons) do
+            TweenService:Create(b.stroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(255, 150, 200), Transparency = 0.5}):Play()
+        end
+        TweenService:Create(stroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(80, 255, 130), Transparency = 0.2}):Play()
+    end)
+
+    table.insert(skyButtons, { frame = frame, stroke = stroke, name = preset.name })
+end
+
+for i, preset in ipairs(Sky.Presets) do
+    CreateSkyButton(preset, skyY + (i - 1) * 68)
+end
+
+skyY = skyY + #Sky.Presets * 68 + 25
+
+local disableBtn = Instance.new("TextButton")
+disableBtn.Size = UDim2.new(1, -50, 0, 40)
+disableBtn.Position = UDim2.new(0, 0, 0, skyY)
+disableBtn.BackgroundColor3 = Color3.fromRGB(255, 80, 100)
+disableBtn.BackgroundTransparency = 0.4
+disableBtn.Text = "DISABLE SKY (Reset to default)"
+disableBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+disableBtn.TextSize = 13
+disableBtn.Font = Enum.Font.GothamBold
+disableBtn.AutoButtonColor = false
+disableBtn.Parent = skyPage
+Instance.new("UICorner", disableBtn).CornerRadius = UDim.new(0, 6)
+
+local disableStroke = Instance.new("UIStroke", disableBtn)
+disableStroke.Thickness = 1
+disableStroke.Color = Color3.fromRGB(255, 80, 100)
+disableStroke.Transparency = 0.2
+
+disableBtn.MouseButton1Click:Connect(function()
+    PlayTab()
+    _SkyCleanup()
+    local Lighting = game:GetService("Lighting")
+    for _, obj in ipairs(Lighting:GetChildren()) do
+        if obj:IsA("Sky") or obj:IsA("Atmosphere") or obj:IsA("BloomEffect") or obj:IsA("SunRaysEffect") or obj:IsA("ColorCorrectionEffect") then
+            pcall(function() obj:Destroy() end)
+        end
+    end
+    Lighting.Ambient = Color3.fromRGB(70, 70, 70)
+    Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
+    Lighting.Brightness = 2
+    Lighting.ClockTime = 14
+    Lighting.FogEnd = 100000
+    Lighting.FogStart = 0
+    for _, b in ipairs(skyButtons) do
+        TweenService:Create(b.stroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(255, 150, 200), Transparency = 0.5}):Play()
+    end
+end)
+
 -- SETTINGS PAGE
--- ====================================================================
 local settingsPage = TabPages["Settings"]
-settingsPage.CanvasSize = UDim2.new(0, 0, 0, 1080)
+settingsPage.CanvasSize = UDim2.new(0, 0, 0, 1180)
 
 CreateSection(settingsPage, "// INTERFACE", 10, THEME.ACCENT)
 
@@ -2771,19 +3260,29 @@ CreateToggle(settingsPage, "Scan Line", "Moving light animation", 150, Config.Sc
     if ScanLine then ScanLine.Visible = v end
 end)
 
-CreateToggle(settingsPage, "FPS Counter", "Show FPS in left panel", 205, Config.FpsCounterEnabled, function(v)
+CreateToggle(settingsPage, "Wipe Clothes", "Strips clothes of all players (client only)", 205, ClothesWiper.Enabled, function(v)
+    ClothesWiper.Enabled = v
+    if v then
+        ClothesWiper.Wiped = {}
+        _WiperUpdate()
+    else
+        ClothesWiper.Wiped = {}
+    end
+end)
+
+CreateToggle(settingsPage, "FPS Counter", "Show FPS in left panel", 260, Config.FpsCounterEnabled, function(v)
     Config.FpsCounterEnabled = v
     FpsFrame.Visible = v
 end)
 
-CreateSection(settingsPage, "// LAYOUT", 275, THEME.ACCENT_HOT)
+CreateSection(settingsPage, "// LAYOUT", 330, THEME.ACCENT_HOT)
 
-CreateSlider(settingsPage, "Menu Scale", "Resize the whole menu", 305, 70, 130, 100, "%", function(v)
+CreateSlider(settingsPage, "Menu Scale", "Resize the whole menu", 360, 70, 130, 100, "%", function(v)
     Config.MenuScale = v
     TweenService:Create(MainScale, TweenInfo.new(0.15), {Scale = v / 100}):Play()
 end)
 
-CreateSlider(settingsPage, "Corner Radius", "Round corners", 365, 0, 16, 8, "px", function(v)
+CreateSlider(settingsPage, "Corner Radius", "Round corners", 420, 0, 16, 8, "px", function(v)
     Config.CornerRadius = v
     for _, el in ipairs(CornerElements) do
         local parent = el.Corner.Parent
@@ -2792,15 +3291,13 @@ CreateSlider(settingsPage, "Corner Radius", "Round corners", 365, 0, 16, 8, "px"
     end
 end)
 
--- ====================================================================
 -- COLOR PICKER
--- ====================================================================
-local colorSectionLine = CreateSection(settingsPage, "// COLOR", 445, Color3.fromRGB(120, 220, 255))
+local colorSectionLine = CreateSection(settingsPage, "// COLOR", 500, Color3.fromRGB(120, 220, 255))
 
 local paletteSize = 140
 local paletteFrame = Instance.new("Frame")
 paletteFrame.Size = UDim2.new(0, paletteSize, 0, paletteSize)
-paletteFrame.Position = UDim2.new(0, 0, 0, 475)
+paletteFrame.Position = UDim2.new(0, 0, 0, 530)
 paletteFrame.BackgroundColor3 = Color3.fromRGB(30, 25, 45)
 paletteFrame.Parent = settingsPage
 Instance.new("UICorner", paletteFrame).CornerRadius = UDim.new(1, 0)
@@ -2830,7 +3327,7 @@ Instance.new("UICorner", pickerDot).CornerRadius = UDim.new(1, 0)
 
 local previewBox = Instance.new("Frame")
 previewBox.Size = UDim2.new(0, 60, 0, 60)
-previewBox.Position = UDim2.new(0, paletteSize + 20, 0, 475 + (paletteSize - 60) / 2 - 30)
+previewBox.Position = UDim2.new(0, paletteSize + 20, 0, 530 + (paletteSize - 60) / 2 - 30)
 previewBox.BackgroundColor3 = THEME.ACCENT
 previewBox.Parent = settingsPage
 local previewCorner = Instance.new("UICorner", previewBox)
@@ -2844,7 +3341,7 @@ previewStroke.Transparency = 0.4
 
 local hexLabel = Instance.new("TextLabel")
 hexLabel.Size = UDim2.new(0, 80, 0, 18)
-hexLabel.Position = UDim2.new(0, paletteSize + 20, 0, 475 + (paletteSize - 60) / 2 + 38)
+hexLabel.Position = UDim2.new(0, paletteSize + 20, 0, 530 + (paletteSize - 60) / 2 + 38)
 hexLabel.BackgroundTransparency = 1
 hexLabel.Text = "#B450FF"
 hexLabel.TextColor3 = THEME.TEXT_HI
@@ -2855,7 +3352,7 @@ hexLabel.Parent = settingsPage
 
 local resetColorBtn = Instance.new("TextButton")
 resetColorBtn.Size = UDim2.new(1, -50, 0, 32)
-resetColorBtn.Position = UDim2.new(0, 0, 0, 475 + paletteSize + 15)
+resetColorBtn.Position = UDim2.new(0, 0, 0, 530 + paletteSize + 15)
 resetColorBtn.BackgroundTransparency = 1
 resetColorBtn.Text = "Reset Color"
 resetColorBtn.TextColor3 = Color3.fromRGB(120, 220, 255)
@@ -3167,10 +3664,8 @@ resetColorBtn.MouseButton1Click:Connect(function()
     hexLabel.Text = "#B450FF"
 end)
 
--- ====================================================================
 -- ACTIONS
--- ====================================================================
-CreateSection(settingsPage, "// ACTIONS", 695, Color3.fromRGB(255, 100, 120))
+CreateSection(settingsPage, "// ACTIONS", 750, Color3.fromRGB(255, 100, 120))
 
 local function MakeActionButton(text, yPos, color, onClick)
     local btn = Instance.new("TextButton")
@@ -3205,7 +3700,7 @@ local function MakeActionButton(text, yPos, color, onClick)
     return btn
 end
 
-MakeActionButton("Reset Settings", 730, Color3.fromRGB(255, 180, 100), function()
+MakeActionButton("Reset Settings", 785, Color3.fromRGB(255, 180, 100), function()
     if ToggleRegistry["Flying Dots"] then ToggleRegistry["Flying Dots"](true, true) end
     if ToggleRegistry["Sounds"] then ToggleRegistry["Sounds"](true, true) end
     if ToggleRegistry["Scan Line"] then ToggleRegistry["Scan Line"](true, true) end
@@ -3216,11 +3711,13 @@ MakeActionButton("Reset Settings", 730, Color3.fromRGB(255, 180, 100), function(
     if ToggleRegistry["Player Tracers"] then ToggleRegistry["Player Tracers"](false, true) end
     if ToggleRegistry["Enemies Only"] then ToggleRegistry["Enemies Only"](false, true) end
     if ToggleRegistry["Range Guard"] then ToggleRegistry["Range Guard"](false, true) end
+    if ToggleRegistry["Wipe Clothes"] then ToggleRegistry["Wipe Clothes"](false, true) end
     if SliderRegistry["Menu Scale"] then SliderRegistry["Menu Scale"](100, true) end
     if SliderRegistry["Corner Radius"] then SliderRegistry["Corner Radius"](8, true) end
     if SliderRegistry["Hitbox Size"] then SliderRegistry["Hitbox Size"](30, true) end
     if SliderRegistry["Guard Radius"] then SliderRegistry["Guard Radius"](8, true) end
     if SliderRegistry["Tracer Length"] then SliderRegistry["Tracer Length"](25, true) end
+    if SliderRegistry["Field of View"] then SliderRegistry["Field of View"](70, true) end
     Config.FlyingDotsEnabled = true
     Config.SoundEnabled = true
     Config.ScanLineEnabled = true
@@ -3231,6 +3728,10 @@ MakeActionButton("Reset Settings", 730, Color3.fromRGB(255, 180, 100), function(
     Config.HitboxSize = 30
     Config.BallESPEnabled = false
     Config.BallPredictorEnabled = false
+    Config.FOV = 70
+    if workspace.CurrentCamera then
+        workspace.CurrentCamera.FieldOfView = 70
+    end
     MegaHitbox.Enabled = false
     MegaHitbox.SizeMultiplier = 3
     RangeGuard.Enabled = false
@@ -3238,6 +3739,8 @@ MakeActionButton("Reset Settings", 730, Color3.fromRGB(255, 180, 100), function(
     Tracers.Enabled = false
     Tracers.Length = 25
     Tracers.OnlyEnemies = false
+    ClothesWiper.Enabled = false
+    ClothesWiper.Wiped = {}
     RestoreAllHitboxes()
     _DestroyHitboxVisual()
     _DestroyBallESP()
@@ -3254,7 +3757,7 @@ MakeActionButton("Reset Settings", 730, Color3.fromRGB(255, 180, 100), function(
     hexLabel.Text = "#B450FF"
 end)
 
-MakeActionButton("Unload Script", 775, Color3.fromRGB(255, 80, 100), function()
+MakeActionButton("Unload Script", 830, Color3.fromRGB(255, 80, 100), function()
     _DestroyBallESP()
     _DestroyHitboxVisual()
     if Pred.ring then Pred.ring:Destroy() end
@@ -3262,6 +3765,9 @@ MakeActionButton("Unload Script", 775, Color3.fromRGB(255, 80, 100), function()
         _TracerDestroy(player)
     end
     if Tracers.Folder then pcall(function() Tracers.Folder:Destroy() end) end
+    _SkyCleanup()
+    ClothesWiper.Enabled = false
+    ClothesWiper.Wiped = {}
     RestoreAllHitboxes()
     pcall(function() ScreenGui:Destroy() end)
     pcall(function() LoadGui:Destroy() end)
@@ -3269,16 +3775,100 @@ MakeActionButton("Unload Script", 775, Color3.fromRGB(255, 80, 100), function()
     pcall(function() Sound:Destroy() end)
 end)
 
-MakeActionButton("Rejoin Server", 820, THEME.ACCENT_HOT, function()
+MakeActionButton("Rejoin Server", 875, THEME.ACCENT_HOT, function()
     local TeleportService = game:GetService("TeleportService")
     pcall(function()
         TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
     end)
 end)
 
--- ====================================================================
+-- MAIN UPDATE LOOP
+task.spawn(function()
+    while true do
+        if not ScreenGui.Parent then
+            task.wait(0.2)
+        else
+        if not BallESP.model or not BallESP.model.Parent or not BallESP.model.PrimaryPart then
+            BallESP.model = _FindBall()
+            if BallESP.model and Config.BallESPEnabled then
+                _CreateBallESP(BallESP.model)
+            end
+        end
+        local ball = BallESP.model
+        if ball and ball.PrimaryPart then
+            local ballPos = ball.PrimaryPart.Position
+            if Config.BallESPEnabled then
+                if not BallESP.highlight or not BallESP.highlight.Parent then
+                    _CreateBallESP(ball)
+                else
+                    BallESP.highlight.Adornee = ball.PrimaryPart
+                    BallESP.highlight.FillColor = THEME.ACCENT
+                    BallESP.highlight.OutlineColor = THEME.ACCENT_HOT
+                    if BallESP.particles and BallESP.particles.Parent ~= ball.PrimaryPart then
+                        BallESP.particles.Parent = ball.PrimaryPart
+                    end
+                    if BallESP.light and BallESP.light.Parent ~= ball.PrimaryPart then
+                        BallESP.light.Parent = ball.PrimaryPart
+                    end
+                end
+            else
+                if BallESP.highlight then _DestroyBallESP() end
+            end
+            if Config.BallPredictorEnabled then
+                local now = tick()
+                if Pred.lastPos and Pred.lastTime then
+                    local dt = now - Pred.lastTime
+                    if dt > 0.001 then
+                        local rawVel = (ballPos - Pred.lastPos) / dt
+                        if Pred.smoothVel then
+                            Pred.smoothVel = Pred.smoothVel:Lerp(rawVel, 0.12)
+                        else
+                            Pred.smoothVel = rawVel
+                        end
+                    end
+                end
+                Pred.lastPos = ballPos
+                Pred.lastTime = now
+                if Pred.smoothVel and Pred.smoothVel.Magnitude >= 0.5 then
+                    local landing = _PredictLanding(ballPos, Pred.smoothVel)
+                    if Pred.smoothLand then
+                        Pred.smoothLand = Pred.smoothLand:Lerp(landing, 0.15)
+                    else
+                        Pred.smoothLand = landing
+                    end
+                    local fp = Pred.smoothLand
+                    Pred.ring.CFrame = CFrame.new(fp.X, fp.Y + 0.05, fp.Z) * CFrame.Angles(0, 0, math.rad(90))
+                    Pred.ring.Transparency = 0.3
+                    Pred.ring.Color = THEME.ACCENT_HOT
+                else
+                    Pred.ring.Transparency = 1
+                end
+            else
+                Pred.ring.Transparency = 1
+            end
+        else
+            if BallESP.highlight then _DestroyBallESP() end
+            if Pred.ring then Pred.ring.Transparency = 1 end
+        end
+
+        pcall(_UpdateHitboxVisual, 0.03)
+        pcall(_WiperUpdate)
+
+        task.wait(0.03)
+        end
+    end
+end)
+
+task.spawn(function()
+    while ScreenGui.Parent do
+        if MegaHitbox.Enabled then
+            pcall(ExpandAllHitboxTemplates)
+        end
+        task.wait(1)
+    end
+end)
+
 -- DROP-IN
--- ====================================================================
 task.spawn(function()
     task.wait(1.6)
     local dropTween = TweenService:Create(MainFrame,
@@ -3317,4 +3907,4 @@ HeaderBaseLine.BackgroundTransparency = 0.7
 HeaderRunner.BackgroundTransparency = 0
 HeaderPulse.BackgroundTransparency = 0.6
 
-print("[VL] Loaded v1.5: Sphere Hitbox + Range Guard Blocker + Tracers")
+print("[VL] Loaded v1.6: Sky Tab + FOV + Wipe Clothes + Hitbox + Guard")
