@@ -1,6 +1,6 @@
 -- ====================================================================
 -- VOLLEYBALL LEGENDS - AGGRESSIVE SPORT EDITION (PREMIUM LOADING)
--- + COLOR PICKER + FULL ACCENT SYNC + CORNER RADIUS + MAIN BANNER
+-- + COLOR PICKER + FULL ACCENT SYNC + CORNER RADIUS + MAIN REDESIGN
 -- ====================================================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -534,6 +534,13 @@ MainStroke.Color = THEME.ACCENT
 MainStroke.Transparency = 0.3
 MainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
+-- ВНЕШНЯЯ ДУБЛЬ-ОБВОДКА (glow)
+local MainGlow = Instance.new("UIStroke", OuterBorder)
+MainGlow.Thickness = 4
+MainGlow.Color = THEME.ACCENT_GLOW
+MainGlow.Transparency = 0.9
+MainGlow.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
 local PanelHolder = Instance.new("Frame")
 PanelHolder.Size = UDim2.new(1, -4, 1, -4)
 PanelHolder.Position = UDim2.new(0, 2, 0, 2)
@@ -591,6 +598,27 @@ RightGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(1, Color3.fromRGB(8, 6, 14)),
 })
 
+-- DOT MATRIX (декор — сетка точек)
+local dotMatrix = Instance.new("Frame")
+dotMatrix.Size = UDim2.new(1, 0, 1, 0)
+dotMatrix.BackgroundTransparency = 1
+dotMatrix.ClipsDescendants = true
+dotMatrix.ZIndex = 3
+dotMatrix.Parent = RightPanel
+
+for row = 1, 22 do
+    for col = 1, 18 do
+        local d = Instance.new("Frame")
+        d.Size = UDim2.new(0, 1, 0, 1)
+        d.Position = UDim2.new(0, col * 22, 0, row * 22)
+        d.BackgroundColor3 = THEME.ACCENT_DARK
+        d.BackgroundTransparency = 0.8
+        d.BorderSizePixel = 0
+        d.ZIndex = 3
+        d.Parent = dotMatrix
+    end
+end
+
 for i = 1, 12 do
     local stripe = Instance.new("Frame")
     stripe.Size = UDim2.new(1, 0, 0, 1)
@@ -598,7 +626,7 @@ for i = 1, 12 do
     stripe.BackgroundColor3 = THEME.ACCENT
     stripe.BackgroundTransparency = 0.94
     stripe.BorderSizePixel = 0
-    stripe.ZIndex = 2
+    stripe.ZIndex = 4
     stripe.Parent = RightPanel
 end
 
@@ -618,6 +646,36 @@ DividerGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0.5, THEME.ACCENT_HOT),
     ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
 })
+
+-- Бегущий блик по divider
+local DividerRunner = Instance.new("Frame")
+DividerRunner.Size = UDim2.new(1, 0, 0.15, 0)
+DividerRunner.Position = UDim2.new(0, 0, -0.15, 0)
+DividerRunner.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+DividerRunner.BackgroundTransparency = 0.5
+DividerRunner.BorderSizePixel = 0
+DividerRunner.ZIndex = 6
+DividerRunner.Parent = Divider
+
+local DividerRunnerGrad = Instance.new("UIGradient", DividerRunner)
+DividerRunnerGrad.Rotation = 90
+DividerRunnerGrad.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 1),
+    NumberSequenceKeypoint.new(0.5, 0),
+    NumberSequenceKeypoint.new(1, 1),
+})
+
+task.spawn(function()
+    while DividerRunner.Parent do
+        DividerRunner.Position = UDim2.new(0, 0, -0.15, 0)
+        local t = TweenService:Create(DividerRunner, TweenInfo.new(2.2, Enum.EasingStyle.Linear), {
+            Position = UDim2.new(0, 0, 1, 0)
+        })
+        t:Play()
+        t.Completed:Wait()
+        task.wait(1.2)
+    end
+end)
 
 -- ЛОГОТИП
 local LogoFrame = Instance.new("Frame")
@@ -639,8 +697,7 @@ Instance.new("UICorner", LogoBadge).CornerRadius = UDim.new(1, 0)
 
 local LogoBadgeGlow = Instance.new("UIStroke", LogoBadge)
 LogoBadgeGlow.Thickness = 1
-LogoBadgeGlow.Color = THEME.ACCENT_GLOW
-LogoBadgeGlow.Transparency = 0.6
+LogoBadgeGlow.Color = THEME.ACCENT_GLOWLogoBadgeGlow.Transparency = 0.6
 
 local LogoImage = Instance.new("ImageLabel")
 LogoImage.Size = UDim2.new(1, 0, 1, 0)
@@ -753,7 +810,7 @@ PageIndex.ZIndex = 11
 PageIndex.Parent = PageHeader
 
 local PageTitle = Instance.new("TextLabel")
-PageTitle.Size = UDim2.new(1, -100, 0, 22)
+PageTitle.Size = UDim2.new(1, -180, 0, 22)
 PageTitle.Position = UDim2.new(0, 70, 0, 16)
 PageTitle.BackgroundTransparency = 1
 PageTitle.Text = ""
@@ -763,6 +820,44 @@ PageTitle.Font = Enum.Font.Gotham
 PageTitle.TextXAlignment = Enum.TextXAlignment.Left
 PageTitle.ZIndex = 11
 PageTitle.Parent = PageHeader
+
+-- ONLINE индикатор в хедере
+local onlineFrame = Instance.new("Frame")
+onlineFrame.Size = UDim2.new(0, 70, 0, 18)
+onlineFrame.Position = UDim2.new(1, -85, 0, 20)
+onlineFrame.BackgroundTransparency = 1
+onlineFrame.ZIndex = 11
+onlineFrame.Parent = PageHeader
+
+local onlineDot = Instance.new("Frame")
+onlineDot.Size = UDim2.new(0, 6, 0, 6)
+onlineDot.Position = UDim2.new(0, 0, 0.5, -3)
+onlineDot.BackgroundColor3 = Color3.fromRGB(80, 255, 130)
+onlineDot.BorderSizePixel = 0
+onlineDot.ZIndex = 12
+onlineDot.Parent = onlineFrame
+Instance.new("UICorner", onlineDot).CornerRadius = UDim.new(1, 0)
+
+task.spawn(function()
+    while onlineDot.Parent do
+        TweenService:Create(onlineDot, TweenInfo.new(0.9, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {BackgroundTransparency = 0.6, Size = UDim2.new(0, 5, 0, 5)}):Play()
+        task.wait(0.9)
+        TweenService:Create(onlineDot, TweenInfo.new(0.9, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {BackgroundTransparency = 0, Size = UDim2.new(0, 6, 0, 6)}):Play()
+        task.wait(0.9)
+    end
+end)
+
+local onlineLabel = Instance.new("TextLabel")
+onlineLabel.Size = UDim2.new(0, 60, 1, 0)
+onlineLabel.Position = UDim2.new(0, 12, 0, 0)
+onlineLabel.BackgroundTransparency = 1
+onlineLabel.Text = "ONLINE"
+onlineLabel.TextColor3 = Color3.fromRGB(80, 255, 130)
+onlineLabel.TextSize = 10
+onlineLabel.Font = Enum.Font.Code
+onlineLabel.TextXAlignment = Enum.TextXAlignment.Left
+onlineLabel.ZIndex = 12
+onlineLabel.Parent = onlineFrame
 
 local HeaderBaseLine = Instance.new("Frame")
 HeaderBaseLine.Size = UDim2.new(1, 0, 0, 2)
@@ -824,6 +919,57 @@ task.spawn(function()
 end)
 
 -- ====================================================================
+-- CORNER BRACKETS (по углам MainFrame)
+-- ====================================================================
+local function CreateBracket(pos, size, anchor, flipX, flipY)
+    local bracket = Instance.new("Frame")
+    bracket.Size = size
+    bracket.Position = pos
+    bracket.AnchorPoint = anchor
+    bracket.BackgroundTransparency = 1
+    bracket.ZIndex = 240
+    bracket.Parent = MainFrame
+
+    local hLine = Instance.new("Frame")
+    hLine.Size = UDim2.new(1, 0, 0, 2)
+    hLine.BackgroundColor3 = THEME.ACCENT_HOT
+    hLine.BorderSizePixel = 0
+    hLine.ZIndex = 241
+    hLine.Parent = bracket
+    if flipY then hLine.Position = UDim2.new(0, 0, 1, -2) end
+
+    local vLine = Instance.new("Frame")
+    vLine.Size = UDim2.new(0, 2, 1, 0)
+    vLine.BackgroundColor3 = THEME.ACCENT_HOT
+    vLine.BorderSizePixel = 0
+    vLine.ZIndex = 241
+    vLine.Parent = bracket
+    if flipX then vLine.Position = UDim2.new(1, -2, 0, 0) end
+
+    local hGrad = Instance.new("UIGradient", hLine)
+    hGrad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, THEME.ACCENT_HOT),
+        ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
+    })
+    if flipX then hGrad.Rotation = 180 end
+
+    local vGrad = Instance.new("UIGradient", vLine)
+    vGrad.Rotation = 90
+    vGrad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, THEME.ACCENT_HOT),
+        ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
+    })
+    if flipY then vGrad.Rotation = 270 end
+
+    return bracket, hLine, vLine
+end
+
+local br_TL, br_TL_h, br_TL_v = CreateBracket(UDim2.new(0, -6, 0, -6), UDim2.new(0, 22, 0, 22), Vector2.new(0, 0), false, false)
+local br_TR, br_TR_h, br_TR_v = CreateBracket(UDim2.new(1, 6, 0, -6), UDim2.new(0, 22, 0, 22), Vector2.new(1, 0), true, false)
+local br_BL, br_BL_h, br_BL_v = CreateBracket(UDim2.new(0, -6, 1, 6), UDim2.new(0, 22, 0, 22), Vector2.new(0, 1), false, true)
+local br_BR, br_BR_h, br_BR_v = CreateBracket(UDim2.new(1, 6, 1, 6), UDim2.new(0, 22, 0, 22), Vector2.new(1, 1), true, true)
+
+-- ====================================================================
 -- ВКЛАДКИ
 -- ====================================================================
 local TabNames = {"Main", "Visuals", "Combat", "Settings"}
@@ -838,8 +984,8 @@ local TabSpacing = 48
 local function CreatePage(name)
     local page = Instance.new("ScrollingFrame")
     page.Name = name .. "Page"
-    page.Size = UDim2.new(1, -30, 1, -80)
-    page.Position = UDim2.new(0, 15, 0, 65)
+    page.Size = UDim2.new(1, -40, 1, -80)
+    page.Position = UDim2.new(0, 20, 0, 65)
     page.BackgroundTransparency = 1
     page.BorderSizePixel = 0
     page.ScrollBarThickness = 3
@@ -1043,12 +1189,12 @@ end
 -- MAIN PAGE CONTENT
 -- ====================================================================
 local mainPage = TabPages["Main"]
-mainPage.CanvasSize = UDim2.new(0, 0, 0, 380)
+mainPage.CanvasSize = UDim2.new(0, 0, 0, 360)
 
--- БАННЕР (72% ширины, центрирован, 90px высотой)
+-- БАННЕР
 local bannerFrame = Instance.new("Frame")
-bannerFrame.Size = UDim2.new(0.72, 0, 0, 90)
-bannerFrame.Position = UDim2.new(0.5, 0, 0, 5)
+bannerFrame.Size = UDim2.new(0.72, 0, 0, 85)
+bannerFrame.Position = UDim2.new(0.5, 0, 0, 3)
 bannerFrame.AnchorPoint = Vector2.new(0.5, 0)
 bannerFrame.BackgroundColor3 = THEME.BG_DARK
 bannerFrame.BorderSizePixel = 0
@@ -1064,6 +1210,11 @@ bannerStroke.Thickness = 1.5
 bannerStroke.Color = THEME.ACCENT
 bannerStroke.Transparency = 0.3
 
+local bannerGlow = Instance.new("UIStroke", bannerFrame)
+bannerGlow.Thickness = 3
+bannerGlow.Color = THEME.ACCENT_GLOW
+bannerGlow.Transparency = 0.92
+
 local bannerImage = Instance.new("ImageLabel")
 bannerImage.Size = UDim2.new(1, 0, 1, 0)
 bannerImage.BackgroundTransparency = 1
@@ -1075,24 +1226,61 @@ local bannerImgCorner = Instance.new("UICorner", bannerImage)
 bannerImgCorner.CornerRadius = UDim.new(0, Config.CornerRadius)
 RegisterCorner(bannerImgCorner, Config.CornerRadius)
 
+-- декор — тонкая полоска под баннером
+local bannerUnderline = Instance.new("Frame")
+bannerUnderline.Size = UDim2.new(0.72, 0, 0, 1)
+bannerUnderline.Position = UDim2.new(0.5, 0, 0, 91)
+bannerUnderline.AnchorPoint = Vector2.new(0.5, 0)
+bannerUnderline.BackgroundColor3 = THEME.ACCENT_HOT
+bannerUnderline.BorderSizePixel = 0
+bannerUnderline.ZIndex = 6
+bannerUnderline.Parent = mainPage
+
+local bannerUnderlineGrad = Instance.new("UIGradient", bannerUnderline)
+bannerUnderlineGrad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, THEME.ACCENT_DARK),
+    ColorSequenceKeypoint.new(0.5, THEME.ACCENT_HOT),
+    ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
+})
+bannerUnderlineGrad.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 1),
+    NumberSequenceKeypoint.new(0.5, 0),
+    NumberSequenceKeypoint.new(1, 1),
+})
+
+task.spawn(function()
+    while bannerUnderlineGrad.Parent do
+        for i = -1, 1, 0.03 do
+            bannerUnderlineGrad.Offset = Vector2.new(i, 0)
+            task.wait(0.04)
+        end
+        for i = 1, -1, -0.03 do
+            bannerUnderlineGrad.Offset = Vector2.new(i, 0)
+            task.wait(0.04)
+        end
+    end
+end)
+
 task.spawn(function()
     while bannerStroke.Parent do
         TweenService:Create(bannerStroke, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.05}):Play()
+        TweenService:Create(bannerGlow, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.75}):Play()
         task.wait(1.2)
         TweenService:Create(bannerStroke, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.5}):Play()
+        TweenService:Create(bannerGlow, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.95}):Play()
         task.wait(1.2)
     end
 end)
 
--- ПРИВЕТСТВИЕ ПОД БАННЕРОМ
+-- ПРИВЕТСТВИЕ
 local greetFrame = Instance.new("Frame")
-greetFrame.Size = UDim2.new(1, 0, 0, 62)
-greetFrame.Position = UDim2.new(0, 0, 0, 105)
+greetFrame.Size = UDim2.new(1, 0, 0, 58)
+greetFrame.Position = UDim2.new(0, 0, 0, 100)
 greetFrame.BackgroundTransparency = 1
 greetFrame.Parent = mainPage
 
 local greetTitle = Instance.new("TextLabel")
-greetTitle.Size = UDim2.new(1, 0, 0, 18)
+greetTitle.Size = UDim2.new(1, 0, 0, 16)
 greetTitle.BackgroundTransparency = 1
 greetTitle.Text = "// HEY, I'M A BEGINNER CODER"
 greetTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -1109,8 +1297,8 @@ greetTitleGradient.Color = ColorSequence.new({
 })
 
 local greetBody = Instance.new("TextLabel")
-greetBody.Size = UDim2.new(1, 0, 0, 42)
-greetBody.Position = UDim2.new(0, 0, 0, 20)
+greetBody.Size = UDim2.new(1, 0, 0, 40)
+greetBody.Position = UDim2.new(0, 0, 0, 18)
 greetBody.BackgroundTransparency = 1
 greetBody.Text = "still learning every day - building my own dream piece by piece.\ncode is the canvas, and the game is the art."
 greetBody.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -1157,10 +1345,34 @@ task.spawn(function()
     end
 end)
 
+-- Разделительная линия
+local splitLine = Instance.new("Frame")
+splitLine.Size = UDim2.new(1, 0, 0, 1)
+splitLine.Position = UDim2.new(0, 0, 0, 162)
+splitLine.BackgroundColor3 = THEME.ACCENT
+splitLine.BorderSizePixel = 0
+splitLine.BackgroundTransparency = 0.7
+splitLine.ZIndex = 6
+splitLine.Parent = mainPage
+
+local splitGrad = Instance.new("UIGradient", splitLine)
+splitGrad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, THEME.ACCENT_DARK),
+    ColorSequenceKeypoint.new(0.5, THEME.ACCENT_HOT),
+    ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
+})
+splitGrad.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 1),
+    NumberSequenceKeypoint.new(0.5, 0),
+    NumberSequenceKeypoint.new(1, 1),
+})
+
+-- ====================================================================
 -- LIVE STATUS
+-- ====================================================================
 local statusSection = Instance.new("Frame")
-statusSection.Size = UDim2.new(1, 0, 0, 20)
-statusSection.Position = UDim2.new(0, 0, 0, 178)
+statusSection.Size = UDim2.new(1, 0, 0, 18)
+statusSection.Position = UDim2.new(0, 0, 0, 172)
 statusSection.BackgroundTransparency = 1
 statusSection.Parent = mainPage
 
@@ -1183,15 +1395,26 @@ statusSectionLabel.Font = Enum.Font.Code
 statusSectionLabel.TextXAlignment = Enum.TextXAlignment.Left
 statusSectionLabel.Parent = statusSection
 
+local statusRightTag = Instance.new("TextLabel")
+statusRightTag.Size = UDim2.new(0, 60, 1, 0)
+statusRightTag.Position = UDim2.new(1, -60, 0, 0)
+statusRightTag.BackgroundTransparency = 1
+statusRightTag.Text = "[ LIVE ]"
+statusRightTag.TextColor3 = Color3.fromRGB(80, 255, 130)
+statusRightTag.TextSize = 9
+statusRightTag.Font = Enum.Font.Code
+statusRightTag.TextXAlignment = Enum.TextXAlignment.Right
+statusRightTag.Parent = statusSection
+
 local gridFrame = Instance.new("Frame")
-gridFrame.Size = UDim2.new(1, 0, 0, 132)
-gridFrame.Position = UDim2.new(0, 0, 0, 203)
+gridFrame.Size = UDim2.new(1, -10, 0, 116)
+gridFrame.Position = UDim2.new(0, 5, 0, 194)
 gridFrame.BackgroundTransparency = 1
 gridFrame.Parent = mainPage
 
 local gridLayout = Instance.new("UIGridLayout", gridFrame)
-gridLayout.CellSize = UDim2.new(0.5, -3, 0, 60)
-gridLayout.CellPadding = UDim2.new(0, 6, 0, 6)
+gridLayout.CellSize = UDim2.new(0.5, -8, 0, 55)
+gridLayout.CellPadding = UDim2.new(0, 8, 0, 5)
 gridLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
 local statTiles = {}
@@ -1204,7 +1427,7 @@ local statConfigs = {
 
 for _, cfg in ipairs(statConfigs) do
     local tile = Instance.new("Frame")
-    tile.Size = UDim2.new(0.5, -3, 0, 60)
+    tile.Size = UDim2.new(0.5, -8, 0, 55)
     tile.BackgroundColor3 = Color3.fromRGB(14, 11, 22)
     tile.BackgroundTransparency = 0.15
     tile.BorderSizePixel = 0
@@ -1219,9 +1442,14 @@ for _, cfg in ipairs(statConfigs) do
     tileStroke.Color = THEME.ACCENT
     tileStroke.Transparency = 0.5
 
+    local tileInnerGlow = Instance.new("UIStroke", tile)
+    tileInnerGlow.Thickness = 2
+    tileInnerGlow.Color = THEME.ACCENT_GLOW
+    tileInnerGlow.Transparency = 0.94
+
     local tileTopBar = Instance.new("Frame")
-    tileTopBar.Size = UDim2.new(1, -14, 0, 2)
-    tileTopBar.Position = UDim2.new(0, 7, 0, 7)
+    tileTopBar.Size = UDim2.new(1, -20, 0, 2)
+    tileTopBar.Position = UDim2.new(0, 10, 0, 6)
     tileTopBar.BackgroundColor3 = THEME.ACCENT_HOT
     tileTopBar.BorderSizePixel = 0
     tileTopBar.Parent = tile
@@ -1235,9 +1463,17 @@ for _, cfg in ipairs(statConfigs) do
         ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
     })
 
+    local tileDot = Instance.new("Frame")
+    tileDot.Size = UDim2.new(0, 4, 0, 4)
+    tileDot.Position = UDim2.new(1, -14, 0, 11)
+    tileDot.BackgroundColor3 = THEME.ACCENT_HOT
+    tileDot.BorderSizePixel = 0
+    tileDot.Parent = tile
+    Instance.new("UICorner", tileDot).CornerRadius = UDim.new(1, 0)
+
     local tileLabel = Instance.new("TextLabel")
-    tileLabel.Size = UDim2.new(1, -14, 0, 12)
-    tileLabel.Position = UDim2.new(0, 7, 0, 13)
+    tileLabel.Size = UDim2.new(1, -20, 0, 12)
+    tileLabel.Position = UDim2.new(0, 10, 0, 11)
     tileLabel.BackgroundTransparency = 1
     tileLabel.Text = cfg.label
     tileLabel.TextColor3 = THEME.TEXT_LOW
@@ -1247,12 +1483,12 @@ for _, cfg in ipairs(statConfigs) do
     tileLabel.Parent = tile
 
     local tileValue = Instance.new("TextLabel")
-    tileValue.Size = UDim2.new(1, -14, 0, 26)
-    tileValue.Position = UDim2.new(0, 7, 0, 26)
+    tileValue.Size = UDim2.new(1, -20, 0, 24)
+    tileValue.Position = UDim2.new(0, 10, 0, 23)
     tileValue.BackgroundTransparency = 1
     tileValue.Text = "--"
     tileValue.TextColor3 = THEME.ACCENT_HOT
-    tileValue.TextSize = 18
+    tileValue.TextSize = 16
     tileValue.Font = Enum.Font.GothamBold
     tileValue.TextXAlignment = Enum.TextXAlignment.Left
     tileValue.Parent = tile
@@ -1263,6 +1499,16 @@ for _, cfg in ipairs(statConfigs) do
         ColorSequenceKeypoint.new(0.5, THEME.ACCENT_GLOW),
         ColorSequenceKeypoint.new(1, THEME.ACCENT_HOT),
     })
+
+    local tileBottomBar = Instance.new("Frame")
+    tileBottomBar.Size = UDim2.new(1, -20, 0, 1)
+    tileBottomBar.Position = UDim2.new(0, 10, 1, -5)
+    tileBottomBar.BackgroundColor3 = THEME.ACCENT_DARK
+    tileBottomBar.BorderSizePixel = 0
+    tileBottomBar.BackgroundTransparency = 0.4
+    tileBottomBar.Parent = tile
+    local botBarCorner = Instance.new("UICorner", tileBottomBar)
+    botBarCorner.CornerRadius = UDim.new(1, 0)
 
     task.spawn(function()
         while tileValueGradient.Parent do
@@ -1297,6 +1543,9 @@ for _, cfg in ipairs(statConfigs) do
         TopGradient = tileTopGradient,
         Value = tileValue,
         ValueGradient = tileValueGradient,
+        InnerGlow = tileInnerGlow,
+        Dot = tileDot,
+        BottomBar = tileBottomBar,
     })
 end
 
@@ -2148,6 +2397,7 @@ local function ApplyAccentColor(color)
     THEME.ACCENT_GLOW = newGlow
 
     MainStroke.Color = newAccent
+    MainGlow.Color = newGlow
     LogoBadgeGlow.Color = newGlow
     AvatarStroke.Color = newHot
     AvatarGlow.Color = newGlow
@@ -2163,6 +2413,14 @@ local function ApplyAccentColor(color)
     paletteStroke.Color = newDark
 
     bannerStroke.Color = newAccent
+    bannerGlow.Color = newGlow
+    bannerUnderline.BackgroundColor3 = newHot
+    bannerUnderlineGrad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, newDark),
+        ColorSequenceKeypoint.new(0.5, newHot),
+        ColorSequenceKeypoint.new(1, newDark),
+    })
+
     greetTitleGradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, newGlow),
         ColorSequenceKeypoint.new(0.5, THEME.TEXT_HI),
@@ -2176,6 +2434,15 @@ local function ApplyAccentColor(color)
     })
     statusSectionLine.BackgroundColor3 = newHot
     statusSectionLabel.TextColor3 = newHot
+
+    splitLine.BackgroundColor3 = newAccent
+    splitGrad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, newDark),
+        ColorSequenceKeypoint.new(0.5, newHot),
+        ColorSequenceKeypoint.new(1, newDark),
+    })
+
+    DividerRunner.BackgroundColor3 = newHot
 
     AccentGradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, newHot),
@@ -2247,6 +2514,21 @@ local function ApplyAccentColor(color)
     previewStroke.Color = newHot
     hexLabel.Text = ColorToHex(newAccent)
 
+    -- corner brackets
+    for _, br in ipairs({br_TL_h, br_TR_h, br_BL_h, br_BR_h}) do
+        br.BackgroundColor3 = newHot
+    end
+    for _, br in ipairs({br_TL_v, br_TR_v, br_BL_v, br_BR_v}) do
+        br.BackgroundColor3 = newHot
+    end
+
+    -- dot matrix
+    for _, d in ipairs(dotMatrix:GetChildren()) do
+        if d:IsA("Frame") then
+            d.BackgroundColor3 = newDark
+        end
+    end
+
     for _, el in ipairs(ColorSyncedElements) do
         if el.Kind == "Toggle" then
             local on = el.GetState and el.GetState() or false
@@ -2267,6 +2549,9 @@ local function ApplyAccentColor(color)
             el.HandleGlow.Color = newHot
         elseif el.Kind == "StatTile" then
             el.Stroke.Color = newAccent
+            el.InnerGlow.Color = newGlow
+            el.Dot.BackgroundColor3 = newHot
+            el.BottomBar.BackgroundColor3 = newDark
             el.TopBar.BackgroundColor3 = newHot
             el.TopGradient.Color = ColorSequence.new({
                 ColorSequenceKeypoint.new(0, newDark),
@@ -2514,4 +2799,4 @@ HeaderBaseLine.BackgroundTransparency = 0.7
 HeaderRunner.BackgroundTransparency = 0
 HeaderPulse.BackgroundTransparency = 0.6
 
-print("[VL] PREMIUM LOADING loaded with Banner + Live Status.")
+print("[VL] PREMIUM LOADING loaded with Banner + Live Status + HUD decor.")
