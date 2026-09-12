@@ -155,7 +155,7 @@ pcall(function()
         return oldNamecall(self, ...)
     end)
 end)
-
+print("[VL] Старт v1.6")
 local TabSound = Instance.new("Sound")
 TabSound.SoundId = "rbxassetid://9035348386"
 TabSound.Volume = 1
@@ -3908,3 +3908,4 @@ HeaderRunner.BackgroundTransparency = 0
 HeaderPulse.BackgroundTransparency = 0.6
 
 print("[VL] Loaded v1.6: Sky Tab + FOV + Wipe Clothes + Hitbox + Guard")
+print("[VL] Дошёл до конца — все функции определены")
