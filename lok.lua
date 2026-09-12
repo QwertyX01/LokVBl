@@ -815,7 +815,6 @@ local TabBaseY = 100
 local TabHeight = 42
 local TabSpacing = 48
 
--- Регистрация акцентных элементов для синхронизации цвета
 local ColorSyncedElements = {}
 
 local function CreatePage(name)
@@ -1419,7 +1418,8 @@ local function CreateSection(parent, title, yPos, color)
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.Parent = section
 
-    return lineend
+    return line
+end
 
 local function CreateToggle(parent, name, descText, yPos, default, callback)
     local frame = Instance.new("Frame")
@@ -1502,7 +1502,6 @@ local function CreateToggle(parent, name, descText, yPos, default, callback)
         SetState(not state, true)
     end)
 
-    -- Регистрация для цветовой синхронизации
     table.insert(ColorSyncedElements, {
         Kind = "Toggle",
         ToggleBg = toggleBg,
@@ -1625,7 +1624,6 @@ local function CreateSlider(parent, name, descText, yPos, minVal, maxVal, defaul
         end
     end)
 
-    -- Регистрация для синхронизации
     table.insert(ColorSyncedElements, {
         Kind = "Slider",
         BarFill = barFill,
@@ -1633,42 +1631,6 @@ local function CreateSlider(parent, name, descText, yPos, minVal, maxVal, defaul
         ValueLabel = valueLabel,
         HandleGlow = handleGlow,
     })
-end
-
-local function CreateButton(parent, text, yPos, color, callback)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, -50, 0, 36)
-    btn.Position = UDim2.new(0, 0, 0, yPos)
-    btn.BackgroundColor3 = Color3.fromRGB(20, 15, 30)
-    btn.BackgroundTransparency = 1
-    btn.BorderSizePixel = 0
-    btn.Text = text
-    btn.TextColor3 = color
-    btn.TextSize = 13
-    btn.Font = Enum.Font.Gotham
-    btn.AutoButtonColor = false
-    btn.Parent = parent
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-
-    local btnStroke = Instance.new("UIStroke", btn)
-    btnStroke.Thickness = 1
-    btnStroke.Color = color
-    btnStroke.Transparency = 1
-
-    btn.MouseEnter:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundTransparency = 0.85}):Play()
-        TweenService:Create(btnStroke, TweenInfo.new(0.2), {Transparency = 0.5}):Play()
-    end)
-    btn.MouseLeave:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
-        TweenService:Create(btnStroke, TweenInfo.new(0.2), {Transparency = 1}):Play()
-    end)
-    btn.MouseButton1Click:Connect(function()
-        PlayTab()
-        if callback then callback() end
-    end)
-
-    return btn, btnStroke
 end
 
 CreateSection(settingsPage, "// INTERFACE", 10, THEME.ACCENT)
@@ -1704,7 +1666,6 @@ end)
 -- ====================================================================
 local colorSectionLine = CreateSection(settingsPage, "// COLOR", 385, Color3.fromRGB(120, 220, 255))
 
--- Круглая палитра
 local paletteSize = 140
 local paletteFrame = Instance.new("Frame")
 paletteFrame.Size = UDim2.new(0, paletteSize, 0, paletteSize)
@@ -1728,7 +1689,6 @@ paletteImage.ScaleType = Enum.ScaleType.Stretch
 paletteImage.Parent = paletteFrame
 Instance.new("UICorner", paletteImage).CornerRadius = UDim.new(1, 0)
 
--- Точка-указатель
 local pickerDot = Instance.new("Frame")
 pickerDot.Size = UDim2.new(0, 12, 0, 12)
 pickerDot.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -1744,7 +1704,6 @@ pickerDotStroke.Thickness = 2
 pickerDotStroke.Color = Color3.fromRGB(0, 0, 0)
 pickerDotStroke.Transparency = 0
 
--- Превью цвета
 local previewBox = Instance.new("Frame")
 previewBox.Size = UDim2.new(0, 60, 0, 60)
 previewBox.Position = UDim2.new(0, paletteSize + 20, 0, 415 + (paletteSize - 60) / 2 - 30)
@@ -1769,7 +1728,6 @@ hexLabel.Font = Enum.Font.Code
 hexLabel.TextXAlignment = Enum.TextXAlignment.Left
 hexLabel.Parent = settingsPage
 
--- Кнопка сброса цвета
 local resetColorBtn = Instance.new("TextButton")
 resetColorBtn.Size = UDim2.new(1, -50, 0, 32)
 resetColorBtn.Position = UDim2.new(0, 0, 0, 415 + paletteSize + 15)
@@ -1798,7 +1756,6 @@ resetColorBtn.MouseLeave:Connect(function()
     TweenService:Create(resetStroke, TweenInfo.new(0.2), {Transparency = 1}):Play()
 end)
 
--- Клик-зона палитры (поверх всего, чтобы ловить тачи)
 local dragArea = Instance.new("TextButton")
 dragArea.Size = UDim2.new(1, 0, 1, 0)
 dragArea.Position = UDim2.new(0, 0, 0, 0)
@@ -1832,7 +1789,6 @@ local function ApplyAccentColor(color)
     THEME.ACCENT_DARK = newDark
     THEME.ACCENT_GLOW = newGlow
 
-    -- Прямые ссылки
     MainStroke.Color = newAccent
     LogoBadgeGlow.Color = newGlow
     AvatarStroke.Color = newHot
@@ -1847,7 +1803,6 @@ local function ApplyAccentColor(color)
     PlayerTag.TextColor3 = newHot
     DragCursor.ImageColor3 = newGlow
 
-    -- Градиенты
     AccentGradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, newHot),
         ColorSequenceKeypoint.new(1, newAccent),
@@ -1888,12 +1843,10 @@ local function ApplyAccentColor(color)
         ColorSequenceKeypoint.new(1, newHot),
     })
 
-    -- Искры
     for _, d in ipairs(Config.Dots) do
         if d.Frame then d.Frame.BackgroundColor3 = newHot end
     end
 
-    -- Вкладки
     for tName, tData in pairs(Tabs) do
         tData.Accent.BackgroundColor3 = newHot
         tData.Arrow.TextColor3 = newHot
@@ -1916,12 +1869,10 @@ local function ApplyAccentColor(color)
         end
     end
 
-    -- Превью и hex
     previewBox.BackgroundColor3 = newAccent
     previewStroke.Color = newHot
     hexLabel.Text = ColorToHex(newAccent)
 
-    -- Тумблеры и слайдеры
     for _, el in ipairs(ColorSyncedElements) do
         if el.Kind == "Toggle" then
             local on = el.GetState and el.GetState() or false
@@ -1943,7 +1894,6 @@ local function ApplyAccentColor(color)
         end
     end
 
-    -- Нить секции COLOR
     if colorSectionLine then
         colorSectionLine.BackgroundColor3 = newHot
     end
@@ -1965,7 +1915,6 @@ local function UpdateColorFromPosition(inputPos)
     local boostedSat = math.clamp(math.sqrt(saturation) * 1.3, 0, 1)
     local pickedColor = Color3.fromHSV(hue, boostedSat, 1)
 
-    -- Двигаем точку по кругу, ограничивая радиусом
     local clampedDist = math.min(dist, radius)
     local nx = math.cos(hue * math.pi * 2) * clampedDist
     local ny = math.sin(hue * math.pi * 2) * clampedDist
@@ -2000,7 +1949,6 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- Reset Color
 resetColorBtn.MouseButton1Click:Connect(function()
     PlayTab()
     local defaultColor = Color3.fromRGB(180, 80, 255)
@@ -2010,7 +1958,7 @@ resetColorBtn.MouseButton1Click:Connect(function()
 end)
 
 -- ====================================================================
--- ACTIONS (сдвинуты вниз из-за COLOR секции)
+-- ACTIONS
 -- ====================================================================
 CreateSection(settingsPage, "// ACTIONS", 635, Color3.fromRGB(255, 100, 120))
 
@@ -2052,7 +2000,6 @@ resetBtn.MouseButton1Click:Connect(function()
     TweenService:Create(MainScale, TweenInfo.new(0.2), {Scale = 1}):Play()
     RebuildDots()
     if ScanLine then ScanLine.Visible = true end
-    -- Сброс цвета
     ApplyAccentColor(Color3.fromRGB(180, 80, 255))
     pickerDot.Position = UDim2.new(0.5, 0, 0.5, 0)
 end)
@@ -2124,15 +2071,6 @@ rejoinBtn.MouseButton1Click:Connect(function()
         TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
     end)
 end)
-
--- Регистрация reset-кнопки цвета и кнопок actions для перекраски
-table.insert(ColorSyncedElements, {
-    Kind = "ColorPickerPreview",
-    PreviewBox = previewBox,
-    PreviewStroke = previewStroke,
-    ResetStroke = resetStroke,
-    RejoinStroke = rejoinStroke,
-})
 
 -- ====================================================================
 -- DROP-IN
