@@ -1,6 +1,6 @@
 -- ====================================================================
 -- VOLLEYBALL LEGENDS - AGGRESSIVE SPORT EDITION (PREMIUM LOADING)
--- + COLOR PICKER + FULL ACCENT SYNC
+-- + COLOR PICKER + FULL ACCENT SYNC + CORNER RADIUS
 -- ====================================================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -68,8 +68,22 @@ local Config = {
     ScanLineEnabled = true,
     FpsCounterEnabled = false,
     MenuScale = 100,
+    CornerRadius = 8,
     Dots = {},
 }
+
+-- Реестры для программного управления из Reset Settings
+local CornerElements = {}
+local ColorSyncedElements = {}
+local SliderRegistry = {}   -- name -> SetValue(val)
+local ToggleRegistry = {}   -- name -> SetState(val)
+
+local function RegisterCorner(uiCorner, baseRadius)
+    table.insert(CornerElements, {
+        Corner = uiCorner,
+        BaseRadius = baseRadius or Config.CornerRadius,
+    })
+end
 
 local function fileExists(path)
     local ok, res = pcall(function() return loadfile(path) end)
@@ -508,7 +522,9 @@ OuterBorder.BackgroundColor3 = THEME.BG_DARK
 OuterBorder.BorderSizePixel = 0
 OuterBorder.ZIndex = 1
 OuterBorder.Parent = MainFrame
-Instance.new("UICorner", OuterBorder).CornerRadius = UDim.new(0, 8)
+local OuterBorderCorner = Instance.new("UICorner", OuterBorder)
+OuterBorderCorner.CornerRadius = UDim.new(0, Config.CornerRadius)
+RegisterCorner(OuterBorderCorner, Config.CornerRadius)
 
 local MainStroke = Instance.new("UIStroke", OuterBorder)
 MainStroke.Thickness = 2
@@ -524,7 +540,9 @@ PanelHolder.BorderSizePixel = 0
 PanelHolder.ClipsDescendants = true
 PanelHolder.ZIndex = 2
 PanelHolder.Parent = OuterBorder
-Instance.new("UICorner", PanelHolder).CornerRadius = UDim.new(0, 6)
+local PanelHolderCorner = Instance.new("UICorner", PanelHolder)
+PanelHolderCorner.CornerRadius = UDim.new(0, math.max(0, Config.CornerRadius - 2))
+RegisterCorner(PanelHolderCorner, math.max(0, Config.CornerRadius - 2))
 
 local LeftPanel = Instance.new("Frame")
 LeftPanel.Size = UDim2.new(0.3, 0, 1, 0)
@@ -815,8 +833,6 @@ local TabBaseY = 100
 local TabHeight = 42
 local TabSpacing = 48
 
-local ColorSyncedElements = {}
-
 local function CreatePage(name)
     local page = Instance.new("ScrollingFrame")
     page.Name = name .. "Page"
@@ -848,7 +864,9 @@ for i, name in ipairs(TabNames) do
     tab.ZIndex = 10
     tab.Parent = LeftPanel
 
-    Instance.new("UICorner", tab).CornerRadius = UDim.new(0, 4)
+    local tabCorner = Instance.new("UICorner", tab)
+    tabCorner.CornerRadius = UDim.new(0, 4)
+    RegisterCorner(tabCorner, 4)
 
     local stroke = Instance.new("UIStroke", tab)
     stroke.Thickness = 1
@@ -1390,7 +1408,7 @@ end)
 -- SETTINGS
 -- ====================================================================
 local settingsPage = TabPages["Settings"]
-settingsPage.CanvasSize = UDim2.new(0, 0, 0, 1000)
+settingsPage.CanvasSize = UDim2.new(0, 0, 0, 1080)
 
 local function CreateSection(parent, title, yPos, color)
     local section = Instance.new("Frame")
@@ -1508,6 +1526,8 @@ local function CreateToggle(parent, name, descText, yPos, default, callback)
         ToggleStroke = toggleStroke,
         GetState = function() return state end,
     })
+
+    ToggleRegistry[name] = SetState
 end
 
 local function CreateSlider(parent, name, descText, yPos, minVal, maxVal, default, suffix, callback)
@@ -1594,28 +1614,37 @@ local function CreateSlider(parent, name, descText, yPos, minVal, maxVal, defaul
 
     local isDragging = false
 
-    local function Update(mouseX)
+    local function SetValue(val, animate)
+        local p = (val - minVal) / (maxVal - minVal)
+        if animate then
+            TweenService:Create(barFill, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Size = UDim2.new(p, 0, 1, 0)}):Play()
+            TweenService:Create(handle, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Position = UDim2.new(p, -7, 0.5, -7)}):Play()
+        else
+            barFill.Size = UDim2.new(p, 0, 1, 0)
+            handle.Position = UDim2.new(p, -7, 0.5, -7)
+        end
+        valueLabel.Text = tostring(math.floor(val + 0.5)) .. (suffix or "")
+        if callback then callback(math.floor(val + 0.5)) end
+    end
+
+    local function UpdateFromMouse(mouseX)
         local absPos = barBg.AbsolutePosition.X
         local width = barBg.AbsoluteSize.X
         if width <= 0 then return end
         local percent = math.clamp((mouseX - absPos) / width, 0, 1)
-        local val = math.floor(minVal + percent * (maxVal - minVal) + 0.5)
-        local p = (val - minVal) / (maxVal - minVal)
-        barFill.Size = UDim2.new(p, 0, 1, 0)
-        handle.Position = UDim2.new(p, -7, 0.5, -7)
-        valueLabel.Text = tostring(val) .. (suffix or "")
-        if callback then callback(val) end
+        local val = minVal + percent * (maxVal - minVal)
+        SetValue(val, false)
     end
 
     dragArea.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             isDragging = true
-            Update(input.Position.X)
+            UpdateFromMouse(input.Position.X)
         end
     end)
     UserInputService.InputChanged:Connect(function(input)
         if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            Update(input.Position.X)
+            UpdateFromMouse(input.Position.X)
         end
     end)
     UserInputService.InputEnded:Connect(function(input)
@@ -1631,8 +1660,13 @@ local function CreateSlider(parent, name, descText, yPos, minVal, maxVal, defaul
         ValueLabel = valueLabel,
         HandleGlow = handleGlow,
     })
+
+    SliderRegistry[name] = SetValue
 end
 
+-- ====================================================================
+-- СЕКЦИЯ INTERFACE
+-- ====================================================================
 CreateSection(settingsPage, "// INTERFACE", 10, THEME.ACCENT)
 
 CreateToggle(settingsPage, "Flying Dots", "Floating particles in left panel", 40, Config.FlyingDotsEnabled, function(v)
@@ -1654,6 +1688,9 @@ CreateToggle(settingsPage, "FPS Counter", "Show FPS in left panel", 205, Config.
     FpsFrame.Visible = v
 end)
 
+-- ====================================================================
+-- СЕКЦИЯ LAYOUT
+-- ====================================================================
 CreateSection(settingsPage, "// LAYOUT", 275, THEME.ACCENT_HOT)
 
 CreateSlider(settingsPage, "Menu Scale", "Resize the whole menu proportionally", 305, 70, 130, 100, "%", function(v)
@@ -1661,19 +1698,34 @@ CreateSlider(settingsPage, "Menu Scale", "Resize the whole menu proportionally",
     TweenService:Create(MainScale, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Scale = v / 100}):Play()
 end)
 
+CreateSlider(settingsPage, "Corner Radius", "Round corners of all panels and buttons", 365, 0, 16, 8, "px", function(v)
+    Config.CornerRadius = v
+    for _, el in ipairs(CornerElements) do
+        local base = el.BaseRadius or 8
+        local offset = el.Corner.Parent == OuterBorder and 0
+                    or el.Corner.Parent == PanelHolder and -2
+                    or 0
+        local target = math.max(0, v + offset)
+        TweenService:Create(el.Corner, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            CornerRadius = UDim.new(0, target)
+        }):Play()
+    end
+end)
+
 -- ====================================================================
--- COLOR PICKER SECTION
+-- СЕКЦИЯ COLOR
 -- ====================================================================
-local colorSectionLine = CreateSection(settingsPage, "// COLOR", 385, Color3.fromRGB(120, 220, 255))
+local colorSectionLine = CreateSection(settingsPage, "// COLOR", 445, Color3.fromRGB(120, 220, 255))
 
 local paletteSize = 140
 local paletteFrame = Instance.new("Frame")
 paletteFrame.Size = UDim2.new(0, paletteSize, 0, paletteSize)
-paletteFrame.Position = UDim2.new(0, 0, 0, 415)
+paletteFrame.Position = UDim2.new(0, 0, 0, 475)
 paletteFrame.BackgroundColor3 = Color3.fromRGB(30, 25, 45)
 paletteFrame.BorderSizePixel = 0
 paletteFrame.Parent = settingsPage
-Instance.new("UICorner", paletteFrame).CornerRadius = UDim.new(1, 0)
+local paletteCorner = Instance.new("UICorner", paletteFrame)
+paletteCorner.CornerRadius = UDim.new(1, 0)  -- круглая, не регистрируем
 
 local paletteStroke = Instance.new("UIStroke", paletteFrame)
 paletteStroke.Thickness = 1
@@ -1706,11 +1758,13 @@ pickerDotStroke.Transparency = 0
 
 local previewBox = Instance.new("Frame")
 previewBox.Size = UDim2.new(0, 60, 0, 60)
-previewBox.Position = UDim2.new(0, paletteSize + 20, 0, 415 + (paletteSize - 60) / 2 - 30)
+previewBox.Position = UDim2.new(0, paletteSize + 20, 0, 475 + (paletteSize - 60) / 2 - 30)
 previewBox.BackgroundColor3 = THEME.ACCENT
 previewBox.BorderSizePixel = 0
 previewBox.Parent = settingsPage
-Instance.new("UICorner", previewBox).CornerRadius = UDim.new(0, 6)
+local previewCorner = Instance.new("UICorner", previewBox)
+previewCorner.CornerRadius = UDim.new(0, 6)
+RegisterCorner(previewCorner, 6)
 
 local previewStroke = Instance.new("UIStroke", previewBox)
 previewStroke.Thickness = 1.5
@@ -1719,7 +1773,7 @@ previewStroke.Transparency = 0.4
 
 local hexLabel = Instance.new("TextLabel")
 hexLabel.Size = UDim2.new(0, 80, 0, 18)
-hexLabel.Position = UDim2.new(0, paletteSize + 20, 0, 415 + (paletteSize - 60) / 2 + 38)
+hexLabel.Position = UDim2.new(0, paletteSize + 20, 0, 475 + (paletteSize - 60) / 2 + 38)
 hexLabel.BackgroundTransparency = 1
 hexLabel.Text = "#B450FF"
 hexLabel.TextColor3 = THEME.TEXT_HI
@@ -1730,7 +1784,7 @@ hexLabel.Parent = settingsPage
 
 local resetColorBtn = Instance.new("TextButton")
 resetColorBtn.Size = UDim2.new(1, -50, 0, 32)
-resetColorBtn.Position = UDim2.new(0, 0, 0, 415 + paletteSize + 15)
+resetColorBtn.Position = UDim2.new(0, 0, 0, 475 + paletteSize + 15)
 resetColorBtn.BackgroundColor3 = Color3.fromRGB(20, 15, 30)
 resetColorBtn.BackgroundTransparency = 1
 resetColorBtn.BorderSizePixel = 0
@@ -1740,7 +1794,9 @@ resetColorBtn.TextSize = 13
 resetColorBtn.Font = Enum.Font.Gotham
 resetColorBtn.AutoButtonColor = false
 resetColorBtn.Parent = settingsPage
-Instance.new("UICorner", resetColorBtn).CornerRadius = UDim.new(0, 6)
+local resetColorCorner = Instance.new("UICorner", resetColorBtn)
+resetColorCorner.CornerRadius = UDim.new(0, 6)
+RegisterCorner(resetColorCorner, 6)
 
 local resetStroke = Instance.new("UIStroke", resetColorBtn)
 resetStroke.Thickness = 1
@@ -1802,6 +1858,7 @@ local function ApplyAccentColor(color)
     StatusDot.BackgroundColor3 = newHot
     PlayerTag.TextColor3 = newHot
     DragCursor.ImageColor3 = newGlow
+    paletteStroke.Color = newDark
 
     AccentGradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, newHot),
@@ -1918,10 +1975,7 @@ local function UpdateColorFromPosition(inputPos)
     local clampedDist = math.min(dist, radius)
     local nx = math.cos(hue * math.pi * 2) * clampedDist
     local ny = math.sin(hue * math.pi * 2) * clampedDist
-    pickerDot.Position = UDim2.new(
-        0.5, nx,
-        0.5, ny
-    )
+    pickerDot.Position = UDim2.new(0.5, nx, 0.5, ny)
 
     ApplyAccentColor(pickedColor)
 end
@@ -1951,20 +2005,19 @@ end)
 
 resetColorBtn.MouseButton1Click:Connect(function()
     PlayTab()
-    local defaultColor = Color3.fromRGB(180, 80, 255)
-    ApplyAccentColor(defaultColor)
+    ApplyAccentColor(Color3.fromRGB(180, 80, 255))
     pickerDot.Position = UDim2.new(0.5, 0, 0.5, 0)
     hexLabel.Text = "#B450FF"
 end)
 
 -- ====================================================================
--- ACTIONS
+-- СЕКЦИЯ ACTIONS
 -- ====================================================================
-CreateSection(settingsPage, "// ACTIONS", 635, Color3.fromRGB(255, 100, 120))
+CreateSection(settingsPage, "// ACTIONS", 695, Color3.fromRGB(255, 100, 120))
 
 local resetBtn = Instance.new("TextButton")
 resetBtn.Size = UDim2.new(1, -50, 0, 36)
-resetBtn.Position = UDim2.new(0, 0, 0, 670)
+resetBtn.Position = UDim2.new(0, 0, 0, 730)
 resetBtn.BackgroundColor3 = Color3.fromRGB(20, 15, 30)
 resetBtn.BackgroundTransparency = 1
 resetBtn.BorderSizePixel = 0
@@ -1974,7 +2027,9 @@ resetBtn.TextSize = 13
 resetBtn.Font = Enum.Font.Gotham
 resetBtn.AutoButtonColor = false
 resetBtn.Parent = settingsPage
-Instance.new("UICorner", resetBtn).CornerRadius = UDim.new(0, 6)
+local resetBtnCorner = Instance.new("UICorner", resetBtn)
+resetBtnCorner.CornerRadius = UDim.new(0, 6)
+RegisterCorner(resetBtnCorner, 6)
 
 local resetBtnStroke = Instance.new("UIStroke", resetBtn)
 resetBtnStroke.Thickness = 1
@@ -1991,22 +2046,40 @@ resetBtn.MouseLeave:Connect(function()
 end)
 resetBtn.MouseButton1Click:Connect(function()
     PlayTab()
+
+    -- Настройки
     Config.FlyingDotsEnabled = true
     Config.SoundEnabled = true
     Config.ScanLineEnabled = true
     Config.FpsCounterEnabled = false
     Config.MenuScale = 100
+    Config.CornerRadius = 8
+
+    -- Программный возврат тумблеров
+    if ToggleRegistry["Flying Dots"] then ToggleRegistry["Flying Dots"](true, true) end
+    if ToggleRegistry["Sounds"] then ToggleRegistry["Sounds"](true, true) end
+    if ToggleRegistry["Scan Line"] then ToggleRegistry["Scan Line"](true, true) end
+    if ToggleRegistry["FPS Counter"] then ToggleRegistry["FPS Counter"](false, true) end
+
+    -- Программный возврат слайдеров
+    if SliderRegistry["Menu Scale"] then SliderRegistry["Menu Scale"](100, true) end
+    if SliderRegistry["Corner Radius"] then SliderRegistry["Corner Radius"](8, true) end
+
+    -- UI-состояние
     FpsFrame.Visible = false
     TweenService:Create(MainScale, TweenInfo.new(0.2), {Scale = 1}):Play()
     RebuildDots()
     if ScanLine then ScanLine.Visible = true end
+
+    -- Сброс цвета + пикер-точка в центр
     ApplyAccentColor(Color3.fromRGB(180, 80, 255))
     pickerDot.Position = UDim2.new(0.5, 0, 0.5, 0)
+    hexLabel.Text = "#B450FF"
 end)
 
 local unloadBtn = Instance.new("TextButton")
 unloadBtn.Size = UDim2.new(1, -50, 0, 36)
-unloadBtn.Position = UDim2.new(0, 0, 0, 715)
+unloadBtn.Position = UDim2.new(0, 0, 0, 775)
 unloadBtn.BackgroundColor3 = Color3.fromRGB(20, 15, 30)
 unloadBtn.BackgroundTransparency = 1
 unloadBtn.BorderSizePixel = 0
@@ -2016,7 +2089,9 @@ unloadBtn.TextSize = 13
 unloadBtn.Font = Enum.Font.Gotham
 unloadBtn.AutoButtonColor = false
 unloadBtn.Parent = settingsPage
-Instance.new("UICorner", unloadBtn).CornerRadius = UDim.new(0, 6)
+local unloadCorner = Instance.new("UICorner", unloadBtn)
+unloadCorner.CornerRadius = UDim.new(0, 6)
+RegisterCorner(unloadCorner, 6)
 
 local unloadStroke = Instance.new("UIStroke", unloadBtn)
 unloadStroke.Thickness = 1
@@ -2040,7 +2115,7 @@ end)
 
 local rejoinBtn = Instance.new("TextButton")
 rejoinBtn.Size = UDim2.new(1, -50, 0, 36)
-rejoinBtn.Position = UDim2.new(0, 0, 0, 760)
+rejoinBtn.Position = UDim2.new(0, 0, 0, 820)
 rejoinBtn.BackgroundColor3 = Color3.fromRGB(20, 15, 30)
 rejoinBtn.BackgroundTransparency = 1
 rejoinBtn.BorderSizePixel = 0
@@ -2050,7 +2125,9 @@ rejoinBtn.TextSize = 13
 rejoinBtn.Font = Enum.Font.Gotham
 rejoinBtn.AutoButtonColor = false
 rejoinBtn.Parent = settingsPage
-Instance.new("UICorner", rejoinBtn).CornerRadius = UDim.new(0, 6)
+local rejoinCorner = Instance.new("UICorner", rejoinBtn)
+rejoinCorner.CornerRadius = UDim.new(0, 6)
+RegisterCorner(rejoinCorner, 6)
 
 local rejoinStroke = Instance.new("UIStroke", rejoinBtn)
 rejoinStroke.Thickness = 1
@@ -2113,4 +2190,4 @@ HeaderBaseLine.BackgroundTransparency = 0.7
 HeaderRunner.BackgroundTransparency = 0
 HeaderPulse.BackgroundTransparency = 0.6
 
-print("[VL] PREMIUM LOADING loaded with Color Picker.")
+print("[VL] PREMIUM LOADING loaded with Color Picker + Corner Radius.")
