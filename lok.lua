@@ -1,5 +1,6 @@
 -- ====================================================================
 -- VOLLEYBALL LEGENDS - AGGRESSIVE SPORT EDITION (PREMIUM LOADING)
+-- + COLOR PICKER + FULL ACCENT SYNC
 -- ====================================================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -143,7 +144,6 @@ LoadGui.ResetOnSpawn = false
 LoadGui.IgnoreGuiInset = true
 pcall(function() LoadGui.Parent = safeParent end)
 
--- Затемняющий фон
 local DarkOverlay = Instance.new("Frame")
 DarkOverlay.Size = UDim2.new(1, 0, 1, 0)
 DarkOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
@@ -154,7 +154,6 @@ DarkOverlay.Parent = LoadGui
 
 TweenService:Create(DarkOverlay, TweenInfo.new(0.6), {BackgroundTransparency = 0.4}):Play()
 
--- Центральный контейнер
 local LoadingContainer = Instance.new("Frame")
 LoadingContainer.Size = UDim2.new(0, 700, 0, 280)
 LoadingContainer.Position = UDim2.new(0.5, -350, 0.5, -140)
@@ -162,16 +161,12 @@ LoadingContainer.BackgroundTransparency = 1
 LoadingContainer.ZIndex = 10
 LoadingContainer.Parent = LoadGui
 
--- ====================================================================
--- GLITCH-ТЕКСТ "VOLLEYBALL" (УЛУЧШЕННЫЙ)
--- ====================================================================
 local GlitchContainer = Instance.new("Frame")
 GlitchContainer.Size = UDim2.new(1, 0, 0, 60)
 GlitchContainer.Position = UDim2.new(0, 0, 0, 0)
 GlitchContainer.BackgroundTransparency = 1
 GlitchContainer.Parent = LoadingContainer
 
--- Тень-свечение сзади
 local GlitchGlow = Instance.new("TextLabel")
 GlitchGlow.Size = UDim2.new(1, 0, 1, 0)
 GlitchGlow.BackgroundTransparency = 1
@@ -183,7 +178,6 @@ GlitchGlow.TextTransparency = 0.75
 GlitchGlow.ZIndex = 0
 GlitchGlow.Parent = GlitchContainer
 
--- Красный (RGB split)
 local GlitchRed = Instance.new("TextLabel")
 GlitchRed.Size = UDim2.new(1, 0, 1, 0)
 GlitchRed.BackgroundTransparency = 1
@@ -194,7 +188,6 @@ GlitchRed.Font = Enum.Font.Gotham
 GlitchRed.ZIndex = 1
 GlitchRed.Parent = GlitchContainer
 
--- Циан (RGB split)
 local GlitchCyan = Instance.new("TextLabel")
 GlitchCyan.Size = UDim2.new(1, 0, 1, 0)
 GlitchCyan.BackgroundTransparency = 1
@@ -205,7 +198,6 @@ GlitchCyan.Font = Enum.Font.Gotham
 GlitchCyan.ZIndex = 2
 GlitchCyan.Parent = GlitchContainer
 
--- Основной текст
 local GlitchMain = Instance.new("TextLabel")
 GlitchMain.Size = UDim2.new(1, 0, 1, 0)
 GlitchMain.BackgroundTransparency = 1
@@ -223,7 +215,6 @@ GlitchGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(1, THEME.ACCENT_HOT),
 })
 
--- Перелив основного текста
 task.spawn(function()
     while LoadGui.Parent do
         for i = -1, 1, 0.02 do
@@ -237,7 +228,6 @@ task.spawn(function()
     end
 end)
 
--- Glitch-эффект (редкие рывки)
 task.spawn(function()
     while LoadGui.Parent do
         task.wait(math.random(10, 20) / 10)
@@ -256,9 +246,6 @@ task.spawn(function()
     end
 end)
 
--- ====================================================================
--- ПОДЗАГОЛОВОК "// LOADING INTERFACE"
--- ====================================================================
 local LoadingSubtitle = Instance.new("TextLabel")
 LoadingSubtitle.Size = UDim2.new(1, 0, 0, 20)
 LoadingSubtitle.Position = UDim2.new(0, 0, 0, 60)
@@ -270,9 +257,6 @@ LoadingSubtitle.Font = Enum.Font.Code
 LoadingSubtitle.ZIndex = 5
 LoadingSubtitle.Parent = LoadingContainer
 
--- ====================================================================
--- PREMIUM PROGRESS BAR
--- ====================================================================
 local BarContainer = Instance.new("Frame")
 BarContainer.Size = UDim2.new(0, 600, 0, 40)
 BarContainer.Position = UDim2.new(0.5, -300, 0, 100)
@@ -280,7 +264,6 @@ BarContainer.BackgroundTransparency = 1
 BarContainer.ZIndex = 5
 BarContainer.Parent = LoadingContainer
 
--- Фон полоски (глубокий)
 local BarBg = Instance.new("Frame")
 BarBg.Size = UDim2.new(1, 0, 0, 12)
 BarBg.Position = UDim2.new(0, 0, 0, 14)
@@ -295,7 +278,6 @@ BarBgStroke.Thickness = 1.5
 BarBgStroke.Color = THEME.ACCENT_DARK
 BarBgStroke.Transparency = 0.4
 
--- Внутренняя подсветка (glow внутри полоски)
 local BarInnerGlow = Instance.new("Frame")
 BarInnerGlow.Size = UDim2.new(1, -4, 1, -4)
 BarInnerGlow.Position = UDim2.new(0, 2, 0, 2)
@@ -306,7 +288,6 @@ BarInnerGlow.ZIndex = 7
 BarInnerGlow.Parent = BarBg
 Instance.new("UICorner", BarInnerGlow).CornerRadius = UDim.new(1, 0)
 
--- Прогресс
 local BarFill = Instance.new("Frame")
 BarFill.Size = UDim2.new(0, 0, 1, 0)
 BarFill.BackgroundColor3 = THEME.ACCENT_HOT
@@ -323,7 +304,6 @@ BarFillGradient.Color = ColorSequence.new({
 })
 BarFillGradient.Rotation = 0
 
--- Бегущий блик по заливке
 task.spawn(function()
     while LoadGui.Parent do
         for i = -1, 1, 0.04 do
@@ -337,13 +317,11 @@ task.spawn(function()
     end
 end)
 
--- Свечение за заливкой
 local BarFillGlow = Instance.new("UIStroke", BarFill)
 BarFillGlow.Thickness = 3
 BarFillGlow.Color = THEME.ACCENT_GLOW
 BarFillGlow.Transparency = 0.5
 
--- Пульсация свечения
 task.spawn(function()
     while LoadGui.BarFill and LoadGui.Parent do
         TweenService:Create(BarFillGlow, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.2}):Play()
@@ -353,7 +331,6 @@ task.spawn(function()
     end
 end)
 
--- Шапка с процентом
 local PercentLabel = Instance.new("TextLabel")
 PercentLabel.Size = UDim2.new(1, 0, 0, 14)
 PercentLabel.Position = UDim2.new(0, 0, 0, -2)
@@ -366,7 +343,6 @@ PercentLabel.TextXAlignment = Enum.TextXAlignment.Right
 PercentLabel.ZIndex = 9
 PercentLabel.Parent = BarContainer
 
--- Индикатор "PROGRESS"
 local ProgressLabel = Instance.new("TextLabel")
 ProgressLabel.Size = UDim2.new(1, 0, 0, 14)
 ProgressLabel.Position = UDim2.new(0, 0, 0, -2)
@@ -379,9 +355,6 @@ ProgressLabel.TextXAlignment = Enum.TextXAlignment.Left
 ProgressLabel.ZIndex = 9
 ProgressLabel.Parent = BarContainer
 
--- ====================================================================
--- СТАТУСНЫЕ НАДПИСИ ПОД ПОЛОСКОЙ
--- ====================================================================
 local StatusContainer = Instance.new("Frame")
 StatusContainer.Size = UDim2.new(0, 600, 0, 30)
 StatusContainer.Position = UDim2.new(0.5, -300, 0, 165)
@@ -407,7 +380,6 @@ StatusGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
 })
 
--- Точки-индикаторы (три мигающие)
 local DotsContainer = Instance.new("Frame")
 DotsContainer.Size = UDim2.new(0, 60, 0, 8)
 DotsContainer.Position = UDim2.new(0.5, -30, 0, 200)
@@ -440,7 +412,6 @@ task.spawn(function()
     end
 end)
 
--- Перелив статуса
 task.spawn(function()
     while LoadGui.Parent do
         for i = -1, 1, 0.03 do
@@ -454,9 +425,6 @@ task.spawn(function()
     end
 end)
 
--- ====================================================================
--- ПРОГРЕСС И СМЕНА СТАТУСОВ
--- ====================================================================
 local StatusPhrases = {
     {time = 0.0, text = "// INITIALIZATION"},
     {time = 0.5, text = "// LOADING MODULES"},
@@ -472,8 +440,6 @@ Sound.Parent = SoundService
 
 task.spawn(function()
     task.wait(0.2)
-
-    -- Меняем статусы по расписанию
     for _, phrase in ipairs(StatusPhrases) do
         task.wait(phrase.time == 0 and 0 or (StatusPhrases[#StatusPhrases - 1] and 0.4 or 0.4))
         if not LoadGui.Parent then break end
@@ -483,7 +449,6 @@ task.spawn(function()
     end
 end)
 
--- Прогресс полоски + обновление процента
 task.spawn(function()
     task.wait(0.3)
     local totalTime = 2.6
@@ -492,7 +457,6 @@ task.spawn(function()
     while true do
         local elapsed = tick() - startTime
         local progress = math.clamp(elapsed / totalTime, 0, 1)
-        -- Easing (плавное ускорение)
         local eased = 1 - (1 - progress) ^ 2.5
 
         BarFill.Size = UDim2.new(eased, 0, 1, 0)
@@ -504,7 +468,6 @@ task.spawn(function()
 
     task.wait(0.3)
 
-    -- Фейд-аут всего загрузочного экрана
     for _, obj in ipairs(LoadGui:GetDescendants()) do
         if obj:IsA("TextLabel") then
             TweenService:Create(obj, TweenInfo.new(0.4, Enum.EasingStyle.Quad), {TextTransparency = 1}):Play()
@@ -852,6 +815,9 @@ local TabBaseY = 100
 local TabHeight = 42
 local TabSpacing = 48
 
+-- Регистрация акцентных элементов для синхронизации цвета
+local ColorSyncedElements = {}
+
 local function CreatePage(name)
     local page = Instance.new("ScrollingFrame")
     page.Name = name .. "Page"
@@ -1046,6 +1012,7 @@ for i, name in ipairs(TabNames) do
     Tabs[name] = {
         Button = tab, Text = textLabel, Stroke = stroke, Accent = tabAccent,
         Arrow = arrow, Index = tabIndex,
+        AccentGradient = tabAccentGradient,
         IsActive = false,
         OriginalSize = originalSize, OriginalPos = originalPos,
         ActiveSize = activeSize, ActivePos = activePos,
@@ -1424,7 +1391,7 @@ end)
 -- SETTINGS
 -- ====================================================================
 local settingsPage = TabPages["Settings"]
-settingsPage.CanvasSize = UDim2.new(0, 0, 0, 780)
+settingsPage.CanvasSize = UDim2.new(0, 0, 0, 1000)
 
 local function CreateSection(parent, title, yPos, color)
     local section = Instance.new("Frame")
@@ -1451,7 +1418,8 @@ local function CreateSection(parent, title, yPos, color)
     label.Font = Enum.Font.Code
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.Parent = section
-end
+
+    return lineend
 
 local function CreateToggle(parent, name, descText, yPos, default, callback)
     local frame = Instance.new("Frame")
@@ -1533,6 +1501,14 @@ local function CreateToggle(parent, name, descText, yPos, default, callback)
         PlayTab()
         SetState(not state, true)
     end)
+
+    -- Регистрация для цветовой синхронизации
+    table.insert(ColorSyncedElements, {
+        Kind = "Toggle",
+        ToggleBg = toggleBg,
+        ToggleStroke = toggleStroke,
+        GetState = function() return state end,
+    })
 end
 
 local function CreateSlider(parent, name, descText, yPos, minVal, maxVal, default, suffix, callback)
@@ -1648,6 +1624,15 @@ local function CreateSlider(parent, name, descText, yPos, minVal, maxVal, defaul
             isDragging = false
         end
     end)
+
+    -- Регистрация для синхронизации
+    table.insert(ColorSyncedElements, {
+        Kind = "Slider",
+        BarFill = barFill,
+        BarFillGradient = barFillGradient,
+        ValueLabel = valueLabel,
+        HandleGlow = handleGlow,
+    })
 end
 
 local function CreateButton(parent, text, yPos, color, callback)
@@ -1682,6 +1667,8 @@ local function CreateButton(parent, text, yPos, color, callback)
         PlayTab()
         if callback then callback() end
     end)
+
+    return btn, btnStroke
 end
 
 CreateSection(settingsPage, "// INTERFACE", 10, THEME.ACCENT)
@@ -1712,9 +1699,350 @@ CreateSlider(settingsPage, "Menu Scale", "Resize the whole menu proportionally",
     TweenService:Create(MainScale, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Scale = v / 100}):Play()
 end)
 
-CreateSection(settingsPage, "// ACTIONS", 385, Color3.fromRGB(255, 100, 120))
+-- ====================================================================
+-- COLOR PICKER SECTION
+-- ====================================================================
+local colorSectionLine = CreateSection(settingsPage, "// COLOR", 385, Color3.fromRGB(120, 220, 255))
 
-CreateButton(settingsPage, "Reset Settings", 415, Color3.fromRGB(255, 180, 100), function()
+-- Круглая палитра
+local paletteSize = 140
+local paletteFrame = Instance.new("Frame")
+paletteFrame.Size = UDim2.new(0, paletteSize, 0, paletteSize)
+paletteFrame.Position = UDim2.new(0, 0, 0, 415)
+paletteFrame.BackgroundColor3 = Color3.fromRGB(30, 25, 45)
+paletteFrame.BorderSizePixel = 0
+paletteFrame.Parent = settingsPage
+Instance.new("UICorner", paletteFrame).CornerRadius = UDim.new(1, 0)
+
+local paletteStroke = Instance.new("UIStroke", paletteFrame)
+paletteStroke.Thickness = 1
+paletteStroke.Color = THEME.ACCENT_DARK
+paletteStroke.Transparency = 0.4
+
+local paletteImage = Instance.new("ImageLabel")
+paletteImage.Size = UDim2.new(1, -4, 1, -4)
+paletteImage.Position = UDim2.new(0, 2, 0, 2)
+paletteImage.BackgroundTransparency = 1
+paletteImage.Image = "rbxassetid://7393858625"
+paletteImage.ScaleType = Enum.ScaleType.Stretch
+paletteImage.Parent = paletteFrame
+Instance.new("UICorner", paletteImage).CornerRadius = UDim.new(1, 0)
+
+-- Точка-указатель
+local pickerDot = Instance.new("Frame")
+pickerDot.Size = UDim2.new(0, 12, 0, 12)
+pickerDot.AnchorPoint = Vector2.new(0.5, 0.5)
+pickerDot.Position = UDim2.new(0.5, 0, 0.5, 0)
+pickerDot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+pickerDot.BorderSizePixel = 0
+pickerDot.ZIndex = 5
+pickerDot.Parent = paletteFrame
+Instance.new("UICorner", pickerDot).CornerRadius = UDim.new(1, 0)
+
+local pickerDotStroke = Instance.new("UIStroke", pickerDot)
+pickerDotStroke.Thickness = 2
+pickerDotStroke.Color = Color3.fromRGB(0, 0, 0)
+pickerDotStroke.Transparency = 0
+
+-- Превью цвета
+local previewBox = Instance.new("Frame")
+previewBox.Size = UDim2.new(0, 60, 0, 60)
+previewBox.Position = UDim2.new(0, paletteSize + 20, 0, 415 + (paletteSize - 60) / 2 - 30)
+previewBox.BackgroundColor3 = THEME.ACCENT
+previewBox.BorderSizePixel = 0
+previewBox.Parent = settingsPage
+Instance.new("UICorner", previewBox).CornerRadius = UDim.new(0, 6)
+
+local previewStroke = Instance.new("UIStroke", previewBox)
+previewStroke.Thickness = 1.5
+previewStroke.Color = THEME.ACCENT_HOT
+previewStroke.Transparency = 0.4
+
+local hexLabel = Instance.new("TextLabel")
+hexLabel.Size = UDim2.new(0, 80, 0, 18)
+hexLabel.Position = UDim2.new(0, paletteSize + 20, 0, 415 + (paletteSize - 60) / 2 + 38)
+hexLabel.BackgroundTransparency = 1
+hexLabel.Text = "#B450FF"
+hexLabel.TextColor3 = THEME.TEXT_HI
+hexLabel.TextSize = 12
+hexLabel.Font = Enum.Font.Code
+hexLabel.TextXAlignment = Enum.TextXAlignment.Left
+hexLabel.Parent = settingsPage
+
+-- Кнопка сброса цвета
+local resetColorBtn = Instance.new("TextButton")
+resetColorBtn.Size = UDim2.new(1, -50, 0, 32)
+resetColorBtn.Position = UDim2.new(0, 0, 0, 415 + paletteSize + 15)
+resetColorBtn.BackgroundColor3 = Color3.fromRGB(20, 15, 30)
+resetColorBtn.BackgroundTransparency = 1
+resetColorBtn.BorderSizePixel = 0
+resetColorBtn.Text = "Reset Color"
+resetColorBtn.TextColor3 = Color3.fromRGB(120, 220, 255)
+resetColorBtn.TextSize = 13
+resetColorBtn.Font = Enum.Font.Gotham
+resetColorBtn.AutoButtonColor = false
+resetColorBtn.Parent = settingsPage
+Instance.new("UICorner", resetColorBtn).CornerRadius = UDim.new(0, 6)
+
+local resetStroke = Instance.new("UIStroke", resetColorBtn)
+resetStroke.Thickness = 1
+resetStroke.Color = Color3.fromRGB(120, 220, 255)
+resetStroke.Transparency = 1
+
+resetColorBtn.MouseEnter:Connect(function()
+    TweenService:Create(resetColorBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0.85}):Play()
+    TweenService:Create(resetStroke, TweenInfo.new(0.2), {Transparency = 0.5}):Play()
+end)
+resetColorBtn.MouseLeave:Connect(function()
+    TweenService:Create(resetColorBtn, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+    TweenService:Create(resetStroke, TweenInfo.new(0.2), {Transparency = 1}):Play()
+end)
+
+-- Клик-зона палитры (поверх всего, чтобы ловить тачи)
+local dragArea = Instance.new("TextButton")
+dragArea.Size = UDim2.new(1, 0, 1, 0)
+dragArea.Position = UDim2.new(0, 0, 0, 0)
+dragArea.BackgroundTransparency = 1
+dragArea.Text = ""
+dragArea.ZIndex = 10
+dragArea.Parent = paletteFrame
+
+-- ====================================================================
+-- APPLY ACCENT COLOR
+-- ====================================================================
+local function ColorToHex(c)
+    return string.format("#%02X%02X%02X",
+        math.floor(c.R * 255 + 0.5),
+        math.floor(c.G * 255 + 0.5),
+        math.floor(c.B * 255 + 0.5))
+end
+
+local function ApplyAccentColor(color)
+    local h, s, v = Color3.toHSV(color)
+    v = 1
+    s = math.clamp(s * 1.4, 0, 1)
+
+    local newAccent     = Color3.fromHSV(h, s, v)
+    local newHot        = Color3.fromHSV(h, 1, 1)
+    local newDark       = Color3.fromHSV(h, math.clamp(s * 0.9, 0, 1), 0.55)
+    local newGlow       = Color3.fromHSV(h, math.clamp(s * 0.5, 0, 1), 1)
+
+    THEME.ACCENT      = newAccent
+    THEME.ACCENT_HOT  = newHot
+    THEME.ACCENT_DARK = newDark
+    THEME.ACCENT_GLOW = newGlow
+
+    -- Прямые ссылки
+    MainStroke.Color = newAccent
+    LogoBadgeGlow.Color = newGlow
+    AvatarStroke.Color = newHot
+    AvatarGlow.Color = newGlow
+    Divider.BackgroundColor3 = newAccent
+    AccentBar.BackgroundColor3 = newAccent
+    HeaderBaseLine.BackgroundColor3 = newDark
+    HeaderRunner.BackgroundColor3 = newHot
+    HeaderPulse.BackgroundColor3 = newGlow
+    ScanLine.BackgroundColor3 = newHot
+    StatusDot.BackgroundColor3 = newHot
+    PlayerTag.TextColor3 = newHot
+    DragCursor.ImageColor3 = newGlow
+
+    -- Градиенты
+    AccentGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, newHot),
+        ColorSequenceKeypoint.new(1, newAccent),
+    })
+    DividerGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, newDark),
+        ColorSequenceKeypoint.new(0.5, newHot),
+        ColorSequenceKeypoint.new(1, newDark),
+    })
+    RunnerGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, newDark),
+        ColorSequenceKeypoint.new(0.5, newHot),
+        ColorSequenceKeypoint.new(1, newDark),
+    })
+    LogoTitleGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, newDark),
+        ColorSequenceKeypoint.new(0.5, THEME.TEXT_HI),
+        ColorSequenceKeypoint.new(1, newDark),
+    })
+    LogoSubGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, newDark),
+        ColorSequenceKeypoint.new(0.5, newHot),
+        ColorSequenceKeypoint.new(1, newDark),
+    })
+    FpsGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, newDark),
+        ColorSequenceKeypoint.new(0.5, newHot),
+        ColorSequenceKeypoint.new(1, newDark),
+    })
+    DotGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, newDark),
+        ColorSequenceKeypoint.new(0.5, newHot),
+        ColorSequenceKeypoint.new(1, newDark),
+    })
+    ScanGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, newHot),
+        ColorSequenceKeypoint.new(0.5, newGlow),
+        ColorSequenceKeypoint.new(1, newHot),
+    })
+
+    -- Искры
+    for _, d in ipairs(Config.Dots) do
+        if d.Frame then d.Frame.BackgroundColor3 = newHot end
+    end
+
+    -- Вкладки
+    for tName, tData in pairs(Tabs) do
+        tData.Accent.BackgroundColor3 = newHot
+        tData.Arrow.TextColor3 = newHot
+        tData.AccentGradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, newDark),
+            ColorSequenceKeypoint.new(0.5, newHot),
+            ColorSequenceKeypoint.new(1, newDark),
+        })
+        if tData.IsActive then
+            tData.Button.BackgroundColor3 = Color3.fromRGB(
+                math.floor(newAccent.R * 60 + 10),
+                math.floor(newAccent.G * 60 + 10),
+                math.floor(newAccent.B * 60 + 10)
+            )
+            tData.Stroke.Color = newHot
+            tData.Index.TextColor3 = newHot
+        else
+            tData.Stroke.Color = THEME.LINE
+            tData.Index.TextColor3 = THEME.TEXT_LOW
+        end
+    end
+
+    -- Превью и hex
+    previewBox.BackgroundColor3 = newAccent
+    previewStroke.Color = newHot
+    hexLabel.Text = ColorToHex(newAccent)
+
+    -- Тумблеры и слайдеры
+    for _, el in ipairs(ColorSyncedElements) do
+        if el.Kind == "Toggle" then
+            local on = el.GetState and el.GetState() or false
+            if on then
+                el.ToggleBg.BackgroundColor3 = newAccent
+                el.ToggleStroke.Color = newHot
+            else
+                el.ToggleBg.BackgroundColor3 = Color3.fromRGB(30, 25, 45)
+                el.ToggleStroke.Color = THEME.LINE
+            end
+        elseif el.Kind == "Slider" then
+            el.BarFill.BackgroundColor3 = newHot
+            el.BarFillGradient.Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, newDark),
+                ColorSequenceKeypoint.new(1, newHot),
+            })
+            el.ValueLabel.TextColor3 = newHot
+            el.HandleGlow.Color = newHot
+        end
+    end
+
+    -- Нить секции COLOR
+    if colorSectionLine then
+        colorSectionLine.BackgroundColor3 = newHot
+    end
+end
+
+-- ====================================================================
+-- UPDATE COLOR FROM POSITION
+-- ====================================================================
+local isDraggingColor = false
+
+local function UpdateColorFromPosition(inputPos)
+    local center = paletteFrame.AbsolutePosition + paletteFrame.AbsoluteSize / 2
+    local rel = Vector2.new(inputPos.X - center.X, inputPos.Y - center.Y)
+    local radius = paletteFrame.AbsoluteSize.X / 2
+    local dist = math.sqrt(rel.X * rel.X + rel.Y * rel.Y)
+
+    local hue = (math.atan2(rel.Y, rel.X) / (math.pi * 2)) % 1
+    local saturation = math.clamp(dist / radius, 0, 1)
+    local boostedSat = math.clamp(math.sqrt(saturation) * 1.3, 0, 1)
+    local pickedColor = Color3.fromHSV(hue, boostedSat, 1)
+
+    -- Двигаем точку по кругу, ограничивая радиусом
+    local clampedDist = math.min(dist, radius)
+    local nx = math.cos(hue * math.pi * 2) * clampedDist
+    local ny = math.sin(hue * math.pi * 2) * clampedDist
+    pickerDot.Position = UDim2.new(
+        0.5, nx,
+        0.5, ny
+    )
+
+    ApplyAccentColor(pickedColor)
+end
+
+dragArea.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        isDraggingColor = true
+        settingsPage.ScrollingEnabled = false
+        UpdateColorFromPosition(input.Position)
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if isDraggingColor and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        UpdateColorFromPosition(input.Position)
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        if isDraggingColor then
+            isDraggingColor = false
+            settingsPage.ScrollingEnabled = true
+        end
+    end
+end)
+
+-- Reset Color
+resetColorBtn.MouseButton1Click:Connect(function()
+    PlayTab()
+    local defaultColor = Color3.fromRGB(180, 80, 255)
+    ApplyAccentColor(defaultColor)
+    pickerDot.Position = UDim2.new(0.5, 0, 0.5, 0)
+    hexLabel.Text = "#B450FF"
+end)
+
+-- ====================================================================
+-- ACTIONS (сдвинуты вниз из-за COLOR секции)
+-- ====================================================================
+CreateSection(settingsPage, "// ACTIONS", 635, Color3.fromRGB(255, 100, 120))
+
+local resetBtn = Instance.new("TextButton")
+resetBtn.Size = UDim2.new(1, -50, 0, 36)
+resetBtn.Position = UDim2.new(0, 0, 0, 670)
+resetBtn.BackgroundColor3 = Color3.fromRGB(20, 15, 30)
+resetBtn.BackgroundTransparency = 1
+resetBtn.BorderSizePixel = 0
+resetBtn.Text = "Reset Settings"
+resetBtn.TextColor3 = Color3.fromRGB(255, 180, 100)
+resetBtn.TextSize = 13
+resetBtn.Font = Enum.Font.Gotham
+resetBtn.AutoButtonColor = false
+resetBtn.Parent = settingsPage
+Instance.new("UICorner", resetBtn).CornerRadius = UDim.new(0, 6)
+
+local resetBtnStroke = Instance.new("UIStroke", resetBtn)
+resetBtnStroke.Thickness = 1
+resetBtnStroke.Color = Color3.fromRGB(255, 180, 100)
+resetBtnStroke.Transparency = 1
+
+resetBtn.MouseEnter:Connect(function()
+    TweenService:Create(resetBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0.85}):Play()
+    TweenService:Create(resetBtnStroke, TweenInfo.new(0.2), {Transparency = 0.5}):Play()
+end)
+resetBtn.MouseLeave:Connect(function()
+    TweenService:Create(resetBtn, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+    TweenService:Create(resetBtnStroke, TweenInfo.new(0.2), {Transparency = 1}):Play()
+end)
+resetBtn.MouseButton1Click:Connect(function()
+    PlayTab()
     Config.FlyingDotsEnabled = true
     Config.SoundEnabled = true
     Config.ScanLineEnabled = true
@@ -1724,23 +2052,91 @@ CreateButton(settingsPage, "Reset Settings", 415, Color3.fromRGB(255, 180, 100),
     TweenService:Create(MainScale, TweenInfo.new(0.2), {Scale = 1}):Play()
     RebuildDots()
     if ScanLine then ScanLine.Visible = true end
+    -- Сброс цвета
+    ApplyAccentColor(Color3.fromRGB(180, 80, 255))
+    pickerDot.Position = UDim2.new(0.5, 0, 0.5, 0)
 end)
 
-CreateButton(settingsPage, "Unload Script", 460, Color3.fromRGB(255, 80, 100), function()
+local unloadBtn = Instance.new("TextButton")
+unloadBtn.Size = UDim2.new(1, -50, 0, 36)
+unloadBtn.Position = UDim2.new(0, 0, 0, 715)
+unloadBtn.BackgroundColor3 = Color3.fromRGB(20, 15, 30)
+unloadBtn.BackgroundTransparency = 1
+unloadBtn.BorderSizePixel = 0
+unloadBtn.Text = "Unload Script"
+unloadBtn.TextColor3 = Color3.fromRGB(255, 80, 100)
+unloadBtn.TextSize = 13
+unloadBtn.Font = Enum.Font.Gotham
+unloadBtn.AutoButtonColor = false
+unloadBtn.Parent = settingsPage
+Instance.new("UICorner", unloadBtn).CornerRadius = UDim.new(0, 6)
+
+local unloadStroke = Instance.new("UIStroke", unloadBtn)
+unloadStroke.Thickness = 1
+unloadStroke.Color = Color3.fromRGB(255, 80, 100)
+unloadStroke.Transparency = 1
+
+unloadBtn.MouseEnter:Connect(function()
+    TweenService:Create(unloadBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0.85}):Play()
+    TweenService:Create(unloadStroke, TweenInfo.new(0.2), {Transparency = 0.5}):Play()
+end)
+unloadBtn.MouseLeave:Connect(function()
+    TweenService:Create(unloadBtn, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+    TweenService:Create(unloadStroke, TweenInfo.new(0.2), {Transparency = 1}):Play()
+end)
+unloadBtn.MouseButton1Click:Connect(function()
     pcall(function() ScreenGui:Destroy() end)
     pcall(function() LoadGui:Destroy() end)
     pcall(function() TabSound:Destroy() end)
     pcall(function() Sound:Destroy() end)
 end)
 
-CreateButton(settingsPage, "Rejoin Server", 505, THEME.ACCENT_HOT, function()
+local rejoinBtn = Instance.new("TextButton")
+rejoinBtn.Size = UDim2.new(1, -50, 0, 36)
+rejoinBtn.Position = UDim2.new(0, 0, 0, 760)
+rejoinBtn.BackgroundColor3 = Color3.fromRGB(20, 15, 30)
+rejoinBtn.BackgroundTransparency = 1
+rejoinBtn.BorderSizePixel = 0
+rejoinBtn.Text = "Rejoin Server"
+rejoinBtn.TextColor3 = THEME.ACCENT_HOT
+rejoinBtn.TextSize = 13
+rejoinBtn.Font = Enum.Font.Gotham
+rejoinBtn.AutoButtonColor = false
+rejoinBtn.Parent = settingsPage
+Instance.new("UICorner", rejoinBtn).CornerRadius = UDim.new(0, 6)
+
+local rejoinStroke = Instance.new("UIStroke", rejoinBtn)
+rejoinStroke.Thickness = 1
+rejoinStroke.Color = THEME.ACCENT_HOT
+rejoinStroke.Transparency = 1
+
+rejoinBtn.MouseEnter:Connect(function()
+    TweenService:Create(rejoinBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0.85}):Play()
+    TweenService:Create(rejoinStroke, TweenInfo.new(0.2), {Transparency = 0.5}):Play()
+end)
+rejoinBtn.MouseLeave:Connect(function()
+    TweenService:Create(rejoinBtn, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+    TweenService:Create(rejoinStroke, TweenInfo.new(0.2), {Transparency = 1}):Play()
+end)
+rejoinBtn.MouseButton1Click:Connect(function()
     local TeleportService = game:GetService("TeleportService")
     pcall(function()
         TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
     end)
 end)
 
+-- Регистрация reset-кнопки цвета и кнопок actions для перекраски
+table.insert(ColorSyncedElements, {
+    Kind = "ColorPickerPreview",
+    PreviewBox = previewBox,
+    PreviewStroke = previewStroke,
+    ResetStroke = resetStroke,
+    RejoinStroke = rejoinStroke,
+})
+
+-- ====================================================================
 -- DROP-IN
+-- ====================================================================
 task.spawn(function()
     task.wait(3.2)
     local dropTween = TweenService:Create(MainFrame,
@@ -1779,4 +2175,4 @@ HeaderBaseLine.BackgroundTransparency = 0.7
 HeaderRunner.BackgroundTransparency = 0
 HeaderPulse.BackgroundTransparency = 0.6
 
-print("[VL] PREMIUM LOADING loaded.")
+print("[VL] PREMIUM LOADING loaded with Color Picker.")
