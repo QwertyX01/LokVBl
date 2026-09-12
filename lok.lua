@@ -534,7 +534,6 @@ MainStroke.Color = THEME.ACCENT
 MainStroke.Transparency = 0.3
 MainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
--- ВНЕШНЯЯ ДУБЛЬ-ОБВОДКА (glow)
 local MainGlow = Instance.new("UIStroke", OuterBorder)
 MainGlow.Thickness = 4
 MainGlow.Color = THEME.ACCENT_GLOW
@@ -598,7 +597,6 @@ RightGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(1, Color3.fromRGB(8, 6, 14)),
 })
 
--- DOT MATRIX (декор — сетка точек)
 local dotMatrix = Instance.new("Frame")
 dotMatrix.Size = UDim2.new(1, 0, 1, 0)
 dotMatrix.BackgroundTransparency = 1
@@ -647,7 +645,6 @@ DividerGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
 })
 
--- Бегущий блик по divider
 local DividerRunner = Instance.new("Frame")
 DividerRunner.Size = UDim2.new(1, 0, 0.15, 0)
 DividerRunner.Position = UDim2.new(0, 0, -0.15, 0)
@@ -697,7 +694,8 @@ Instance.new("UICorner", LogoBadge).CornerRadius = UDim.new(1, 0)
 
 local LogoBadgeGlow = Instance.new("UIStroke", LogoBadge)
 LogoBadgeGlow.Thickness = 1
-LogoBadgeGlow.Color = THEME.ACCENT_GLOWLogoBadgeGlow.Transparency = 0.6
+LogoBadgeGlow.Color = THEME.ACCENT_GLOW
+LogoBadgeGlow.Transparency = 0.6
 
 local LogoImage = Instance.new("ImageLabel")
 LogoImage.Size = UDim2.new(1, 0, 1, 0)
@@ -821,7 +819,6 @@ PageTitle.TextXAlignment = Enum.TextXAlignment.Left
 PageTitle.ZIndex = 11
 PageTitle.Parent = PageHeader
 
--- ONLINE индикатор в хедере
 local onlineFrame = Instance.new("Frame")
 onlineFrame.Size = UDim2.new(0, 70, 0, 18)
 onlineFrame.Position = UDim2.new(1, -85, 0, 20)
@@ -919,7 +916,7 @@ task.spawn(function()
 end)
 
 -- ====================================================================
--- CORNER BRACKETS (по углам MainFrame)
+-- CORNER BRACKETS
 -- ====================================================================
 local function CreateBracket(pos, size, anchor, flipX, flipY)
     local bracket = Instance.new("Frame")
@@ -1191,7 +1188,6 @@ end
 local mainPage = TabPages["Main"]
 mainPage.CanvasSize = UDim2.new(0, 0, 0, 360)
 
--- БАННЕР
 local bannerFrame = Instance.new("Frame")
 bannerFrame.Size = UDim2.new(0.72, 0, 0, 85)
 bannerFrame.Position = UDim2.new(0.5, 0, 0, 3)
@@ -1226,7 +1222,6 @@ local bannerImgCorner = Instance.new("UICorner", bannerImage)
 bannerImgCorner.CornerRadius = UDim.new(0, Config.CornerRadius)
 RegisterCorner(bannerImgCorner, Config.CornerRadius)
 
--- декор — тонкая полоска под баннером
 local bannerUnderline = Instance.new("Frame")
 bannerUnderline.Size = UDim2.new(0.72, 0, 0, 1)
 bannerUnderline.Position = UDim2.new(0.5, 0, 0, 91)
@@ -1272,7 +1267,6 @@ task.spawn(function()
     end
 end)
 
--- ПРИВЕТСТВИЕ
 local greetFrame = Instance.new("Frame")
 greetFrame.Size = UDim2.new(1, 0, 0, 58)
 greetFrame.Position = UDim2.new(0, 0, 0, 100)
@@ -1345,7 +1339,6 @@ task.spawn(function()
     end
 end)
 
--- Разделительная линия
 local splitLine = Instance.new("Frame")
 splitLine.Size = UDim2.new(1, 0, 0, 1)
 splitLine.Position = UDim2.new(0, 0, 0, 162)
@@ -1367,9 +1360,6 @@ splitGrad.Transparency = NumberSequence.new({
     NumberSequenceKeypoint.new(1, 1),
 })
 
--- ====================================================================
--- LIVE STATUS
--- ====================================================================
 local statusSection = Instance.new("Frame")
 statusSection.Size = UDim2.new(1, 0, 0, 18)
 statusSection.Position = UDim2.new(0, 0, 0, 172)
@@ -1549,7 +1539,6 @@ for _, cfg in ipairs(statConfigs) do
     })
 end
 
--- Живое обновление статуса
 task.spawn(function()
     local sessionStart = tick()
     local frameCount = 0
@@ -2266,7 +2255,6 @@ CreateSlider(settingsPage, "Corner Radius", "Round corners of all panels and but
     end
 end)
 
--- СЕКЦИЯ COLOR
 local colorSectionLine = CreateSection(settingsPage, "// COLOR", 445, Color3.fromRGB(120, 220, 255))
 
 local paletteSize = 140
@@ -2371,9 +2359,6 @@ dragArea.Text = ""
 dragArea.ZIndex = 10
 dragArea.Parent = paletteFrame
 
--- ====================================================================
--- APPLY ACCENT COLOR
--- ====================================================================
 local function ColorToHex(c)
     return string.format("#%02X%02X%02X",
         math.floor(c.R * 255 + 0.5),
@@ -2514,15 +2499,15 @@ local function ApplyAccentColor(color)
     previewStroke.Color = newHot
     hexLabel.Text = ColorToHex(newAccent)
 
-    -- corner brackets
-    for _, br in ipairs({br_TL_h, br_TR_h, br_BL_h, br_BR_h}) do
-        br.BackgroundColor3 = newHot
-    end
-    for _, br in ipairs({br_TL_v, br_TR_v, br_BL_v, br_BR_v}) do
-        br.BackgroundColor3 = newHot
-    end
+    br_TL_h.BackgroundColor3 = newHot
+    br_TL_v.BackgroundColor3 = newHot
+    br_TR_h.BackgroundColor3 = newHot
+    br_TR_v.BackgroundColor3 = newHot
+    br_BL_h.BackgroundColor3 = newHot
+    br_BL_v.BackgroundColor3 = newHot
+    br_BR_h.BackgroundColor3 = newHot
+    br_BR_v.BackgroundColor3 = newHot
 
-    -- dot matrix
     for _, d in ipairs(dotMatrix:GetChildren()) do
         if d:IsA("Frame") then
             d.BackgroundColor3 = newDark
@@ -2572,9 +2557,6 @@ local function ApplyAccentColor(color)
     end
 end
 
--- ====================================================================
--- UPDATE COLOR FROM POSITION
--- ====================================================================
 local isDraggingColor = false
 
 local function UpdateColorFromPosition(inputPos)
@@ -2626,7 +2608,6 @@ resetColorBtn.MouseButton1Click:Connect(function()
     hexLabel.Text = "#B450FF"
 end)
 
--- СЕКЦИЯ ACTIONS
 CreateSection(settingsPage, "// ACTIONS", 695, Color3.fromRGB(255, 100, 120))
 
 local resetBtn = Instance.new("TextButton")
