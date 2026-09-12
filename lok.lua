@@ -11,13 +11,11 @@ local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 
--- ЗАЩИТА
 do
     local ok = pcall(function()
         local ContentProvider = game:GetService("ContentProvider")
         local CG = game:GetService("CoreGui")
         local oldPreloadAsync = ContentProvider.PreloadAsync
-
         hookfunction(ContentProvider.PreloadAsync, function(self, instances, callback)
             if type(instances) ~= "table" then return oldPreloadAsync(self, instances, callback) end
             local filtered = {}
@@ -37,7 +35,6 @@ do
             end
             return oldPreloadAsync(self, filtered, callback)
         end)
-        print("[VL] PreloadAsync hook installed")
     end)
 end
 
@@ -48,48 +45,32 @@ for _, gui in ipairs(CoreGui:GetChildren()) do
 end
 
 local THEME = {
-    BG_DARK       = Color3.fromRGB(8, 6, 14),
-    BG_MID        = Color3.fromRGB(14, 11, 22),
-    BG_PANEL      = Color3.fromRGB(11, 9, 18),
-    BG_LEFT       = Color3.fromRGB(18, 14, 28),
-    ACCENT        = Color3.fromRGB(180, 80, 255),
-    ACCENT_DARK   = Color3.fromRGB(80, 40, 150),
-    ACCENT_GLOW   = Color3.fromRGB(220, 150, 255),
-    ACCENT_SOFT   = Color3.fromRGB(130, 70, 200),
-    ACCENT_HOT    = Color3.fromRGB(255, 60, 180),
-    TEXT_HI       = Color3.fromRGB(245, 240, 255),
-    TEXT_MID      = Color3.fromRGB(170, 155, 200),
-    TEXT_LOW      = Color3.fromRGB(90, 75, 115),
-    LINE          = Color3.fromRGB(50, 35, 75),
+    BG_DARK = Color3.fromRGB(8, 6, 14), BG_MID = Color3.fromRGB(14, 11, 22),
+    BG_PANEL = Color3.fromRGB(11, 9, 18), BG_LEFT = Color3.fromRGB(18, 14, 28),
+    ACCENT = Color3.fromRGB(180, 80, 255), ACCENT_DARK = Color3.fromRGB(80, 40, 150),
+    ACCENT_GLOW = Color3.fromRGB(220, 150, 255), ACCENT_SOFT = Color3.fromRGB(130, 70, 200),
+    ACCENT_HOT = Color3.fromRGB(255, 60, 180),
+    TEXT_HI = Color3.fromRGB(245, 240, 255), TEXT_MID = Color3.fromRGB(170, 155, 200),
+    TEXT_LOW = Color3.fromRGB(90, 75, 115), LINE = Color3.fromRGB(50, 35, 75),
 }
 
 local Config = {
-    FlyingDotsEnabled = true,
-    SoundEnabled = true,
-    ScanLineEnabled = true,
-    FpsCounterEnabled = false,
-    MenuScale = 100,
-    CornerRadius = 8,
-    Dots = {},
-    -- Combat
-    HitboxEnabled = false,
-    HitboxSize = 30,
-    -- Visuals
-    BallESPEnabled = false,
-    BallPredictorEnabled = false,
-    FacingESPEnabled = false,
+    FlyingDotsEnabled = true, SoundEnabled = true, ScanLineEnabled = true,
+    FpsCounterEnabled = false, MenuScale = 100, CornerRadius = 8, Dots = {},
+    HitboxEnabled = false, HitboxSize = 30,
+    BallESPEnabled = false, BallPredictorEnabled = false,
 }
 
 local CornerElements = {}
 local ColorSyncedElements = {}
 local SliderRegistry = {}
 local ToggleRegistry = {}
+local Br = {}
+local BallESP = { model = nil, highlight = nil, particles = nil, light = nil }
+local Pred = { ring = nil, center = nil, tracer = nil, lastPos = nil, lastTime = nil, smoothVel = nil, smoothLand = nil }
 
 local function RegisterCorner(uiCorner, baseRadius)
-    table.insert(CornerElements, {
-        Corner = uiCorner,
-        BaseRadius = baseRadius or Config.CornerRadius,
-    })
+    table.insert(CornerElements, { Corner = uiCorner, BaseRadius = baseRadius or Config.CornerRadius })
 end
 
 local function fileExists(path)
@@ -98,9 +79,7 @@ local function fileExists(path)
 end
 
 local function downloadImage(url, path)
-    if isfile and isfile(path) then
-        pcall(function() delfile(path) end)
-    end
+    if isfile and isfile(path) then pcall(function() delfile(path) end) end
     if not fileExists(path) then
         local ok, content = pcall(function() return game:HttpGet(url, true) end)
         if ok and content then pcall(function() writefile(path, content) end) end
@@ -115,10 +94,8 @@ end
 
 downloadImage("https://i.ibb.co/RkDbPKvG/IMG-20260912-124847.jpg", "vl_logo.png")
 local logoPath = getAssetPath("vl_logo.png")
-
 downloadImage("https://i.ibb.co/WWDZY4jc/14289-removebg-preview.png", "vl_brand.png")
 local brandPath = getAssetPath("vl_brand.png")
-
 downloadImage("https://i.ibb.co/tMsVBqwG/IMG-20260828-160933.png", "vl_banner.png")
 local bannerPath = getAssetPath("vl_banner.png")
 
@@ -157,10 +134,12 @@ TabSound.SoundId = "rbxassetid://9035348386"
 TabSound.Volume = 1
 TabSound.Parent = SoundService
 
-local function PlayTab() if Config.SoundEnabled then pcall(function() TabSound:Play() end) end end
+local function PlayTab()
+    if Config.SoundEnabled then pcall(function() TabSound:Play() end) end
+end
 
 -- ====================================================================
--- PREMIUM LOADING SCREEN
+-- LOADING SCREEN
 -- ====================================================================
 local LoadGui = Instance.new("ScreenGui")
 LoadGui.Name = "VL_Load"
@@ -187,7 +166,6 @@ LoadingContainer.Parent = LoadGui
 
 local GlitchContainer = Instance.new("Frame")
 GlitchContainer.Size = UDim2.new(1, 0, 0, 60)
-GlitchContainer.Position = UDim2.new(0, 0, 0, 0)
 GlitchContainer.BackgroundTransparency = 1
 GlitchContainer.Parent = LoadingContainer
 
@@ -241,14 +219,8 @@ GlitchGradient.Color = ColorSequence.new({
 
 task.spawn(function()
     while LoadGui.Parent do
-        for i = -1, 1, 0.02 do
-            GlitchGradient.Offset = Vector2.new(i, 0)
-            task.wait(0.03)
-        end
-        for i = 1, -1, -0.02 do
-            GlitchGradient.Offset = Vector2.new(i, 0)
-            task.wait(0.03)
-        end
+        for i = -1, 1, 0.02 do GlitchGradient.Offset = Vector2.new(i, 0); task.wait(0.03) end
+        for i = 1, -1, -0.02 do GlitchGradient.Offset = Vector2.new(i, 0); task.wait(0.03) end
     end
 end)
 
@@ -302,16 +274,6 @@ BarBgStroke.Thickness = 1.5
 BarBgStroke.Color = THEME.ACCENT_DARK
 BarBgStroke.Transparency = 0.4
 
-local BarInnerGlow = Instance.new("Frame")
-BarInnerGlow.Size = UDim2.new(1, -4, 1, -4)
-BarInnerGlow.Position = UDim2.new(0, 2, 0, 2)
-BarInnerGlow.BackgroundColor3 = THEME.ACCENT_DARK
-BarInnerGlow.BackgroundTransparency = 0.9
-BarInnerGlow.BorderSizePixel = 0
-BarInnerGlow.ZIndex = 7
-BarInnerGlow.Parent = BarBg
-Instance.new("UICorner", BarInnerGlow).CornerRadius = UDim.new(1, 0)
-
 local BarFill = Instance.new("Frame")
 BarFill.Size = UDim2.new(0, 0, 1, 0)
 BarFill.BackgroundColor3 = THEME.ACCENT_HOT
@@ -326,18 +288,11 @@ BarFillGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0.5, THEME.ACCENT_HOT),
     ColorSequenceKeypoint.new(1, THEME.ACCENT_GLOW),
 })
-BarFillGradient.Rotation = 0
 
 task.spawn(function()
     while LoadGui.Parent do
-        for i = -1, 1, 0.04 do
-            BarFillGradient.Offset = Vector2.new(i, 0)
-            task.wait(0.04)
-        end
-        for i = 1, -1, -0.04 do
-            BarFillGradient.Offset = Vector2.new(i, 0)
-            task.wait(0.04)
-        end
+        for i = -1, 1, 0.04 do BarFillGradient.Offset = Vector2.new(i, 0); task.wait(0.04) end
+        for i = 1, -1, -0.04 do BarFillGradient.Offset = Vector2.new(i, 0); task.wait(0.04) end
     end
 end)
 
@@ -345,15 +300,6 @@ local BarFillGlow = Instance.new("UIStroke", BarFill)
 BarFillGlow.Thickness = 3
 BarFillGlow.Color = THEME.ACCENT_GLOW
 BarFillGlow.Transparency = 0.5
-
-task.spawn(function()
-    while LoadGui.Parent do
-        TweenService:Create(BarFillGlow, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.2}):Play()
-        task.wait(0.8)
-        TweenService:Create(BarFillGlow, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.6}):Play()
-        task.wait(0.8)
-    end
-end)
 
 local PercentLabel = Instance.new("TextLabel")
 PercentLabel.Size = UDim2.new(1, 0, 0, 14)
@@ -393,7 +339,6 @@ StatusLabel.Text = "// INITIALIZATION"
 StatusLabel.TextColor3 = THEME.ACCENT_HOT
 StatusLabel.TextSize = 14
 StatusLabel.Font = Enum.Font.Code
-StatusLabel.TextTransparency = 0
 StatusLabel.ZIndex = 6
 StatusLabel.Parent = StatusContainer
 
@@ -428,9 +373,9 @@ end
 task.spawn(function()
     while LoadGui.Parent do
         for i, dot in ipairs(statusDots) do
-            TweenService:Create(dot, TweenInfo.new(0.3), {BackgroundTransparency = 0.1, Size = UDim2.new(0, 8, 0, 8), Position = UDim2.new(0, (i-1) * 14 - 1, 0, 0)}):Play()
+            TweenService:Create(dot, TweenInfo.new(0.3), {BackgroundTransparency = 0.1, Size = UDim2.new(0, 8, 0, 8)}):Play()
             task.wait(0.25)
-            TweenService:Create(dot, TweenInfo.new(0.3), {BackgroundTransparency = 0.7, Size = UDim2.new(0, 6, 0, 6), Position = UDim2.new(0, (i-1) * 14, 0, 1)}):Play()
+            TweenService:Create(dot, TweenInfo.new(0.3), {BackgroundTransparency = 0.7, Size = UDim2.new(0, 6, 0, 6)}):Play()
         end
         task.wait(0.3)
     end
@@ -438,14 +383,8 @@ end)
 
 task.spawn(function()
     while LoadGui.Parent do
-        for i = -1, 1, 0.03 do
-            StatusGradient.Offset = Vector2.new(i, 0)
-            task.wait(0.03)
-        end
-        for i = 1, -1, -0.03 do
-            StatusGradient.Offset = Vector2.new(i, 0)
-            task.wait(0.03)
-        end
+        for i = -1, 1, 0.03 do StatusGradient.Offset = Vector2.new(i, 0); task.wait(0.03) end
+        for i = 1, -1, -0.03 do StatusGradient.Offset = Vector2.new(i, 0); task.wait(0.03) end
     end
 end)
 
@@ -477,21 +416,16 @@ task.spawn(function()
     task.wait(0.3)
     local totalTime = 2.6
     local startTime = tick()
-
     while true do
         local elapsed = tick() - startTime
         local progress = math.clamp(elapsed / totalTime, 0, 1)
         local eased = 1 - (1 - progress) ^ 2.5
-
         BarFill.Size = UDim2.new(eased, 0, 1, 0)
         PercentLabel.Text = string.format("%d%%", math.floor(eased * 100))
-
         if progress >= 1 then break end
         task.wait(0.016)
     end
-
     task.wait(0.3)
-
     for _, obj in ipairs(LoadGui:GetDescendants()) do
         if obj:IsA("TextLabel") then
             TweenService:Create(obj, TweenInfo.new(0.4, Enum.EasingStyle.Quad), {TextTransparency = 1}):Play()
@@ -501,14 +435,13 @@ task.spawn(function()
             TweenService:Create(obj, TweenInfo.new(0.4, Enum.EasingStyle.Quad), {Transparency = 1}):Play()
         end
     end
-
     task.wait(0.5)
     LoadGui:Destroy()
     pcall(function() Sound:Play() end)
 end)
 
 -- ====================================================================
--- ГЛАВНАЯ ПАНЕЛЬ
+-- MAIN PANEL
 -- ====================================================================
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
@@ -518,7 +451,6 @@ MainFrame.BackgroundTransparency = 1
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = false
-MainFrame.ClipsDescendants = false
 MainFrame.ZIndex = 1
 MainFrame.Parent = ScreenGui
 
@@ -633,7 +565,7 @@ DividerGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
 })
 
--- ЛОГОТИП
+-- LOGO
 local LogoFrame = Instance.new("Frame")
 LogoFrame.Size = UDim2.new(1, -20, 0, 70)
 LogoFrame.Position = UDim2.new(0, 10, 0, 10)
@@ -645,7 +577,6 @@ local LogoBadge = Instance.new("Frame")
 LogoBadge.Size = UDim2.new(0, 50, 0, 50)
 LogoBadge.Position = UDim2.new(0, 5, 0, 10)
 LogoBadge.BackgroundTransparency = 1
-LogoBadge.BorderSizePixel = 0
 LogoBadge.ClipsDescendants = true
 LogoBadge.ZIndex = 6
 LogoBadge.Parent = LogoFrame
@@ -796,9 +727,9 @@ Instance.new("UICorner", onlineDot).CornerRadius = UDim.new(1, 0)
 
 task.spawn(function()
     while onlineDot.Parent do
-        TweenService:Create(onlineDot, TweenInfo.new(0.9, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {BackgroundTransparency = 0.6, Size = UDim2.new(0, 5, 0, 5)}):Play()
+        TweenService:Create(onlineDot, TweenInfo.new(0.9, Enum.EasingStyle.Sine), {BackgroundTransparency = 0.6, Size = UDim2.new(0, 5, 0, 5)}):Play()
         task.wait(0.9)
-        TweenService:Create(onlineDot, TweenInfo.new(0.9, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {BackgroundTransparency = 0, Size = UDim2.new(0, 6, 0, 6)}):Play()
+        TweenService:Create(onlineDot, TweenInfo.new(0.9, Enum.EasingStyle.Sine), {BackgroundTransparency = 0, Size = UDim2.new(0, 6, 0, 6)}):Play()
         task.wait(0.9)
     end
 end)
@@ -856,9 +787,7 @@ HeaderPulse.Parent = PageHeader
 task.spawn(function()
     while ScreenGui.Parent do
         HeaderRunner.Position = UDim2.new(-0.3, 0, 0, 45)
-        local t = TweenService:Create(HeaderRunner, TweenInfo.new(1.6, Enum.EasingStyle.Linear), {
-            Position = UDim2.new(1, 0, 0, 45)
-        })
+        local t = TweenService:Create(HeaderRunner, TweenInfo.new(1.6, Enum.EasingStyle.Linear), {Position = UDim2.new(1, 0, 0, 45)})
         t:Play()
         t.Completed:Wait()
         task.wait(0.3)
@@ -867,16 +796,14 @@ end)
 
 task.spawn(function()
     while ScreenGui.Parent do
-        TweenService:Create(HeaderPulse, TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {BackgroundTransparency = 0.15}):Play()
+        TweenService:Create(HeaderPulse, TweenInfo.new(0.6, Enum.EasingStyle.Sine), {BackgroundTransparency = 0.15}):Play()
         task.wait(0.6)
-        TweenService:Create(HeaderPulse, TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {BackgroundTransparency = 0.85}):Play()
+        TweenService:Create(HeaderPulse, TweenInfo.new(0.6, Enum.EasingStyle.Sine), {BackgroundTransparency = 0.85}):Play()
         task.wait(0.6)
     end
 end)
 
--- ====================================================================
--- CORNER BRACKETS
--- ====================================================================
+-- CORNER BRACKETS (в table Br)
 local function CreateBracket(pos, size, anchor, flipX, flipY)
     local bracket = Instance.new("Frame")
     bracket.Size = size
@@ -902,17 +829,15 @@ local function CreateBracket(pos, size, anchor, flipX, flipY)
     vLine.Parent = bracket
     if flipX then vLine.Position = UDim2.new(1, -2, 0, 0) end
 
-    return bracket, hLine, vLine
+    return hLine, vLine
 end
 
-local br_TL, br_TL_h, br_TL_v = CreateBracket(UDim2.new(0, -6, 0, -6), UDim2.new(0, 22, 0, 22), Vector2.new(0, 0), false, false)
-local br_TR, br_TR_h, br_TR_v = CreateBracket(UDim2.new(1, 6, 0, -6), UDim2.new(0, 22, 0, 22), Vector2.new(1, 0), true, false)
-local br_BL, br_BL_h, br_BL_v = CreateBracket(UDim2.new(0, -6, 1, 6), UDim2.new(0, 22, 0, 22), Vector2.new(0, 1), false, true)
-local br_BR, br_BR_h, br_BR_v = CreateBracket(UDim2.new(1, 6, 1, 6), UDim2.new(0, 22, 0, 22), Vector2.new(1, 1), true, true)
+Br.TL_h, Br.TL_v = CreateBracket(UDim2.new(0, -6, 0, -6), UDim2.new(0, 22, 0, 22), Vector2.new(0, 0), false, false)
+Br.TR_h, Br.TR_v = CreateBracket(UDim2.new(1, 6, 0, -6), UDim2.new(0, 22, 0, 22), Vector2.new(1, 0), true, false)
+Br.BL_h, Br.BL_v = CreateBracket(UDim2.new(0, -6, 1, 6), UDim2.new(0, 22, 0, 22), Vector2.new(0, 1), false, true)
+Br.BR_h, Br.BR_v = CreateBracket(UDim2.new(1, 6, 1, 6), UDim2.new(0, 22, 0, 22), Vector2.new(1, 1), true, true)
 
--- ====================================================================
--- ВКЛАДКИ
--- ====================================================================
+-- TABS
 local TabNames = {"Main", "Visuals", "Combat", "Settings"}
 local TabIndexes = { "01", "02", "03", "04" }
 local Tabs = {}
@@ -982,14 +907,8 @@ for i, name in ipairs(TabNames) do
 
     task.spawn(function()
         while tabAccent.Parent do
-            for j = -1, 1, 0.05 do
-                tabAccentGradient.Offset = Vector2.new(0, j)
-                task.wait(0.05)
-            end
-            for j = 1, -1, -0.05 do
-                tabAccentGradient.Offset = Vector2.new(0, j)
-                task.wait(0.05)
-            end
+            for j = -1, 1, 0.05 do tabAccentGradient.Offset = Vector2.new(0, j); task.wait(0.05) end
+            for j = 1, -1, -0.05 do tabAccentGradient.Offset = Vector2.new(0, j); task.wait(0.05) end
         end
     end)
 
@@ -1059,17 +978,11 @@ for i, name in ipairs(TabNames) do
 
     tab.MouseButton1Click:Connect(function()
         PlayTab()
-        local sizeNow = tab.Size
-        TweenService:Create(tab, TweenInfo.new(0.08), {Size = UDim2.new(sizeNow.X.Scale, sizeNow.X.Offset - 4, 0, sizeNow.Y.Offset)}):Play()
-        task.delay(0.08, function()
-            TweenService:Create(tab, TweenInfo.new(0.12, Enum.EasingStyle.Back), {Size = sizeNow}):Play()
-        end)
-
         for otherName, otherTab in pairs(Tabs) do
             if otherName ~= name and otherTab.IsActive then
                 otherTab.IsActive = false
                 local oT, oS, oX, oA, oAr, oI = otherTab.Button, otherTab.Stroke, otherTab.Text, otherTab.Accent, otherTab.Arrow, otherTab.Index
-                local ti = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+                local ti = TweenInfo.new(0.2, Enum.EasingStyle.Quad)
                 TweenService:Create(oT, ti, {Size = otherTab.OriginalSize, Position = otherTab.OriginalPos, BackgroundColor3 = THEME.BG_MID, BackgroundTransparency = 0.5}):Play()
                 TweenService:Create(oS, ti, {Color = THEME.LINE, Transparency = 0.3}):Play()
                 TweenService:Create(oX, ti, {TextColor3 = THEME.TEXT_MID}):Play()
@@ -1078,7 +991,6 @@ for i, name in ipairs(TabNames) do
                 TweenService:Create(oI, ti, {TextColor3 = THEME.TEXT_LOW}):Play()
             end
         end
-
         for _, page in pairs(TabPages) do page.Visible = false end
 
         if Tabs[name].IsActive then
@@ -1097,7 +1009,6 @@ for i, name in ipairs(TabNames) do
 
         Tabs[name].IsActive = true
         ActiveTab = name
-
         PageHeader.Visible = true
         PageTitle.Text = name:upper()
         PageTitle.TextTransparency = 1
@@ -1110,25 +1021,20 @@ for i, name in ipairs(TabNames) do
         TweenService:Create(PageTitle, TweenInfo.new(0.25), {TextTransparency = 0}):Play()
         TweenService:Create(PageIndex, TweenInfo.new(0.25), {TextTransparency = 0}):Play()
         TweenService:Create(AccentBar, TweenInfo.new(0.25), {BackgroundTransparency = 0}):Play()
-
         AnimateTo(activeSize, activePos, Color3.fromRGB(35, 22, 60), 0, THEME.ACCENT_HOT, 0.3, THEME.TEXT_HI, TabHeight - 8, 0, THEME.ACCENT_HOT)
         if TabPages[name] then TabPages[name].Visible = true end
     end)
 
     Tabs[name] = {
         Button = tab, Text = textLabel, Stroke = stroke, Accent = tabAccent,
-        Arrow = arrow, Index = tabIndex,
-        AccentGradient = tabAccentGradient,
-        IsActive = false,
-        OriginalSize = originalSize, OriginalPos = originalPos,
+        Arrow = arrow, Index = tabIndex, AccentGradient = tabAccentGradient,
+        IsActive = false, OriginalSize = originalSize, OriginalPos = originalPos,
         ActiveSize = activeSize, ActivePos = activePos,
     }
     CreatePage(name)
 end
 
--- ====================================================================
 -- MAIN PAGE
--- ====================================================================
 local mainPage = TabPages["Main"]
 mainPage.CanvasSize = UDim2.new(0, 0, 0, 380)
 
@@ -1137,7 +1043,6 @@ bannerFrame.Size = UDim2.new(0.72, 0, 0, 90)
 bannerFrame.Position = UDim2.new(0.5, 0, 0, 3)
 bannerFrame.AnchorPoint = Vector2.new(0.5, 0)
 bannerFrame.BackgroundColor3 = THEME.BG_DARK
-bannerFrame.BorderSizePixel = 0
 bannerFrame.ClipsDescendants = true
 bannerFrame.ZIndex = 6
 bannerFrame.Parent = mainPage
@@ -1165,17 +1070,6 @@ bannerImage.Parent = bannerFrame
 local bannerImgCorner = Instance.new("UICorner", bannerImage)
 bannerImgCorner.CornerRadius = UDim.new(0, Config.CornerRadius)
 RegisterCorner(bannerImgCorner, Config.CornerRadius)
-
-task.spawn(function()
-    while bannerStroke.Parent do
-        TweenService:Create(bannerStroke, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.05}):Play()
-        TweenService:Create(bannerGlow, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.75}):Play()
-        task.wait(1.2)
-        TweenService:Create(bannerStroke, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.5}):Play()
-        TweenService:Create(bannerGlow, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.95}):Play()
-        task.wait(1.2)
-    end
-end)
 
 local greetFrame = Instance.new("Frame")
 greetFrame.Size = UDim2.new(1, 0, 0, 58)
@@ -1210,7 +1104,6 @@ greetBody.TextSize = 10
 greetBody.Font = Enum.Font.Gotham
 greetBody.TextWrapped = true
 greetBody.TextXAlignment = Enum.TextXAlignment.Left
-greetBody.TextYAlignment = Enum.TextYAlignment.Top
 greetBody.LineHeight = 1.15
 greetBody.Parent = greetFrame
 
@@ -1225,27 +1118,15 @@ greetBodyGradient.Color = ColorSequence.new({
 
 task.spawn(function()
     while greetTitleGradient.Parent do
-        for i = -1, 1, 0.03 do
-            greetTitleGradient.Offset = Vector2.new(i, 0)
-            task.wait(0.04)
-        end
-        for i = 1, -1, -0.03 do
-            greetTitleGradient.Offset = Vector2.new(i, 0)
-            task.wait(0.04)
-        end
+        for i = -1, 1, 0.03 do greetTitleGradient.Offset = Vector2.new(i, 0); task.wait(0.04) end
+        for i = 1, -1, -0.03 do greetTitleGradient.Offset = Vector2.new(i, 0); task.wait(0.04) end
     end
 end)
 
 task.spawn(function()
     while greetBodyGradient.Parent do
-        for i = -1.2, 1.2, 0.02 do
-            greetBodyGradient.Offset = Vector2.new(i, 0)
-            task.wait(0.035)
-        end
-        for i = 1.2, -1.2, -0.02 do
-            greetBodyGradient.Offset = Vector2.new(i, 0)
-            task.wait(0.035)
-        end
+        for i = -1.2, 1.2, 0.02 do greetBodyGradient.Offset = Vector2.new(i, 0); task.wait(0.035) end
+        for i = 1.2, -1.2, -0.02 do greetBodyGradient.Offset = Vector2.new(i, 0); task.wait(0.035) end
     end
 end)
 
@@ -1270,7 +1151,6 @@ splitGrad.Transparency = NumberSequence.new({
     NumberSequenceKeypoint.new(1, 1),
 })
 
--- LIVE STATUS
 local statusSection = Instance.new("Frame")
 statusSection.Size = UDim2.new(1, 0, 0, 18)
 statusSection.Position = UDim2.new(0, 0, 0, 172)
@@ -1309,9 +1189,9 @@ gridLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
 local statTiles = {}
 local statConfigs = {
-    {key = "FPS",     label = "FPS",     order = 1},
-    {key = "PING",    label = "PING",    order = 2},
-    {key = "MEMORY",  label = "MEMORY",  order = 3},
+    {key = "FPS", label = "FPS", order = 1},
+    {key = "PING", label = "PING", order = 2},
+    {key = "MEMORY", label = "MEMORY", order = 3},
     {key = "SESSION", label = "SESSION", order = 4},
 }
 
@@ -1389,39 +1269,12 @@ for _, cfg in ipairs(statConfigs) do
         ColorSequenceKeypoint.new(1, THEME.ACCENT_HOT),
     })
 
-    task.spawn(function()
-        while tileValueGradient.Parent do
-            for i = -1, 1, 0.04 do
-                tileValueGradient.Offset = Vector2.new(i, 0)
-                task.wait(0.05)
-            end
-            for i = 1, -1, -0.04 do
-                tileValueGradient.Offset = Vector2.new(i, 0)
-                task.wait(0.05)
-            end
-        end
-    end)
-
-    task.spawn(function()
-        while tileStroke.Parent do
-            TweenService:Create(tileStroke, TweenInfo.new(1.4, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.2}):Play()
-            task.wait(1.4)
-            TweenService:Create(tileStroke, TweenInfo.new(1.4, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.65}):Play()
-            task.wait(1.4)
-        end
-    end)
-
     statTiles[cfg.key] = { Value = tileValue }
 
     table.insert(ColorSyncedElements, {
-        Kind = "StatTile",
-        Stroke = tileStroke,
-        TopBar = tileTopBar,
-        TopGradient = tileTopGradient,
-        Value = tileValue,
-        ValueGradient = tileValueGradient,
-        InnerGlow = tileInnerGlow,
-        Dot = tileDot,
+        Kind = "StatTile", Stroke = tileStroke, TopBar = tileTopBar,
+        TopGradient = tileTopGradient, Value = tileValue,
+        ValueGradient = tileValueGradient, InnerGlow = tileInnerGlow, Dot = tileDot,
     })
 end
 
@@ -1429,41 +1282,37 @@ task.spawn(function()
     local sessionStart = tick()
     local frameCount = 0
     local lastFpsTime = tick()
-
-    RunService.RenderStepped:Connect(function()
-        frameCount = frameCount + 1
-    end)
-
+    RunService.RenderStepped:Connect(function() frameCount = frameCount + 1 end)
     while mainPage.Parent do
         local now = tick()
         if now - lastFpsTime >= 1 then
-            local fps = math.floor(frameCount / (now - lastFpsTime))
+            if statTiles["FPS"] then statTiles["FPS"].Value.Text = tostring(math.floor(frameCount / (now - lastFpsTime))) end
             frameCount = 0
             lastFpsTime = now
-            if statTiles["FPS"] then statTiles["FPS"].Value.Text = tostring(fps) end
         end
-        local ping = 0
-        pcall(function() ping = math.floor(LocalPlayer:GetNetworkPing() * 1000) end)
-        if statTiles["PING"] then statTiles["PING"].Value.Text = tostring(ping) .. "ms" end
-        local mem = 0
-        pcall(function() mem = math.floor(game:GetService("Stats"):GetTotalMemoryUsageMb()) end)
-        if statTiles["MEMORY"] then statTiles["MEMORY"].Value.Text = tostring(mem) .. "MB" end
-        local secs = math.floor(tick() - sessionStart)
-        local mins = math.floor(secs / 60)
-        local remSecs = secs % 60
-        if statTiles["SESSION"] then statTiles["SESSION"].Value.Text = string.format("%02d:%02d", mins, remSecs) end
+        if statTiles["PING"] then
+            local ping = 0
+            pcall(function() ping = math.floor(LocalPlayer:GetNetworkPing() * 1000) end)
+            statTiles["PING"].Value.Text = tostring(ping) .. "ms"
+        end
+        if statTiles["MEMORY"] then
+            local mem = 0
+            pcall(function() mem = math.floor(game:GetService("Stats"):GetTotalMemoryUsageMb()) end)
+            statTiles["MEMORY"].Value.Text = tostring(mem) .. "MB"
+        end
+        if statTiles["SESSION"] then
+            local secs = math.floor(tick() - sessionStart)
+            statTiles["SESSION"].Value.Text = string.format("%02d:%02d", math.floor(secs/60), secs % 60)
+        end
         task.wait(1)
     end
 end)
 
--- ====================================================================
--- DRAG HANDLE
--- ====================================================================
+-- DRAG
 local DragHandle = Instance.new("Frame")
 DragHandle.Size = UDim2.new(0, 60, 0, 60)
 DragHandle.Position = UDim2.new(1, -60, 0, 0)
 DragHandle.BackgroundTransparency = 1
-DragHandle.BorderSizePixel = 0
 DragHandle.ZIndex = 250
 DragHandle.Parent = MainFrame
 
@@ -1476,15 +1325,6 @@ DragCursor.ImageColor3 = THEME.ACCENT_GLOW
 DragCursor.ImageTransparency = 0.2
 DragCursor.ZIndex = 251
 DragCursor.Parent = DragHandle
-
-task.spawn(function()
-    while ScreenGui.Parent do
-        TweenService:Create(DragCursor, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {ImageTransparency = 0.5}):Play()
-        task.wait(1.2)
-        TweenService:Create(DragCursor, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {ImageTransparency = 0.2}):Play()
-        task.wait(1.2)
-    end
-end)
 
 local DragButton = Instance.new("TextButton")
 DragButton.Size = UDim2.new(1, 20, 1, 20)
@@ -1503,7 +1343,6 @@ DragButton.InputBegan:Connect(function(input)
         isDraggingMenu = true
         dragStartMouse = Vector2.new(input.Position.X, input.Position.Y)
         dragStartFrame = MainFrame.Position
-        TweenService:Create(DragCursor, TweenInfo.new(0.15), {ImageTransparency = 0}):Play()
     end
 end)
 
@@ -1522,19 +1361,15 @@ end)
 UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         isDraggingMenu = false
-        TweenService:Create(DragCursor, TweenInfo.new(0.2), {ImageTransparency = 0.2}):Play()
     end
 end)
 
--- ====================================================================
--- АВАТАР + БРЕНД
--- ====================================================================
+-- AVATAR
 local AvatarFrame = Instance.new("Frame")
 AvatarFrame.Size = UDim2.new(0, 50, 0, 50)
 AvatarFrame.Position = UDim2.new(0, 10, 1, -64)
 AvatarFrame.BackgroundColor3 = THEME.BG_MID
 AvatarFrame.BackgroundTransparency = 0.2
-AvatarFrame.BorderSizePixel = 0
 AvatarFrame.ZIndex = 10
 AvatarFrame.Parent = LeftPanel
 Instance.new("UICorner", AvatarFrame).CornerRadius = UDim.new(1, 0)
@@ -1588,7 +1423,6 @@ local BrandFrame = Instance.new("Frame")
 BrandFrame.Size = UDim2.new(0, 42, 0, 42)
 BrandFrame.Position = UDim2.new(1, -52, 1, -60)
 BrandFrame.BackgroundTransparency = 1
-BrandFrame.BorderSizePixel = 0
 BrandFrame.ZIndex = 10
 BrandFrame.Parent = LeftPanel
 Instance.new("UICorner", BrandFrame).CornerRadius = UDim.new(1, 0)
@@ -1603,9 +1437,7 @@ BrandImage.ZIndex = 11
 BrandImage.Parent = BrandFrame
 Instance.new("UICorner", BrandImage).CornerRadius = UDim.new(1, 0)
 
--- ====================================================================
--- FPS COUNTER
--- ====================================================================
+-- FPS
 local FpsFrame = Instance.new("Frame")
 FpsFrame.Size = UDim2.new(0, 70, 0, 18)
 FpsFrame.Position = UDim2.new(1, -80, 1, -22)
@@ -1634,14 +1466,8 @@ FpsGradient.Color = ColorSequence.new({
 
 task.spawn(function()
     while ScreenGui.Parent do
-        for i = -1, 1, 0.02 do
-            FpsGradient.Offset = Vector2.new(i, 0)
-            task.wait(0.04)
-        end
-        for i = 1, -1, -0.02 do
-            FpsGradient.Offset = Vector2.new(i, 0)
-            task.wait(0.04)
-        end
+        for i = -1, 1, 0.02 do FpsGradient.Offset = Vector2.new(i, 0); task.wait(0.04) end
+        for i = 1, -1, -0.02 do FpsGradient.Offset = Vector2.new(i, 0); task.wait(0.04) end
     end
 end)
 
@@ -1659,9 +1485,7 @@ task.spawn(function()
     end)
 end)
 
--- ====================================================================
--- ИСКРЫ
--- ====================================================================
+-- DOTS
 local DotContainer = Instance.new("Frame")
 DotContainer.Size = UDim2.new(1, 0, 1, 0)
 DotContainer.BackgroundTransparency = 1
@@ -1669,7 +1493,7 @@ DotContainer.ClipsDescendants = true
 DotContainer.ZIndex = 1
 DotContainer.Parent = LeftPanel
 
-function RebuildDots()
+local function RebuildDots()
     for _, dot in ipairs(Config.Dots) do
         if dot.Frame then dot.Frame:Destroy() end
     end
@@ -1696,7 +1520,6 @@ function RebuildDots()
             Frame = star, SpeedX = math.random(3, 6) / 10, SpeedY = -math.random(4, 8) / 10,
             PosX = startX, PosY = startY,
             PulseSpeed = math.random(15, 30) / 10, PulsePhase = math.random() * math.pi * 2,
-            MaxX = w, MaxY = h,
         })
     end
 end
@@ -1728,9 +1551,7 @@ task.spawn(function()
     end
 end)
 
--- ====================================================================
--- СВЕТЯЩАЯСЯ ТОЧКА + SCAN LINE
--- ====================================================================
+-- STATUS DOT + SCAN
 local StatusDot = Instance.new("Frame")
 StatusDot.Size = UDim2.new(0, 6, 0, 6)
 StatusDot.Position = UDim2.new(0, 8, 0, 8)
@@ -1749,14 +1570,8 @@ DotGradient.Color = ColorSequence.new({
 
 task.spawn(function()
     while ScreenGui.Parent do
-        for i = -1, 1, 0.01 do
-            DotGradient.Offset = Vector2.new(i, 0)
-            task.wait(0.04)
-        end
-        for i = 1, -1, -0.01 do
-            DotGradient.Offset = Vector2.new(i, 0)
-            task.wait(0.04)
-        end
+        for i = -1, 1, 0.01 do DotGradient.Offset = Vector2.new(i, 0); task.wait(0.04) end
+        for i = 1, -1, -0.01 do DotGradient.Offset = Vector2.new(i, 0); task.wait(0.04) end
     end
 end)
 
@@ -1780,10 +1595,7 @@ task.spawn(function()
         if Config.ScanLineEnabled then
             ScanLine.Visible = true
             ScanLine.Position = UDim2.new(0, 0, 0, 0)
-            ScanLine.BackgroundTransparency = 0.5
-            local t = TweenService:Create(ScanLine, TweenInfo.new(1.8, Enum.EasingStyle.Linear), {
-                Position = UDim2.new(0, 0, 1, 0)
-            })
+            local t = TweenService:Create(ScanLine, TweenInfo.new(1.8, Enum.EasingStyle.Linear), {Position = UDim2.new(0, 0, 1, 0)})
             t:Play()
             t.Completed:Wait()
             task.wait(2)
@@ -1796,20 +1608,18 @@ end)
 
 task.spawn(function()
     while ScreenGui.Parent do
-        TweenService:Create(LogoBadgeGlow, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.3}):Play()
-        TweenService:Create(MainStroke, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.15}):Play()
-        TweenService:Create(AvatarGlow, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.75}):Play()
+        TweenService:Create(LogoBadgeGlow, TweenInfo.new(0.8), {Transparency = 0.3}):Play()
+        TweenService:Create(MainStroke, TweenInfo.new(0.8), {Transparency = 0.15}):Play()
+        TweenService:Create(AvatarGlow, TweenInfo.new(0.8), {Transparency = 0.75}):Play()
         task.wait(0.8)
-        TweenService:Create(LogoBadgeGlow, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.75}):Play()
-        TweenService:Create(MainStroke, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.5}):Play()
-        TweenService:Create(AvatarGlow, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.95}):Play()
+        TweenService:Create(LogoBadgeGlow, TweenInfo.new(0.8), {Transparency = 0.75}):Play()
+        TweenService:Create(MainStroke, TweenInfo.new(0.8), {Transparency = 0.5}):Play()
+        TweenService:Create(AvatarGlow, TweenInfo.new(0.8), {Transparency = 0.95}):Play()
         task.wait(0.8)
     end
 end)
 
--- ====================================================================
--- СОЗДАНИЕ UI ФУНКЦИЙ (CreateSection/Toggle/Slider)
--- ====================================================================
+-- UI HELPERS
 local function CreateSection(parent, title, yPos, color)
     local section = Instance.new("Frame")
     section.Size = UDim2.new(1, 0, 0, 24)
@@ -1899,7 +1709,7 @@ local function CreateToggle(parent, name, descText, yPos, default, callback)
 
     local function SetState(value, animate)
         state = value
-        local ti = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local ti = TweenInfo.new(0.2, Enum.EasingStyle.Quad)
         local targetBg = value and THEME.ACCENT or Color3.fromRGB(30, 25, 45)
         local targetStroke = value and THEME.ACCENT_HOT or THEME.LINE
         local targetPos = value and UDim2.new(0, 23, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
@@ -1921,9 +1731,7 @@ local function CreateToggle(parent, name, descText, yPos, default, callback)
     end)
 
     table.insert(ColorSyncedElements, {
-        Kind = "Toggle",
-        ToggleBg = toggleBg,
-        ToggleStroke = toggleStroke,
+        Kind = "Toggle", ToggleBg = toggleBg, ToggleStroke = toggleStroke,
         GetState = function() return state end,
     })
 
@@ -2018,8 +1826,8 @@ local function CreateSlider(parent, name, descText, yPos, minVal, maxVal, defaul
         val = math.clamp(val, minVal, maxVal)
         local p = (val - minVal) / (maxVal - minVal)
         if animate then
-            TweenService:Create(barFill, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Size = UDim2.new(p, 0, 1, 0)}):Play()
-            TweenService:Create(handle, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Position = UDim2.new(p, -7, 0.5, -7)}):Play()
+            TweenService:Create(barFill, TweenInfo.new(0.2), {Size = UDim2.new(p, 0, 1, 0)}):Play()
+            TweenService:Create(handle, TweenInfo.new(0.2), {Position = UDim2.new(p, -7, 0.5, -7)}):Play()
         else
             barFill.Size = UDim2.new(p, 0, 1, 0)
             handle.Position = UDim2.new(p, -7, 0.5, -7)
@@ -2033,8 +1841,7 @@ local function CreateSlider(parent, name, descText, yPos, minVal, maxVal, defaul
         local width = barBg.AbsoluteSize.X
         if width <= 0 then return end
         local percent = math.clamp((mouseX - absPos) / width, 0, 1)
-        local val = minVal + percent * (maxVal - minVal)
-        SetValue(val, false)
+        SetValue(minVal + percent * (maxVal - minVal), false)
     end
 
     dragArea.InputBegan:Connect(function(input)
@@ -2055,31 +1862,14 @@ local function CreateSlider(parent, name, descText, yPos, minVal, maxVal, defaul
     end)
 
     table.insert(ColorSyncedElements, {
-        Kind = "Slider",
-        BarFill = barFill,
-        BarFillGradient = barFillGradient,
-        ValueLabel = valueLabel,
-        HandleGlow = handleGlow,
+        Kind = "Slider", BarFill = barFill, BarFillGradient = barFillGradient,
+        ValueLabel = valueLabel, HandleGlow = handleGlow,
     })
 
     SliderRegistry[name] = SetValue
 end
 
--- ====================================================================
--- VISUALS FUNCTIONS (Ball ESP + Predictor)
--- ====================================================================
-local _ballModel = nil
-local _ballHighlight = nil
-local _ballParticles = nil
-local _ballLight = nil
-local _predRing = nil
-local _predCenter = nil
-local _predTracer = nil
-local _predLastPos = nil
-local _predLastTime = nil
-local _predSmoothVel = nil
-local _predSmoothLand = nil
-
+-- VISUALS FUNCTIONS
 local function _FindBall()
     for _, obj in ipairs(workspace:GetChildren()) do
         if obj:IsA("Model") and string.find(string.lower(obj.Name), "client_ball") then
@@ -2090,8 +1880,7 @@ local function _FindBall()
         if obj:IsA("Model") and obj.PrimaryPart then
             local lname = string.lower(obj.Name)
             if (string.find(lname, "volleyball") or string.find(lname, "ball"))
-               and not string.find(lname, "shadow")
-               and not string.find(lname, "rack") then
+               and not string.find(lname, "shadow") and not string.find(lname, "rack") then
                 return obj
             end
         end
@@ -2135,9 +1924,9 @@ local function _PredictLanding(origin, velocity)
 end
 
 local function _DestroyBallESP()
-    if _ballHighlight then pcall(function() _ballHighlight:Destroy() end) _ballHighlight = nil end
-    if _ballParticles then pcall(function() _ballParticles:Destroy() end) _ballParticles = nil end
-    if _ballLight then pcall(function() _ballLight:Destroy() end) _ballLight = nil end
+    if BallESP.highlight then pcall(function() BallESP.highlight:Destroy() end) BallESP.highlight = nil end
+    if BallESP.particles then pcall(function() BallESP.particles:Destroy() end) BallESP.particles = nil end
+    if BallESP.light then pcall(function() BallESP.light:Destroy() end) BallESP.light = nil end
 end
 
 local function _CreateBallESP(ball)
@@ -2145,159 +1934,151 @@ local function _CreateBallESP(ball)
     if not ball or not ball.PrimaryPart then return end
     local primary = ball.PrimaryPart
 
-    _ballHighlight = Instance.new("Highlight")
-    _ballHighlight.Name = "VL_BallESP"
-    _ballHighlight.Adornee = primary
-    _ballHighlight.FillColor = THEME.ACCENT
-    _ballHighlight.OutlineColor = THEME.ACCENT_HOT
-    _ballHighlight.FillTransparency = 0.55
-    _ballHighlight.OutlineTransparency = 0
-    _ballHighlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-    _ballHighlight.Parent = safeParent
+    BallESP.highlight = Instance.new("Highlight")
+    BallESP.highlight.Name = "VL_BallESP"
+    BallESP.highlight.Adornee = primary
+    BallESP.highlight.FillColor = THEME.ACCENT
+    BallESP.highlight.OutlineColor = THEME.ACCENT_HOT
+    BallESP.highlight.FillTransparency = 0.55
+    BallESP.highlight.OutlineTransparency = 0
+    BallESP.highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    BallESP.highlight.Parent = safeParent
 
-    _ballParticles = Instance.new("ParticleEmitter")
-    _ballParticles.Name = "VL_BallSparks"
-    _ballParticles.Texture = "rbxasset://textures/particles/sparkles_main.dds"
-    _ballParticles.LightEmission = 1
-    _ballParticles.LightInfluence = 0
-    _ballParticles.Size = NumberSequence.new({
+    BallESP.particles = Instance.new("ParticleEmitter")
+    BallESP.particles.Name = "VL_BallSparks"
+    BallESP.particles.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+    BallESP.particles.LightEmission = 1
+    BallESP.particles.LightInfluence = 0
+    BallESP.particles.Size = NumberSequence.new({
         NumberSequenceKeypoint.new(0, 0),
         NumberSequenceKeypoint.new(0.5, 0.35),
         NumberSequenceKeypoint.new(1, 0),
     })
-    _ballParticles.Transparency = NumberSequence.new({
+    BallESP.particles.Transparency = NumberSequence.new({
         NumberSequenceKeypoint.new(0, 1),
         NumberSequenceKeypoint.new(0.3, 0.2),
         NumberSequenceKeypoint.new(1, 1),
     })
-    _ballParticles.Lifetime = NumberRange.new(0.6, 1.1)
-    _ballParticles.Rate = 25
-    _ballParticles.Speed = NumberRange.new(0.4, 1.2)
-    _ballParticles.SpreadAngle = Vector2.new(360, 360)
-    _ballParticles.Color = ColorSequence.new({
+    BallESP.particles.Lifetime = NumberRange.new(0.6, 1.1)
+    BallESP.particles.Rate = 25
+    BallESP.particles.Speed = NumberRange.new(0.4, 1.2)
+    BallESP.particles.SpreadAngle = Vector2.new(360, 360)
+    BallESP.particles.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, THEME.ACCENT),
         ColorSequenceKeypoint.new(1, THEME.ACCENT_GLOW),
     })
-    _ballParticles.Parent = primary
+    BallESP.particles.Parent = primary
 
-    _ballLight = Instance.new("PointLight")
-    _ballLight.Color = THEME.ACCENT
-    _ballLight.Brightness = 2
-    _ballLight.Range = 10
-    _ballLight.Shadows = false
-    _ballLight.Parent = primary
+    BallESP.light = Instance.new("PointLight")
+    BallESP.light.Color = THEME.ACCENT
+    BallESP.light.Brightness = 2
+    BallESP.light.Range = 10
+    BallESP.light.Shadows = false
+    BallESP.light.Parent = primary
 end
 
 local function _CreatePredictorVisuals()
-    if _predRing then _predRing:Destroy() end
-    if _predCenter then _predCenter:Destroy() end
-    if _predTracer then _predTracer:Destroy() end
+    if Pred.ring then Pred.ring:Destroy() end
+    if Pred.center then Pred.center:Destroy() end
+    if Pred.tracer then Pred.tracer:Destroy() end
 
-    _predRing = Instance.new("Part")
-    _predRing.Name = "VL_PredRing"
-    _predRing.Shape = Enum.PartType.Cylinder
-    _predRing.Size = Vector3.new(0.1, 4, 4)
-    _predRing.Anchored = true
-    _predRing.CanCollide = false
-    _predRing.CanQuery = false
-    _predRing.CanTouch = false
-    _predRing.Material = Enum.Material.Neon
-    _predRing.Color = THEME.ACCENT_HOT
-    _predRing.Transparency = 1
-    _predRing.Parent = workspace
+    Pred.ring = Instance.new("Part")
+    Pred.ring.Name = "VL_PredRing"
+    Pred.ring.Shape = Enum.PartType.Cylinder
+    Pred.ring.Size = Vector3.new(0.1, 4, 4)
+    Pred.ring.Anchored = true
+    Pred.ring.CanCollide = false
+    Pred.ring.CanQuery = false
+    Pred.ring.CanTouch = false
+    Pred.ring.Material = Enum.Material.Neon
+    Pred.ring.Color = THEME.ACCENT_HOT
+    Pred.ring.Transparency = 1
+    Pred.ring.Parent = workspace
 
-    _predCenter = Instance.new("Part")
-    _predCenter.Name = "VL_PredCenter"
-    _predCenter.Shape = Enum.PartType.Cylinder
-    _predCenter.Size = Vector3.new(0.15, 0.8, 0.8)
-    _predCenter.Anchored = true
-    _predCenter.CanCollide = false
-    _predCenter.CanQuery = false
-    _predCenter.CanTouch = false
-    _predCenter.Material = Enum.Material.Neon
-    _predCenter.Color = THEME.ACCENT
-    _predCenter.Transparency = 1
-    _predCenter.Parent = workspace
+    Pred.center = Instance.new("Part")
+    Pred.center.Name = "VL_PredCenter"
+    Pred.center.Shape = Enum.PartType.Cylinder
+    Pred.center.Size = Vector3.new(0.15, 0.8, 0.8)
+    Pred.center.Anchored = true
+    Pred.center.CanCollide = false
+    Pred.center.CanQuery = false
+    Pred.center.CanTouch = false
+    Pred.center.Material = Enum.Material.Neon
+    Pred.center.Color = THEME.ACCENT
+    Pred.center.Transparency = 1
+    Pred.center.Parent = workspace
 
-    _predTracer = Instance.new("Frame")
-    _predTracer.Name = "VL_PredTracer"
-    _predTracer.AnchorPoint = Vector2.new(0, 0.5)
-    _predTracer.Size = UDim2.new(0, 0, 0, 1.5)
-    _predTracer.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    _predTracer.BackgroundTransparency = 0.1
-    _predTracer.BorderSizePixel = 0
-    _predTracer.ZIndex = 85
-    _predTracer.Visible = false
-    _predTracer.Parent = safeParent
+    Pred.tracer = Instance.new("Frame")
+    Pred.tracer.Name = "VL_PredTracer"
+    Pred.tracer.AnchorPoint = Vector2.new(0, 0.5)
+    Pred.tracer.Size = UDim2.new(0, 0, 0, 1.5)
+    Pred.tracer.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Pred.tracer.BackgroundTransparency = 0.1
+    Pred.tracer.BorderSizePixel = 0
+    Pred.tracer.ZIndex = 85
+    Pred.tracer.Visible = false
+    Pred.tracer.Parent = safeParent
 end
 
 _CreatePredictorVisuals()
 
 task.spawn(function()
     while ScreenGui.Parent do
-        if not _ballModel or not _ballModel.Parent or not _ballModel.PrimaryPart then
-            _ballModel = _FindBall()
-            if _ballModel and Config.BallESPEnabled then
-                _CreateBallESP(_ballModel)
+        if not BallESP.model or not BallESP.model.Parent or not BallESP.model.PrimaryPart then
+            BallESP.model = _FindBall()
+            if BallESP.model and Config.BallESPEnabled then
+                _CreateBallESP(BallESP.model)
             end
         end
-
-        local ball = _ballModel
+        local ball = BallESP.model
         if ball and ball.PrimaryPart then
             local ballPos = ball.PrimaryPart.Position
-
-            -- Ball ESP
             if Config.BallESPEnabled then
-                if not _ballHighlight or not _ballHighlight.Parent then
+                if not BallESP.highlight or not BallESP.highlight.Parent then
                     _CreateBallESP(ball)
                 else
-                    _ballHighlight.Adornee = ball.PrimaryPart
-                    _ballHighlight.FillColor = THEME.ACCENT
-                    _ballHighlight.OutlineColor = THEME.ACCENT_HOT
-                    if _ballParticles and _ballParticles.Parent ~= ball.PrimaryPart then
-                        _ballParticles.Parent = ball.PrimaryPart
+                    BallESP.highlight.Adornee = ball.PrimaryPart
+                    BallESP.highlight.FillColor = THEME.ACCENT
+                    BallESP.highlight.OutlineColor = THEME.ACCENT_HOT
+                    if BallESP.particles and BallESP.particles.Parent ~= ball.PrimaryPart then
+                        BallESP.particles.Parent = ball.PrimaryPart
                     end
-                    if _ballLight and _ballLight.Parent ~= ball.PrimaryPart then
-                        _ballLight.Parent = ball.PrimaryPart
+                    if BallESP.light and BallESP.light.Parent ~= ball.PrimaryPart then
+                        BallESP.light.Parent = ball.PrimaryPart
                     end
                 end
             else
-                if _ballHighlight then _DestroyBallESP() end
+                if BallESP.highlight then _DestroyBallESP() end
             end
-
-            -- Predictor
             if Config.BallPredictorEnabled then
                 local now = tick()
-                if _predLastPos and _predLastTime then
-                    local dt = now - _predLastTime
+                if Pred.lastPos and Pred.lastTime then
+                    local dt = now - Pred.lastTime
                     if dt > 0.001 then
-                        local rawVel = (ballPos - _predLastPos) / dt
-                        if _predSmoothVel then
-                            _predSmoothVel = _predSmoothVel:Lerp(rawVel, 0.12)
+                        local rawVel = (ballPos - Pred.lastPos) / dt
+                        if Pred.smoothVel then
+                            Pred.smoothVel = Pred.smoothVel:Lerp(rawVel, 0.12)
                         else
-                            _predSmoothVel = rawVel
+                            Pred.smoothVel = rawVel
                         end
                     end
                 end
-                _predLastPos = ballPos
-                _predLastTime = now
-
-                if _predSmoothVel and _predSmoothVel.Magnitude >= 3 then
-                    local landing = _PredictLanding(ballPos, _predSmoothVel)
-                    if _predSmoothLand then
-                        _predSmoothLand = _predSmoothLand:Lerp(landing, 0.15)
+                Pred.lastPos = ballPos
+                Pred.lastTime = now
+                if Pred.smoothVel and Pred.smoothVel.Magnitude >= 3 then
+                    local landing = _PredictLanding(ballPos, Pred.smoothVel)
+                    if Pred.smoothLand then
+                        Pred.smoothLand = Pred.smoothLand:Lerp(landing, 0.15)
                     else
-                        _predSmoothLand = landing
+                        Pred.smoothLand = landing
                     end
-                    local fp = _predSmoothLand
-
-                    _predRing.CFrame = CFrame.new(fp.X, fp.Y + 0.05, fp.Z) * CFrame.Angles(0, 0, math.rad(90))
-                    _predRing.Transparency = 0.3
-                    _predRing.Color = THEME.ACCENT_HOT
-                    _predCenter.CFrame = CFrame.new(fp.X, fp.Y + 0.1, fp.Z) * CFrame.Angles(0, 0, math.rad(90))
-                    _predCenter.Transparency = 0.1
-                    _predCenter.Color = THEME.ACCENT
-
+                    local fp = Pred.smoothLand
+                    Pred.ring.CFrame = CFrame.new(fp.X, fp.Y + 0.05, fp.Z) * CFrame.Angles(0, 0, math.rad(90))
+                    Pred.ring.Transparency = 0.3
+                    Pred.ring.Color = THEME.ACCENT_HOT
+                    Pred.center.CFrame = CFrame.new(fp.X, fp.Y + 0.1, fp.Z) * CFrame.Angles(0, 0, math.rad(90))
+                    Pred.center.Transparency = 0.1
+                    Pred.center.Color = THEME.ACCENT
                     local cam = workspace.CurrentCamera
                     if cam then
                         local bs, bsOn = cam:WorldToViewportPoint(ballPos)
@@ -2307,41 +2088,38 @@ task.spawn(function()
                             local dy = ls.Y - bs.Y
                             local len = math.sqrt(dx*dx + dy*dy)
                             if len > 5 then
-                                _predTracer.Position = UDim2.new(0, bs.X, 0, bs.Y)
-                                _predTracer.Size = UDim2.new(0, len, 0, 1.5)
-                                _predTracer.Rotation = math.deg(math.atan2(dy, dx))
-                                _predTracer.Visible = true
+                                Pred.tracer.Position = UDim2.new(0, bs.X, 0, bs.Y)
+                                Pred.tracer.Size = UDim2.new(0, len, 0, 1.5)
+                                Pred.tracer.Rotation = math.deg(math.atan2(dy, dx))
+                                Pred.tracer.Visible = true
                             else
-                                _predTracer.Visible = false
+                                Pred.tracer.Visible = false
                             end
                         else
-                            _predTracer.Visible = false
+                            Pred.tracer.Visible = false
                         end
                     end
                 else
-                    _predRing.Transparency = 1
-                    _predCenter.Transparency = 1
-                    _predTracer.Visible = false
+                    Pred.ring.Transparency = 1
+                    Pred.center.Transparency = 1
+                    Pred.tracer.Visible = false
                 end
             else
-                _predRing.Transparency = 1
-                _predCenter.Transparency = 1
-                _predTracer.Visible = false
+                Pred.ring.Transparency = 1
+                Pred.center.Transparency = 1
+                Pred.tracer.Visible = false
             end
         else
-            if _ballHighlight then _DestroyBallESP() end
-            if _predRing then _predRing.Transparency = 1 end
-            if _predCenter then _predCenter.Transparency = 1 end
-            if _predTracer then _predTracer.Visible = false end
+            if BallESP.highlight then _DestroyBallESP() end
+            if Pred.ring then Pred.ring.Transparency = 1 end
+            if Pred.center then Pred.center.Transparency = 1 end
+            if Pred.tracer then Pred.tracer.Visible = false end
         end
-
         task.wait(0.03)
     end
 end)
 
--- ====================================================================
--- COMBAT PAGE — Hitbox Expander
--- ====================================================================
+-- COMBAT PAGE
 local combatPage = TabPages["Combat"]
 combatPage.CanvasSize = UDim2.new(0, 0, 0, 400)
 
@@ -2350,7 +2128,6 @@ local function ExpandHitboxes()
     if not Assets then return 0 end
     local HitboxesNew = Assets:FindFirstChild("HitboxesNew")
     if not HitboxesNew then return 0 end
-
     local count = 0
     local function processFolder(folder)
         for _, sub in ipairs(folder:GetChildren()) do
@@ -2368,12 +2145,10 @@ local function ExpandHitboxes()
             end
         end
     end
-
     local d = HitboxesNew:FindFirstChild("Default")
     if d then processFolder(d) end
     local bs = HitboxesNew:FindFirstChild("BySpecial")
     if bs then processFolder(bs) end
-
     return count
 end
 
@@ -2392,9 +2167,7 @@ end
 
 task.spawn(function()
     while ScreenGui.Parent do
-        if Config.HitboxEnabled then
-            pcall(ExpandHitboxes)
-        end
+        if Config.HitboxEnabled then pcall(ExpandHitboxes) end
         task.wait(1)
     end
 end)
@@ -2416,9 +2189,7 @@ CreateSlider(combatPage, "Hitbox Size", "Размер (10-200)", 95, 10, 200, Co
     if Config.HitboxEnabled then ExpandHitboxes() end
 end)
 
--- ====================================================================
--- VISUALS PAGE — Ball ESP + Predictor
--- ====================================================================
+-- VISUALS PAGE
 local visualsPage = TabPages["Visuals"]
 visualsPage.CanvasSize = UDim2.new(0, 0, 0, 400)
 
@@ -2427,7 +2198,7 @@ CreateSection(visualsPage, "// BALL VISUALS", 10, Color3.fromRGB(120, 220, 255))
 CreateToggle(visualsPage, "Ball ESP", "Аура + блёстки + свет на мяче", 40, Config.BallESPEnabled, function(v)
     Config.BallESPEnabled = v
     if v then
-        if _ballModel then _CreateBallESP(_ballModel) end
+        if BallESP.model then _CreateBallESP(BallESP.model) end
     else
         _DestroyBallESP()
     end
@@ -2436,17 +2207,15 @@ end)
 CreateToggle(visualsPage, "Ball Predictor", "Линия + круг куда летит мяч", 95, Config.BallPredictorEnabled, function(v)
     Config.BallPredictorEnabled = v
     if not v then
-        _predSmoothVel = nil
-        _predSmoothLand = nil
-        if _predRing then _predRing.Transparency = 1 end
-        if _predCenter then _predCenter.Transparency = 1 end
-        if _predTracer then _predTracer.Visible = false end
+        Pred.smoothVel = nil
+        Pred.smoothLand = nil
+        if Pred.ring then Pred.ring.Transparency = 1 end
+        if Pred.center then Pred.center.Transparency = 1 end
+        if Pred.tracer then Pred.tracer.Visible = false end
     end
 end)
 
--- ====================================================================
 -- SETTINGS PAGE
--- ====================================================================
 local settingsPage = TabPages["Settings"]
 settingsPage.CanvasSize = UDim2.new(0, 0, 0, 1080)
 
@@ -2473,21 +2242,17 @@ end)
 
 CreateSection(settingsPage, "// LAYOUT", 275, THEME.ACCENT_HOT)
 
-CreateSlider(settingsPage, "Menu Scale", "Resize the whole menu proportionally", 305, 70, 130, 100, "%", function(v)
+CreateSlider(settingsPage, "Menu Scale", "Resize the whole menu", 305, 70, 130, 100, "%", function(v)
     Config.MenuScale = v
-    TweenService:Create(MainScale, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Scale = v / 100}):Play()
+    TweenService:Create(MainScale, TweenInfo.new(0.15), {Scale = v / 100}):Play()
 end)
 
-CreateSlider(settingsPage, "Corner Radius", "Round corners of all panels and buttons", 365, 0, 16, 8, "px", function(v)
+CreateSlider(settingsPage, "Corner Radius", "Round corners", 365, 0, 16, 8, "px", function(v)
     Config.CornerRadius = v
     for _, el in ipairs(CornerElements) do
         local parent = el.Corner.Parent
-        local offset = 0
-        if parent == PanelHolder then offset = -2 end
-        local target = math.max(0, v + offset)
-        TweenService:Create(el.Corner, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            CornerRadius = UDim.new(0, target)
-        }):Play()
+        local offset = (parent == PanelHolder) and -2 or 0
+        TweenService:Create(el.Corner, TweenInfo.new(0.15), {CornerRadius = UDim.new(0, math.max(0, v + offset))}):Play()
     end
 end)
 
@@ -2499,7 +2264,6 @@ local paletteFrame = Instance.new("Frame")
 paletteFrame.Size = UDim2.new(0, paletteSize, 0, paletteSize)
 paletteFrame.Position = UDim2.new(0, 0, 0, 475)
 paletteFrame.BackgroundColor3 = Color3.fromRGB(30, 25, 45)
-paletteFrame.BorderSizePixel = 0
 paletteFrame.Parent = settingsPage
 Instance.new("UICorner", paletteFrame).CornerRadius = UDim.new(1, 0)
 
@@ -2522,20 +2286,14 @@ pickerDot.Size = UDim2.new(0, 12, 0, 12)
 pickerDot.AnchorPoint = Vector2.new(0.5, 0.5)
 pickerDot.Position = UDim2.new(0.5, 0, 0.5, 0)
 pickerDot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-pickerDot.BorderSizePixel = 0
 pickerDot.ZIndex = 5
 pickerDot.Parent = paletteFrame
 Instance.new("UICorner", pickerDot).CornerRadius = UDim.new(1, 0)
-
-local pickerDotStroke = Instance.new("UIStroke", pickerDot)
-pickerDotStroke.Thickness = 2
-pickerDotStroke.Color = Color3.fromRGB(0, 0, 0)
 
 local previewBox = Instance.new("Frame")
 previewBox.Size = UDim2.new(0, 60, 0, 60)
 previewBox.Position = UDim2.new(0, paletteSize + 20, 0, 475 + (paletteSize - 60) / 2 - 30)
 previewBox.BackgroundColor3 = THEME.ACCENT
-previewBox.BorderSizePixel = 0
 previewBox.Parent = settingsPage
 local previewCorner = Instance.new("UICorner", previewBox)
 previewCorner.CornerRadius = UDim.new(0, 6)
@@ -2560,9 +2318,7 @@ hexLabel.Parent = settingsPage
 local resetColorBtn = Instance.new("TextButton")
 resetColorBtn.Size = UDim2.new(1, -50, 0, 32)
 resetColorBtn.Position = UDim2.new(0, 0, 0, 475 + paletteSize + 15)
-resetColorBtn.BackgroundColor3 = Color3.fromRGB(20, 15, 30)
 resetColorBtn.BackgroundTransparency = 1
-resetColorBtn.BorderSizePixel = 0
 resetColorBtn.Text = "Reset Color"
 resetColorBtn.TextColor3 = Color3.fromRGB(120, 220, 255)
 resetColorBtn.TextSize = 13
@@ -2596,23 +2352,20 @@ dragArea.Parent = paletteFrame
 
 local function ColorToHex(c)
     return string.format("#%02X%02X%02X",
-        math.floor(c.R * 255 + 0.5),
-        math.floor(c.G * 255 + 0.5),
-        math.floor(c.B * 255 + 0.5))
+        math.floor(c.R * 255 + 0.5), math.floor(c.G * 255 + 0.5), math.floor(c.B * 255 + 0.5))
 end
 
 local function ApplyAccentColor(color)
     local h, s, v = Color3.toHSV(color)
     v = 1
     s = math.clamp(s * 1.4, 0, 1)
+    local newAccent = Color3.fromHSV(h, s, v)
+    local newHot = Color3.fromHSV(h, 1, 1)
+    local newDark = Color3.fromHSV(h, math.clamp(s * 0.9, 0, 1), 0.55)
+    local newGlow = Color3.fromHSV(h, math.clamp(s * 0.5, 0, 1), 1)
 
-    local newAccent     = Color3.fromHSV(h, s, v)
-    local newHot        = Color3.fromHSV(h, 1, 1)
-    local newDark       = Color3.fromHSV(h, math.clamp(s * 0.9, 0, 1), 0.55)
-    local newGlow       = Color3.fromHSV(h, math.clamp(s * 0.5, 0, 1), 1)
-
-    THEME.ACCENT      = newAccent
-    THEME.ACCENT_HOT  = newHot
+    THEME.ACCENT = newAccent
+    THEME.ACCENT_HOT = newHot
     THEME.ACCENT_DARK = newDark
     THEME.ACCENT_GLOW = newGlow
 
@@ -2631,9 +2384,11 @@ local function ApplyAccentColor(color)
     PlayerTag.TextColor3 = newHot
     DragCursor.ImageColor3 = newGlow
     paletteStroke.Color = newDark
-
     bannerStroke.Color = newAccent
     bannerGlow.Color = newGlow
+    statusSectionLine.BackgroundColor3 = newHot
+    statusSectionLabel.TextColor3 = newHot
+    splitLine.BackgroundColor3 = newAccent
 
     greetTitleGradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, newGlow),
@@ -2646,15 +2401,11 @@ local function ApplyAccentColor(color)
         ColorSequenceKeypoint.new(0.7, newHot),
         ColorSequenceKeypoint.new(1, newDark),
     })
-    statusSectionLine.BackgroundColor3 = newHot
-    statusSectionLabel.TextColor3 = newHot
-    splitLine.BackgroundColor3 = newAccent
     splitGrad.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, newDark),
         ColorSequenceKeypoint.new(0.5, newHot),
         ColorSequenceKeypoint.new(1, newDark),
     })
-
     AccentGradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, newHot),
         ColorSequenceKeypoint.new(1, newAccent),
@@ -2711,8 +2462,7 @@ local function ApplyAccentColor(color)
             tData.Button.BackgroundColor3 = Color3.fromRGB(
                 math.floor(newAccent.R * 60 + 10),
                 math.floor(newAccent.G * 60 + 10),
-                math.floor(newAccent.B * 60 + 10)
-            )
+                math.floor(newAccent.B * 60 + 10))
             tData.Stroke.Color = newHot
             tData.Index.TextColor3 = newHot
         else
@@ -2725,30 +2475,28 @@ local function ApplyAccentColor(color)
     previewStroke.Color = newHot
     hexLabel.Text = ColorToHex(newAccent)
 
-    br_TL_h.BackgroundColor3 = newHot
-    br_TL_v.BackgroundColor3 = newHot
-    br_TR_h.BackgroundColor3 = newHot
-    br_TR_v.BackgroundColor3 = newHot
-    br_BL_h.BackgroundColor3 = newHot
-    br_BL_v.BackgroundColor3 = newHot
-    br_BR_h.BackgroundColor3 = newHot
-    br_BR_v.BackgroundColor3 = newHot
+    Br.TL_h.BackgroundColor3 = newHot
+    Br.TL_v.BackgroundColor3 = newHot
+    Br.TR_h.BackgroundColor3 = newHot
+    Br.TR_v.BackgroundColor3 = newHot
+    Br.BL_h.BackgroundColor3 = newHot
+    Br.BL_v.BackgroundColor3 = newHot
+    Br.BR_h.BackgroundColor3 = newHot
+    Br.BR_v.BackgroundColor3 = newHot
 
-    if _ballHighlight then
-        _ballHighlight.FillColor = newAccent
-        _ballHighlight.OutlineColor = newHot
+    if BallESP.highlight then
+        BallESP.highlight.FillColor = newAccent
+        BallESP.highlight.OutlineColor = newHot
     end
-    if _ballParticles then
-        _ballParticles.Color = ColorSequence.new({
+    if BallESP.particles then
+        BallESP.particles.Color = ColorSequence.new({
             ColorSequenceKeypoint.new(0, newAccent),
             ColorSequenceKeypoint.new(1, newGlow),
         })
     end
-    if _ballLight then
-        _ballLight.Color = newAccent
-    end
-    if _predRing then _predRing.Color = newHot end
-    if _predCenter then _predCenter.Color = newAccent end
+    if BallESP.light then BallESP.light.Color = newAccent end
+    if Pred.ring then Pred.ring.Color = newHot end
+    if Pred.center then Pred.center.Color = newAccent end
 
     for _, el in ipairs(ColorSyncedElements) do
         if el.Kind == "Toggle" then
@@ -2797,17 +2545,14 @@ local function UpdateColorFromPosition(inputPos)
     local rel = Vector2.new(inputPos.X - center.X, inputPos.Y - center.Y)
     local radius = paletteFrame.AbsoluteSize.X / 2
     local dist = math.sqrt(rel.X * rel.X + rel.Y * rel.Y)
-
     local hue = (math.atan2(rel.Y, rel.X) / (math.pi * 2)) % 1
     local saturation = math.clamp(dist / radius, 0, 1)
     local boostedSat = math.clamp(math.sqrt(saturation) * 1.3, 0, 1)
     local pickedColor = Color3.fromHSV(hue, boostedSat, 1)
-
     local clampedDist = math.min(dist, radius)
     local nx = math.cos(hue * math.pi * 2) * clampedDist
     local ny = math.sin(hue * math.pi * 2) * clampedDist
     pickerDot.Position = UDim2.new(0.5, nx, 0.5, ny)
-
     ApplyAccentColor(pickedColor)
 end
 
@@ -2844,38 +2589,40 @@ end)
 -- ACTIONS
 CreateSection(settingsPage, "// ACTIONS", 695, Color3.fromRGB(255, 100, 120))
 
-local resetBtn = Instance.new("TextButton")
-resetBtn.Size = UDim2.new(1, -50, 0, 36)
-resetBtn.Position = UDim2.new(0, 0, 0, 730)
-resetBtn.BackgroundColor3 = Color3.fromRGB(20, 15, 30)
-resetBtn.BackgroundTransparency = 1
-resetBtn.BorderSizePixel = 0
-resetBtn.Text = "Reset Settings"
-resetBtn.TextColor3 = Color3.fromRGB(255, 180, 100)
-resetBtn.TextSize = 13
-resetBtn.Font = Enum.Font.Gotham
-resetBtn.AutoButtonColor = false
-resetBtn.Parent = settingsPage
-local resetBtnCorner = Instance.new("UICorner", resetBtn)
-resetBtnCorner.CornerRadius = UDim.new(0, 6)
-RegisterCorner(resetBtnCorner, 6)
+local function MakeActionButton(text, yPos, color, onClick)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -50, 0, 36)
+    btn.Position = UDim2.new(0, 0, 0, yPos)
+    btn.BackgroundTransparency = 1
+    btn.Text = text
+    btn.TextColor3 = color
+    btn.TextSize = 13
+    btn.Font = Enum.Font.Gotham
+    btn.AutoButtonColor = false
+    btn.Parent = settingsPage
+    local c = Instance.new("UICorner", btn)
+    c.CornerRadius = UDim.new(0, 6)
+    RegisterCorner(c, 6)
+    local s = Instance.new("UIStroke", btn)
+    s.Thickness = 1
+    s.Color = color
+    s.Transparency = 1
+    btn.MouseEnter:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundTransparency = 0.85}):Play()
+        TweenService:Create(s, TweenInfo.new(0.2), {Transparency = 0.5}):Play()
+    end)
+    btn.MouseLeave:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+        TweenService:Create(s, TweenInfo.new(0.2), {Transparency = 1}):Play()
+    end)
+    btn.MouseButton1Click:Connect(function()
+        PlayTab()
+        onClick()
+    end)
+    return btn
+end
 
-local resetBtnStroke = Instance.new("UIStroke", resetBtn)
-resetBtnStroke.Thickness = 1
-resetBtnStroke.Color = Color3.fromRGB(255, 180, 100)
-resetBtnStroke.Transparency = 1
-
-resetBtn.MouseEnter:Connect(function()
-    TweenService:Create(resetBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0.85}):Play()
-    TweenService:Create(resetBtnStroke, TweenInfo.new(0.2), {Transparency = 0.5}):Play()
-end)
-resetBtn.MouseLeave:Connect(function()
-    TweenService:Create(resetBtn, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
-    TweenService:Create(resetBtnStroke, TweenInfo.new(0.2), {Transparency = 1}):Play()
-end)
-resetBtn.MouseButton1Click:Connect(function()
-    PlayTab()
-
+MakeActionButton("Reset Settings", 730, Color3.fromRGB(255, 180, 100), function()
     if ToggleRegistry["Flying Dots"] then ToggleRegistry["Flying Dots"](true, true) end
     if ToggleRegistry["Sounds"] then ToggleRegistry["Sounds"](true, true) end
     if ToggleRegistry["Scan Line"] then ToggleRegistry["Scan Line"](true, true) end
@@ -2883,11 +2630,9 @@ resetBtn.MouseButton1Click:Connect(function()
     if ToggleRegistry["Hitbox Expander"] then ToggleRegistry["Hitbox Expander"](false, true) end
     if ToggleRegistry["Ball ESP"] then ToggleRegistry["Ball ESP"](false, true) end
     if ToggleRegistry["Ball Predictor"] then ToggleRegistry["Ball Predictor"](false, true) end
-
     if SliderRegistry["Menu Scale"] then SliderRegistry["Menu Scale"](100, true) end
     if SliderRegistry["Corner Radius"] then SliderRegistry["Corner Radius"](8, true) end
     if SliderRegistry["Hitbox Size"] then SliderRegistry["Hitbox Size"](30, true) end
-
     Config.FlyingDotsEnabled = true
     Config.SoundEnabled = true
     Config.ScanLineEnabled = true
@@ -2898,99 +2643,36 @@ resetBtn.MouseButton1Click:Connect(function()
     Config.HitboxSize = 30
     Config.BallESPEnabled = false
     Config.BallPredictorEnabled = false
-
     RestoreHitboxes()
     _DestroyBallESP()
-
     FpsFrame.Visible = false
     TweenService:Create(MainScale, TweenInfo.new(0.2), {Scale = 1}):Play()
     RebuildDots()
     if ScanLine then ScanLine.Visible = true end
-
     ApplyAccentColor(Color3.fromRGB(180, 80, 255))
     pickerDot.Position = UDim2.new(0.5, 0, 0.5, 0)
     hexLabel.Text = "#B450FF"
 end)
 
-local unloadBtn = Instance.new("TextButton")
-unloadBtn.Size = UDim2.new(1, -50, 0, 36)
-unloadBtn.Position = UDim2.new(0, 0, 0, 775)
-unloadBtn.BackgroundColor3 = Color3.fromRGB(20, 15, 30)
-unloadBtn.BackgroundTransparency = 1
-unloadBtn.BorderSizePixel = 0
-unloadBtn.Text = "Unload Script"
-unloadBtn.TextColor3 = Color3.fromRGB(255, 80, 100)
-unloadBtn.TextSize = 13
-unloadBtn.Font = Enum.Font.Gotham
-unloadBtn.AutoButtonColor = false
-unloadBtn.Parent = settingsPage
-local unloadCorner = Instance.new("UICorner", unloadBtn)
-unloadCorner.CornerRadius = UDim.new(0, 6)
-RegisterCorner(unloadCorner, 6)
-
-local unloadStroke = Instance.new("UIStroke", unloadBtn)
-unloadStroke.Thickness = 1
-unloadStroke.Color = Color3.fromRGB(255, 80, 100)
-unloadStroke.Transparency = 1
-
-unloadBtn.MouseEnter:Connect(function()
-    TweenService:Create(unloadBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0.85}):Play()
-    TweenService:Create(unloadStroke, TweenInfo.new(0.2), {Transparency = 0.5}):Play()
-end)
-unloadBtn.MouseLeave:Connect(function()
-    TweenService:Create(unloadBtn, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
-    TweenService:Create(unloadStroke, TweenInfo.new(0.2), {Transparency = 1}):Play()
-end)
-unloadBtn.MouseButton1Click:Connect(function()
+MakeActionButton("Unload Script", 775, Color3.fromRGB(255, 80, 100), function()
     _DestroyBallESP()
-    if _predRing then _predRing:Destroy() end
-    if _predCenter then _predCenter:Destroy() end
-    if _predTracer then _predTracer:Destroy() end
+    if Pred.ring then Pred.ring:Destroy() end
+    if Pred.center then Pred.center:Destroy() end
+    if Pred.tracer then Pred.tracer:Destroy() end
     pcall(function() ScreenGui:Destroy() end)
     pcall(function() LoadGui:Destroy() end)
     pcall(function() TabSound:Destroy() end)
     pcall(function() Sound:Destroy() end)
 end)
 
-local rejoinBtn = Instance.new("TextButton")
-rejoinBtn.Size = UDim2.new(1, -50, 0, 36)
-rejoinBtn.Position = UDim2.new(0, 0, 0, 820)
-rejoinBtn.BackgroundColor3 = Color3.fromRGB(20, 15, 30)
-rejoinBtn.BackgroundTransparency = 1
-rejoinBtn.BorderSizePixel = 0
-rejoinBtn.Text = "Rejoin Server"
-rejoinBtn.TextColor3 = THEME.ACCENT_HOT
-rejoinBtn.TextSize = 13
-rejoinBtn.Font = Enum.Font.Gotham
-rejoinBtn.AutoButtonColor = false
-rejoinBtn.Parent = settingsPage
-local rejoinCorner = Instance.new("UICorner", rejoinBtn)
-rejoinCorner.CornerRadius = UDim.new(0, 6)
-RegisterCorner(rejoinCorner, 6)
-
-local rejoinStroke = Instance.new("UIStroke", rejoinBtn)
-rejoinStroke.Thickness = 1
-rejoinStroke.Color = THEME.ACCENT_HOT
-rejoinStroke.Transparency = 1
-
-rejoinBtn.MouseEnter:Connect(function()
-    TweenService:Create(rejoinBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0.85}):Play()
-    TweenService:Create(rejoinStroke, TweenInfo.new(0.2), {Transparency = 0.5}):Play()
-end)
-rejoinBtn.MouseLeave:Connect(function()
-    TweenService:Create(rejoinBtn, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
-    TweenService:Create(rejoinStroke, TweenInfo.new(0.2), {Transparency = 1}):Play()
-end)
-rejoinBtn.MouseButton1Click:Connect(function()
+MakeActionButton("Rejoin Server", 820, THEME.ACCENT_HOT, function()
     local TeleportService = game:GetService("TeleportService")
     pcall(function()
         TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
     end)
 end)
 
--- ====================================================================
 -- DROP-IN
--- ====================================================================
 task.spawn(function()
     task.wait(3.2)
     local dropTween = TweenService:Create(MainFrame,
