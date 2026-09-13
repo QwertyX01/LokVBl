@@ -1,6 +1,8 @@
 -- ====================================================================
 -- VOLLEYBALL LEGENDS - AGGRESSIVE SPORT EDITION (PREMIUM v1.6)
--- FIXED: обход лимита 200 локальных переменных (Delta-совместимо)
+-- FIXED: обход лимита 200 локалов (Delta-compatible)
+-- FIXED: загрузка логотипов
+-- REDESIGN: компактная вкладка Sky
 -- ====================================================================
 
 task.spawn(function()
@@ -89,12 +91,11 @@ local Reg = {
     Sliders = {},
     Toggles = {},
     Br = {},
-    Picker = {},
     Assets = { logo = nil, brand = nil, banner = nil },
 }
 
 -- ====================================================================
--- ГЛАВНАЯ ТАБЛИЦА СОСТОЯНИЯ (объединена — экономия ~8 локалов)
+-- ГЛАВНАЯ ТАБЛИЦА СОСТОЯНИЯ
 -- ====================================================================
 local S = {
     BallESP = { model = nil, highlight = nil, particles = nil, light = nil, trail = nil, trailAtt0 = nil, trailAtt1 = nil },
@@ -3053,128 +3054,77 @@ CreateSlider(visualsPage, "Field of View", "Camera zoom out angle (70 - 200)", 3
 end)
 
 -- ====================================================================
--- SKY PAGE
+-- SKY PAGE (redesign: компактно / тёмно / без белого)
 -- ====================================================================
 local skyPage = TabPages["Sky"]
-skyPage.CanvasSize = UDim2.new(0, 0, 0, 700)
+skyPage.CanvasSize = UDim2.new(0, 0, 0, 480)
 
-CreateSection(skyPage, "// SKY SELECTOR", 10, Color3.fromRGB(255, 150, 200))
+CreateSection(skyPage, "// SKY PRESETS", 8, THEME.ACCENT)
 
-local skyY = 50
+local skyListY = 44
 local skyButtons = {}
 
-function CreateSkyButton(preset, yPos)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 60)
-    frame.Position = UDim2.new(0, 0, 0, yPos)
-    frame.BackgroundColor3 = Color3.fromRGB(30, 22, 50)
-    frame.BackgroundTransparency = 0.3
-    frame.BorderSizePixel = 0
-    frame.Parent = skyPage
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+function CreateSkyButton(preset, yPos, index)
+    local card = Instance.new("TextButton")
+    card.Name = "SkyCard_" .. preset.name
+    card.Size = UDim2.new(1, -8, 0, 42)
+    card.Position = UDim2.new(0, 4, 0, yPos)
+    card.BackgroundColor3 = Color3.fromRGB(18, 13, 28)
+    card.BackgroundTransparency = 0.15
+    card.BorderSizePixel = 0
+    card.Text = ""
+    card.AutoButtonColor = false
+    card.ZIndex = 5
+    card.Parent = skyPage
+    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 6)
 
-    local stroke = Instance.new("UIStroke", frame)
-    stroke.Thickness = 1
-    stroke.Color = Color3.fromRGB(255, 150, 200)
-    stroke.Transparency = 0.5
+    local cardStroke = Instance.new("UIStroke", card)
+    cardStroke.Thickness = 1
+    cardStroke.Color = THEME.ACCENT_DARK
+    cardStroke.Transparency = 0.55
+    cardStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
-    local frameGradient = Instance.new("UIGradient", frame)
-    frameGradient.Rotation = 45
-    frameGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 25, 65)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(70, 30, 80)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 25, 65)),
-    })
+    -- левый тонкий акцент
+    local accent = Instance.new("Frame")
+    accent.Size = UDim2.new(0, 2, 1, -12)
+    accent.Position = UDim2.new(0, 0, 0, 6)
+    accent.BackgroundColor3 = THEME.ACCENT_DARK
+    accent.BorderSizePixel = 0
+    accent.ZIndex = 6
+    accent.Parent = card
+    Instance.new("UICorner", accent).CornerRadius = UDim.new(1, 0)
 
-    task.spawn(function()
-        while frameGradient.Parent do
-            for i = -1, 1, 0.04 do
-                if not frameGradient.Parent then break end
-                frameGradient.Offset = Vector2.new(i, 0)
-                task.wait(0.05)
-            end
-            for i = 1, -1, -0.04 do
-                if not frameGradient.Parent then break end
-                frameGradient.Offset = Vector2.new(i, 0)
-                task.wait(0.05)
-            end
-        end
-    end)
+    -- индекс
+    local idxLabel = Instance.new("TextLabel")
+    idxLabel.Size = UDim2.new(0, 24, 1, 0)
+    idxLabel.Position = UDim2.new(0, 12, 0, 0)
+    idxLabel.BackgroundTransparency = 1
+    idxLabel.Text = string.format("%02d", index)
+    idxLabel.TextColor3 = THEME.TEXT_LOW
+    idxLabel.TextSize = 11
+    idxLabel.Font = Enum.Font.Code
+    idxLabel.TextXAlignment = Enum.TextXAlignment.Left
+    idxLabel.ZIndex = 7
+    idxLabel.Parent = card
 
-    local shineLine = Instance.new("Frame")
-    shineLine.Size = UDim2.new(0, 3, 1, -12)
-    shineLine.Position = UDim2.new(0, 0, 0, 6)
-    shineLine.BackgroundColor3 = Color3.fromRGB(255, 150, 200)
-    shineLine.BorderSizePixel = 0
-    shineLine.Parent = frame
-    Instance.new("UICorner", shineLine).CornerRadius = UDim.new(1, 0)
-
-    local shineGradient = Instance.new("UIGradient", shineLine)
-    shineGradient.Rotation = 90
-    shineGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(180, 80, 255)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 60, 180)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 80, 255)),
-    })
-
-    task.spawn(function()
-        while shineGradient.Parent do
-            for i = -1, 1, 0.05 do
-                if not shineGradient.Parent then break end
-                shineGradient.Offset = Vector2.new(0, i)
-                task.wait(0.04)
-            end
-            for i = 1, -1, -0.05 do
-                if not shineGradient.Parent then break end
-                shineGradient.Offset = Vector2.new(0, i)
-                task.wait(0.04)
-            end
-        end
-    end)
-
-    local iconBox = Instance.new("Frame")
-    iconBox.Size = UDim2.new(0, 36, 0, 36)
-    iconBox.Position = UDim2.new(0, 14, 0.5, -18)
-    iconBox.BackgroundColor3 = Color3.fromRGB(40, 25, 60)
-    iconBox.BackgroundTransparency = 0.2
-    iconBox.BorderSizePixel = 0
-    iconBox.Parent = frame
-    Instance.new("UICorner", iconBox).CornerRadius = UDim.new(1, 0)
-
-    local iconStroke = Instance.new("UIStroke", iconBox)
-    iconStroke.Thickness = 1.5
-    iconStroke.Color = Color3.fromRGB(255, 150, 200)
-    iconStroke.Transparency = 0.3
-
-    local iconDot = Instance.new("Frame")
-    iconDot.Size = UDim2.new(0, 14, 0, 14)
-    iconDot.Position = UDim2.new(0.5, -7, 0.5, -7)
-    iconDot.BackgroundColor3 = Color3.fromRGB(255, 150, 200)
-    iconDot.BorderSizePixel = 0
-    iconDot.Parent = iconBox
-    Instance.new("UICorner", iconDot).CornerRadius = UDim.new(1, 0)
-
-    local iconGlow = Instance.new("UIStroke", iconDot)
-    iconGlow.Thickness = 3
-    iconGlow.Color = Color3.fromRGB(255, 100, 180)
-    iconGlow.Transparency = 0.5
-
+    -- название пресета с переливом
     local nameLabel = Instance.new("TextLabel")
-    nameLabel.Size = UDim2.new(1, -170, 0, 24)
-    nameLabel.Position = UDim2.new(0, 62, 0, 18)
+    nameLabel.Size = UDim2.new(0.55, 0, 1, 0)
+    nameLabel.Position = UDim2.new(0, 40, 0, 0)
     nameLabel.BackgroundTransparency = 1
-    nameLabel.Text = preset.name
+    nameLabel.Text = preset.name:upper()
     nameLabel.TextColor3 = THEME.TEXT_HI
-    nameLabel.TextSize = 15
+    nameLabel.TextSize = 12
     nameLabel.Font = Enum.Font.GothamBold
     nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-    nameLabel.Parent = frame
+    nameLabel.ZIndex = 7
+    nameLabel.Parent = card
 
     local nameGradient = Instance.new("UIGradient", nameLabel)
     nameGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 220, 240)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 150, 210)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(220, 150, 255)),
+        ColorSequenceKeypoint.new(0, THEME.ACCENT_GLOW),
+        ColorSequenceKeypoint.new(0.5, THEME.TEXT_HI),
+        ColorSequenceKeypoint.new(1, THEME.ACCENT_HOT),
     })
 
     task.spawn(function()
@@ -3192,79 +3142,122 @@ function CreateSkyButton(preset, yPos)
         end
     end)
 
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 90, 0, 36)
-    btn.Position = UDim2.new(1, -102, 0.5, -18)
-    btn.BackgroundColor3 = Color3.fromRGB(255, 100, 180)
-    btn.BackgroundTransparency = 0.2
-    btn.Text = "APPLY"
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.TextSize = 13
-    btn.Font = Enum.Font.GothamBold
-    btn.AutoButtonColor = false
-    btn.Parent = frame
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+    -- индикатор выбора
+    local dot = Instance.new("Frame")
+    dot.Size = UDim2.new(0, 5, 0, 5)
+    dot.Position = UDim2.new(0.42, 0, 0.5, -2)
+    dot.BackgroundColor3 = THEME.ACCENT_HOT
+    dot.BackgroundTransparency = 1
+    dot.BorderSizePixel = 0
+    dot.ZIndex = 8
+    dot.Parent = card
+    Instance.new("UICorner", dot).CornerRadius = UDim.new(1, 0)
 
-    local btnStroke = Instance.new("UIStroke", btn)
-    btnStroke.Thickness = 1.5
-    btnStroke.Color = Color3.fromRGB(255, 150, 200)
-    btnStroke.Transparency = 0.2
+    -- кнопка APPLY (тёмная, без белого)
+    local applyBtn = Instance.new("TextButton")
+    applyBtn.Size = UDim2.new(0, 64, 0, 24)
+    applyBtn.Position = UDim2.new(1, -74, 0.5, -12)
+    applyBtn.BackgroundColor3 = Color3.fromRGB(28, 18, 42)
+    applyBtn.BackgroundTransparency = 0.1
+    applyBtn.Text = "APPLY"
+    applyBtn.TextColor3 = THEME.ACCENT_HOT
+    applyBtn.TextSize = 10
+    applyBtn.Font = Enum.Font.GothamBold
+    applyBtn.AutoButtonColor = false
+    applyBtn.ZIndex = 7
+    applyBtn.Parent = card
+    Instance.new("UICorner", applyBtn).CornerRadius = UDim.new(0, 5)
 
-    local btnGradient = Instance.new("UIGradient", btn)
-    btnGradient.Rotation = 45
-    btnGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 60, 180)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 100, 200)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 80, 255)),
+    local applyStroke = Instance.new("UIStroke", applyBtn)
+    applyStroke.Thickness = 1
+    applyStroke.Color = THEME.ACCENT
+    applyStroke.Transparency = 0.4
+
+    -- переливка на кнопке APPLY
+    local applyGradient = Instance.new("UIGradient", applyBtn)
+    applyGradient.Rotation = 45
+    applyGradient.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.9),
+        NumberSequenceKeypoint.new(0.5, 0.5),
+        NumberSequenceKeypoint.new(1, 0.9),
+    })
+    applyGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, THEME.ACCENT_DARK),
+        ColorSequenceKeypoint.new(0.5, THEME.ACCENT_HOT),
+        ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
     })
 
     task.spawn(function()
-        while btnGradient.Parent do
-            for i = -1, 1, 0.05 do
-                if not btnGradient.Parent then break end
-                btnGradient.Offset = Vector2.new(i, 0)
-                task.wait(0.04)
+        while applyGradient.Parent do
+            for i = -1, 1, 0.04 do
+                if not applyGradient.Parent then break end
+                applyGradient.Offset = Vector2.new(i, 0)
+                task.wait(0.05)
             end
-            for i = 1, -1, -0.05 do
-                if not btnGradient.Parent then break end
-                btnGradient.Offset = Vector2.new(i, 0)
-                task.wait(0.04)
+            for i = 1, -1, -0.04 do
+                if not applyGradient.Parent then break end
+                applyGradient.Offset = Vector2.new(i, 0)
+                task.wait(0.05)
             end
         end
     end)
 
-    btn.MouseEnter:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundTransparency = 0}):Play()
+    -- hover всей карточки
+    card.MouseEnter:Connect(function()
+        TweenService:Create(card, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(24, 17, 36)}):Play()
+        TweenService:Create(cardStroke, TweenInfo.new(0.15), {Transparency = 0.25}):Play()
+        TweenService:Create(accent, TweenInfo.new(0.15), {BackgroundColor3 = THEME.ACCENT_HOT}):Play()
     end)
-    btn.MouseLeave:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundTransparency = 0.2}):Play()
+    card.MouseLeave:Connect(function()
+        TweenService:Create(card, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(18, 13, 28)}):Play()
+        TweenService:Create(cardStroke, TweenInfo.new(0.15), {Transparency = 0.55}):Play()
+        if dot.BackgroundTransparency >= 1 then
+            TweenService:Create(accent, TweenInfo.new(0.15), {BackgroundColor3 = THEME.ACCENT_DARK}):Play()
+        end
     end)
-    btn.MouseButton1Click:Connect(function()
+
+    -- кнопка APPLY hover
+    applyBtn.MouseEnter:Connect(function()
+        TweenService:Create(applyBtn, TweenInfo.new(0.15), {BackgroundTransparency = 0}):Play()
+        TweenService:Create(applyStroke, TweenInfo.new(0.15), {Transparency = 0.1}):Play()
+    end)
+    applyBtn.MouseLeave:Connect(function()
+        TweenService:Create(applyBtn, TweenInfo.new(0.15), {BackgroundTransparency = 0.1}):Play()
+        TweenService:Create(applyStroke, TweenInfo.new(0.15), {Transparency = 0.4}):Play()
+    end)
+
+    -- клик по APPLY
+    applyBtn.MouseButton1Click:Connect(function()
         PlayTab()
         preset.func()
         for _, b in ipairs(skyButtons) do
-            TweenService:Create(b.stroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(255, 150, 200), Transparency = 0.5}):Play()
+            b.dot.BackgroundTransparency = 1
+            TweenService:Create(b.accent, TweenInfo.new(0.2), {BackgroundColor3 = THEME.ACCENT_DARK}):Play()
         end
-        TweenService:Create(stroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(80, 255, 130), Transparency = 0.2}):Play()
+        dot.BackgroundTransparency = 0
+        TweenService:Create(accent, TweenInfo.new(0.2), {BackgroundColor3 = THEME.ACCENT_HOT}):Play()
     end)
 
-    table.insert(skyButtons, { frame = frame, stroke = stroke, name = preset.name })
+    table.insert(skyButtons, {
+        card = card, dot = dot, accent = accent, name = preset.name,
+    })
 end
 
 for i, preset in ipairs(S.Sky.Presets) do
-    CreateSkyButton(preset, skyY + (i - 1) * 68)
+    CreateSkyButton(preset, skyListY + (i - 1) * 48, i)
 end
 
-skyY = skyY + #S.Sky.Presets * 68 + 25
+-- кнопка DISABLE
+local disableY = skyListY + #S.Sky.Presets * 48 + 14
 
 local disableBtn = Instance.new("TextButton")
-disableBtn.Size = UDim2.new(1, -50, 0, 40)
-disableBtn.Position = UDim2.new(0, 0, 0, skyY)
-disableBtn.BackgroundColor3 = Color3.fromRGB(255, 80, 100)
-disableBtn.BackgroundTransparency = 0.4
-disableBtn.Text = "DISABLE SKY (Reset to default)"
-disableBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-disableBtn.TextSize = 13
+disableBtn.Size = UDim2.new(1, -8, 0, 38)
+disableBtn.Position = UDim2.new(0, 4, 0, disableY)
+disableBtn.BackgroundColor3 = Color3.fromRGB(26, 12, 18)
+disableBtn.BackgroundTransparency = 0.2
+disableBtn.Text = "DISABLE SKY"
+disableBtn.TextColor3 = Color3.fromRGB(255, 100, 120)
+disableBtn.TextSize = 11
 disableBtn.Font = Enum.Font.GothamBold
 disableBtn.AutoButtonColor = false
 disableBtn.Parent = skyPage
@@ -3272,8 +3265,17 @@ Instance.new("UICorner", disableBtn).CornerRadius = UDim.new(0, 6)
 
 local disableStroke = Instance.new("UIStroke", disableBtn)
 disableStroke.Thickness = 1
-disableStroke.Color = Color3.fromRGB(255, 80, 100)
-disableStroke.Transparency = 0.2
+disableStroke.Color = Color3.fromRGB(255, 100, 120)
+disableStroke.Transparency = 0.5
+
+disableBtn.MouseEnter:Connect(function()
+    TweenService:Create(disableBtn, TweenInfo.new(0.15), {BackgroundTransparency = 0}):Play()
+    TweenService:Create(disableStroke, TweenInfo.new(0.15), {Transparency = 0.2}):Play()
+end)
+disableBtn.MouseLeave:Connect(function()
+    TweenService:Create(disableBtn, TweenInfo.new(0.15), {BackgroundTransparency = 0.2}):Play()
+    TweenService:Create(disableStroke, TweenInfo.new(0.15), {Transparency = 0.5}):Play()
+end)
 
 disableBtn.MouseButton1Click:Connect(function()
     PlayTab()
@@ -3291,7 +3293,8 @@ disableBtn.MouseButton1Click:Connect(function()
     Lighting.FogEnd = 100000
     Lighting.FogStart = 0
     for _, b in ipairs(skyButtons) do
-        TweenService:Create(b.stroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(255, 150, 200), Transparency = 0.5}):Play()
+        b.dot.BackgroundTransparency = 1
+        TweenService:Create(b.accent, TweenInfo.new(0.2), {BackgroundColor3 = THEME.ACCENT_DARK}):Play()
     end
 end)
 
@@ -3349,100 +3352,100 @@ CreateSlider(settingsPage, "Corner Radius", "Round corners", 420, 0, 16, 8, "px"
 end)
 
 -- ====================================================================
--- COLOR PICKER (использует Reg.Picker)
+-- COLOR PICKER
 -- ====================================================================
-Reg.Picker.size = 140
-Reg.Picker.section = CreateSection(settingsPage, "// COLOR", 500, Color3.fromRGB(120, 220, 255))
+local colorSectionLine = CreateSection(settingsPage, "// COLOR", 500, Color3.fromRGB(120, 220, 255))
 
-Reg.Picker.frame = Instance.new("Frame")
-Reg.Picker.frame.Size = UDim2.new(0, Reg.Picker.size, 0, Reg.Picker.size)
-Reg.Picker.frame.Position = UDim2.new(0, 0, 0, 530)
-Reg.Picker.frame.BackgroundColor3 = Color3.fromRGB(30, 25, 45)
-Reg.Picker.frame.Parent = settingsPage
-Instance.new("UICorner", Reg.Picker.frame).CornerRadius = UDim.new(1, 0)
+local paletteSize = 140
+local paletteFrame = Instance.new("Frame")
+paletteFrame.Size = UDim2.new(0, paletteSize, 0, paletteSize)
+paletteFrame.Position = UDim2.new(0, 0, 0, 530)
+paletteFrame.BackgroundColor3 = Color3.fromRGB(30, 25, 45)
+paletteFrame.Parent = settingsPage
+Instance.new("UICorner", paletteFrame).CornerRadius = UDim.new(1, 0)
 
-Reg.Picker.frameStroke = Instance.new("UIStroke", Reg.Picker.frame)
-Reg.Picker.frameStroke.Thickness = 1
-Reg.Picker.frameStroke.Color = THEME.ACCENT_DARK
-Reg.Picker.frameStroke.Transparency = 0.4
+local paletteStroke = Instance.new("UIStroke", paletteFrame)
+paletteStroke.Thickness = 1
+paletteStroke.Color = THEME.ACCENT_DARK
+paletteStroke.Transparency = 0.4
 
-Reg.Picker.image = Instance.new("ImageLabel")
-Reg.Picker.image.Size = UDim2.new(1, -4, 1, -4)
-Reg.Picker.image.Position = UDim2.new(0, 2, 0, 2)
-Reg.Picker.image.BackgroundTransparency = 1
-Reg.Picker.image.Image = "rbxassetid://7393858625"
-Reg.Picker.image.ScaleType = Enum.ScaleType.Stretch
-Reg.Picker.image.Parent = Reg.Picker.frame
-Instance.new("UICorner", Reg.Picker.image).CornerRadius = UDim.new(1, 0)
+local paletteImage = Instance.new("ImageLabel")
+paletteImage.Size = UDim2.new(1, -4, 1, -4)
+paletteImage.Position = UDim2.new(0, 2, 0, 2)
+paletteImage.BackgroundTransparency = 1
+paletteImage.Image = "rbxassetid://7393858625"
+paletteImage.ScaleType = Enum.ScaleType.Stretch
+paletteImage.Parent = paletteFrame
+Instance.new("UICorner", paletteImage).CornerRadius = UDim.new(1, 0)
 
-Reg.Picker.dot = Instance.new("Frame")
-Reg.Picker.dot.Size = UDim2.new(0, 12, 0, 12)
-Reg.Picker.dot.AnchorPoint = Vector2.new(0.5, 0.5)
-Reg.Picker.dot.Position = UDim2.new(0.5, 0, 0.5, 0)
-Reg.Picker.dot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-Reg.Picker.dot.ZIndex = 5
-Reg.Picker.dot.Parent = Reg.Picker.frame
-Instance.new("UICorner", Reg.Picker.dot).CornerRadius = UDim.new(1, 0)
+local pickerDot = Instance.new("Frame")
+pickerDot.Size = UDim2.new(0, 12, 0, 12)
+pickerDot.AnchorPoint = Vector2.new(0.5, 0.5)
+pickerDot.Position = UDim2.new(0.5, 0, 0.5, 0)
+pickerDot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+pickerDot.ZIndex = 5
+pickerDot.Parent = paletteFrame
+Instance.new("UICorner", pickerDot).CornerRadius = UDim.new(1, 0)
 
-Reg.Picker.preview = Instance.new("Frame")
-Reg.Picker.preview.Size = UDim2.new(0, 60, 0, 60)
-Reg.Picker.preview.Position = UDim2.new(0, Reg.Picker.size + 20, 0, 530 + (Reg.Picker.size - 60) / 2 - 30)
-Reg.Picker.preview.BackgroundColor3 = THEME.ACCENT
-Reg.Picker.preview.Parent = settingsPage
-local previewCorner = Instance.new("UICorner", Reg.Picker.preview)
+local previewBox = Instance.new("Frame")
+previewBox.Size = UDim2.new(0, 60, 0, 60)
+previewBox.Position = UDim2.new(0, paletteSize + 20, 0, 530 + (paletteSize - 60) / 2 - 30)
+previewBox.BackgroundColor3 = THEME.ACCENT
+previewBox.Parent = settingsPage
+local previewCorner = Instance.new("UICorner", previewBox)
 previewCorner.CornerRadius = UDim.new(0, 6)
 RegisterCorner(previewCorner, 6)
 
-Reg.Picker.previewStroke = Instance.new("UIStroke", Reg.Picker.preview)
-Reg.Picker.previewStroke.Thickness = 1.5
-Reg.Picker.previewStroke.Color = THEME.ACCENT_HOT
-Reg.Picker.previewStroke.Transparency = 0.4
+local previewStroke = Instance.new("UIStroke", previewBox)
+previewStroke.Thickness = 1.5
+previewStroke.Color = THEME.ACCENT_HOT
+previewStroke.Transparency = 0.4
 
-Reg.Picker.hex = Instance.new("TextLabel")
-Reg.Picker.hex.Size = UDim2.new(0, 80, 0, 18)
-Reg.Picker.hex.Position = UDim2.new(0, Reg.Picker.size + 20, 0, 530 + (Reg.Picker.size - 60) / 2 + 38)
-Reg.Picker.hex.BackgroundTransparency = 1
-Reg.Picker.hex.Text = "#B450FF"
-Reg.Picker.hex.TextColor3 = THEME.TEXT_HI
-Reg.Picker.hex.TextSize = 12
-Reg.Picker.hex.Font = Enum.Font.Code
-Reg.Picker.hex.TextXAlignment = Enum.TextXAlignment.Left
-Reg.Picker.hex.Parent = settingsPage
+local hexLabel = Instance.new("TextLabel")
+hexLabel.Size = UDim2.new(0, 80, 0, 18)
+hexLabel.Position = UDim2.new(0, paletteSize + 20, 0, 530 + (paletteSize - 60) / 2 + 38)
+hexLabel.BackgroundTransparency = 1
+hexLabel.Text = "#B450FF"
+hexLabel.TextColor3 = THEME.TEXT_HI
+hexLabel.TextSize = 12
+hexLabel.Font = Enum.Font.Code
+hexLabel.TextXAlignment = Enum.TextXAlignment.Left
+hexLabel.Parent = settingsPage
 
-Reg.Picker.resetBtn = Instance.new("TextButton")
-Reg.Picker.resetBtn.Size = UDim2.new(1, -50, 0, 32)
-Reg.Picker.resetBtn.Position = UDim2.new(0, 0, 0, 530 + Reg.Picker.size + 15)
-Reg.Picker.resetBtn.BackgroundTransparency = 1
-Reg.Picker.resetBtn.Text = "Reset Color"
-Reg.Picker.resetBtn.TextColor3 = Color3.fromRGB(120, 220, 255)
-Reg.Picker.resetBtn.TextSize = 13
-Reg.Picker.resetBtn.Font = Enum.Font.Gotham
-Reg.Picker.resetBtn.AutoButtonColor = false
-Reg.Picker.resetBtn.Parent = settingsPage
-local resetColorCorner = Instance.new("UICorner", Reg.Picker.resetBtn)
+local resetColorBtn = Instance.new("TextButton")
+resetColorBtn.Size = UDim2.new(1, -50, 0, 32)
+resetColorBtn.Position = UDim2.new(0, 0, 0, 530 + paletteSize + 15)
+resetColorBtn.BackgroundTransparency = 1
+resetColorBtn.Text = "Reset Color"
+resetColorBtn.TextColor3 = Color3.fromRGB(120, 220, 255)
+resetColorBtn.TextSize = 13
+resetColorBtn.Font = Enum.Font.Gotham
+resetColorBtn.AutoButtonColor = false
+resetColorBtn.Parent = settingsPage
+local resetColorCorner = Instance.new("UICorner", resetColorBtn)
 resetColorCorner.CornerRadius = UDim.new(0, 6)
 RegisterCorner(resetColorCorner, 6)
 
-Reg.Picker.resetStroke = Instance.new("UIStroke", Reg.Picker.resetBtn)
-Reg.Picker.resetStroke.Thickness = 1
-Reg.Picker.resetStroke.Color = Color3.fromRGB(120, 220, 255)
-Reg.Picker.resetStroke.Transparency = 1
+local resetStroke = Instance.new("UIStroke", resetColorBtn)
+resetStroke.Thickness = 1
+resetStroke.Color = Color3.fromRGB(120, 220, 255)
+resetStroke.Transparency = 1
 
-Reg.Picker.resetBtn.MouseEnter:Connect(function()
-    TweenService:Create(Reg.Picker.resetBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0.85}):Play()
-    TweenService:Create(Reg.Picker.resetStroke, TweenInfo.new(0.2), {Transparency = 0.5}):Play()
+resetColorBtn.MouseEnter:Connect(function()
+    TweenService:Create(resetColorBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0.85}):Play()
+    TweenService:Create(resetStroke, TweenInfo.new(0.2), {Transparency = 0.5}):Play()
 end)
-Reg.Picker.resetBtn.MouseLeave:Connect(function()
-    TweenService:Create(Reg.Picker.resetBtn, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
-    TweenService:Create(Reg.Picker.resetStroke, TweenInfo.new(0.2), {Transparency = 1}):Play()
+resetColorBtn.MouseLeave:Connect(function()
+    TweenService:Create(resetColorBtn, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+    TweenService:Create(resetStroke, TweenInfo.new(0.2), {Transparency = 1}):Play()
 end)
 
-Reg.Picker.dragArea = Instance.new("TextButton")
-Reg.Picker.dragArea.Size = UDim2.new(1, 0, 1, 0)
-Reg.Picker.dragArea.BackgroundTransparency = 1
-Reg.Picker.dragArea.Text = ""
-Reg.Picker.dragArea.ZIndex = 10
-Reg.Picker.dragArea.Parent = Reg.Picker.frame
+local colorDragArea = Instance.new("TextButton")
+colorDragArea.Size = UDim2.new(1, 0, 1, 0)
+colorDragArea.BackgroundTransparency = 1
+colorDragArea.Text = ""
+colorDragArea.ZIndex = 10
+colorDragArea.Parent = paletteFrame
 
 function ColorToHex(c)
     return string.format("#%02X%02X%02X",
@@ -3500,7 +3503,7 @@ function ApplyAccentColor(color)
     StatusDot.BackgroundColor3 = newHot
     PlayerTag.TextColor3 = newHot
     DragCursor.ImageColor3 = newGlow
-    Reg.Picker.frameStroke.Color = newDark
+    paletteStroke.Color = newDark
     bannerStroke.Color = newAccent
     bannerGlow.Color = newGlow
     statusSectionLine.BackgroundColor3 = newHot
@@ -3595,9 +3598,9 @@ function ApplyAccentColor(color)
         end
     end
 
-    Reg.Picker.preview.BackgroundColor3 = newAccent
-    Reg.Picker.previewStroke.Color = newHot
-    Reg.Picker.hex.Text = ColorToHex(newAccent)
+    previewBox.BackgroundColor3 = newAccent
+    previewStroke.Color = newHot
+    hexLabel.Text = ColorToHex(newAccent)
 
     Reg.Br.TL_h.BackgroundColor3 = newHot
     Reg.Br.TL_v.BackgroundColor3 = newHot
@@ -3672,15 +3675,15 @@ function ApplyAccentColor(color)
         end
     end
 
-    if Reg.Picker.section then Reg.Picker.section.BackgroundColor3 = newHot end
+    if colorSectionLine then colorSectionLine.BackgroundColor3 = newHot end
 end
 
 local isDraggingColor = false
 
 function UpdateColorFromPosition(inputPos)
-    local center = Reg.Picker.frame.AbsolutePosition + Reg.Picker.frame.AbsoluteSize / 2
+    local center = paletteFrame.AbsolutePosition + paletteFrame.AbsoluteSize / 2
     local rel = Vector2.new(inputPos.X - center.X, inputPos.Y - center.Y)
-    local radius = Reg.Picker.frame.AbsoluteSize.X / 2
+    local radius = paletteFrame.AbsoluteSize.X / 2
     local dist = math.sqrt(rel.X * rel.X + rel.Y * rel.Y)
     local hue = (math.atan2(rel.Y, rel.X) / (math.pi * 2)) % 1
     local saturation = math.clamp(dist / radius, 0, 1)
@@ -3689,11 +3692,11 @@ function UpdateColorFromPosition(inputPos)
     local clampedDist = math.min(dist, radius)
     local nx = math.cos(hue * math.pi * 2) * clampedDist
     local ny = math.sin(hue * math.pi * 2) * clampedDist
-    Reg.Picker.dot.Position = UDim2.new(0.5, nx, 0.5, ny)
+    pickerDot.Position = UDim2.new(0.5, nx, 0.5, ny)
     ApplyAccentColor(pickedColor)
 end
 
-Reg.Picker.dragArea.InputBegan:Connect(function(input)
+colorDragArea.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         isDraggingColor = true
         settingsPage.ScrollingEnabled = false
@@ -3716,11 +3719,11 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
-Reg.Picker.resetBtn.MouseButton1Click:Connect(function()
+resetColorBtn.MouseButton1Click:Connect(function()
     PlayTab()
     ApplyAccentColor(Color3.fromRGB(180, 80, 255))
-    Reg.Picker.dot.Position = UDim2.new(0.5, 0, 0.5, 0)
-    Reg.Picker.hex.Text = "#B450FF"
+    pickerDot.Position = UDim2.new(0.5, 0, 0.5, 0)
+    hexLabel.Text = "#B450FF"
 end)
 
 -- ====================================================================
@@ -3814,8 +3817,8 @@ MakeActionButton("Reset Settings", 785, Color3.fromRGB(255, 180, 100), function(
     RebuildDots()
     if ScanLine then ScanLine.Visible = true end
     ApplyAccentColor(Color3.fromRGB(180, 80, 255))
-    Reg.Picker.dot.Position = UDim2.new(0.5, 0, 0.5, 0)
-    Reg.Picker.hex.Text = "#B450FF"
+    pickerDot.Position = UDim2.new(0.5, 0, 0.5, 0)
+    hexLabel.Text = "#B450FF"
 end)
 
 MakeActionButton("Unload Script", 830, Color3.fromRGB(255, 80, 100), function()
@@ -3934,7 +3937,9 @@ task.spawn(function()
     end
 end)
 
+-- ====================================================================
 -- DROP-IN
+-- ====================================================================
 task.spawn(function()
     task.wait(1.6)
     local dropTween = TweenService:Create(MainFrame,
@@ -3973,6 +3978,6 @@ HeaderBaseLine.BackgroundTransparency = 0.7
 HeaderRunner.BackgroundTransparency = 0
 HeaderPulse.BackgroundTransparency = 0.6
 
-print("[VL] Loaded v1.6 FIXED: обход лимита локалов Delta")
+print("[VL] Loaded v1.6 FINAL: Sky redesigned + logo fix + loc limit bypass")
 
 end) -- конец task.spawn
