@@ -1,13 +1,6 @@
 -- ====================================================================
--- VOLLEYBALL LEGENDS - AGGRESSIVE SPORT EDITION (PREMIUM v1.7)
--- FIXED: обход лимита 200 локалов через task.spawn
--- FIXED: синхронная загрузка логотипов
--- ADDED: новый DragHandle (крестик)
--- ADDED: хук Hitbox.get для лучшей регистрации
+-- VOLLEYBALL LEGENDS - AGGRESSIVE SPORT EDITION (PREMIUM v1.9)
 -- ====================================================================
-
-task.spawn(function()
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
@@ -19,11 +12,9 @@ local LocalPlayer = Players.LocalPlayer
 
 do
     local ok = pcall(function()
-        if not hookfunction then return end
         local ContentProvider = game:GetService("ContentProvider")
         local CG = game:GetService("CoreGui")
         local oldPreloadAsync = ContentProvider.PreloadAsync
-        if not oldPreloadAsync then return end
         hookfunction(ContentProvider.PreloadAsync, function(self, instances, callback)
             if type(instances) ~= "table" then return oldPreloadAsync(self, instances, callback) end
             local filtered = {}
@@ -46,15 +37,6 @@ do
     end)
 end
 
-pcall(function()
-    if gethui then
-        for _, gui in ipairs(gethui():GetChildren()) do
-            if gui.Name == "VL_Menu" or gui.Name == "VL_Panel" or gui.Name == "VL_ESP" or gui.Name == "VL_Load" or gui.Name == "RobloxGui" then
-                pcall(function() gui:Destroy() end)
-            end
-        end
-    end
-end)
 for _, gui in ipairs(CoreGui:GetChildren()) do
     if gui.Name == "VL_Menu" or gui.Name == "VL_Panel" or gui.Name == "VL_ESP" or gui.Name == "VL_Load" or gui.Name == "RobloxGui" then
         pcall(function() gui:Destroy() end)
@@ -98,11 +80,6 @@ local function RegisterCorner(uiCorner, baseRadius)
     table.insert(CornerElements, { Corner = uiCorner, BaseRadius = baseRadius or Config.CornerRadius })
 end
 
-local function fileExists(path)
-    local ok, res = pcall(function() return loadfile(path) end)
-    return ok and res ~= nil
-end
-
 local function downloadImage(url, path)
     if isfile and isfile(path) then return true end
     local ok, content = pcall(function() return game:HttpGet(url, true) end)
@@ -119,9 +96,6 @@ local function getAssetPath(path)
     return nil
 end
 
--- ====================================================================
--- СИНХРОННАЯ ЗАГРУЗКА ЛОГОТИПОВ (до создания GUI)
--- ====================================================================
 local logoPath = nil
 local brandPath = nil
 local bannerPath = nil
@@ -148,7 +122,7 @@ warn("[VL] Brand: " .. (brandPath and "OK" or "NIL"))
 warn("[VL] Banner: " .. (bannerPath and "OK" or "NIL"))
 
 -- ====================================================================
--- ХУК HITBOX MODULE (для Hitbox + Guard)
+-- ХУК HITBOX
 -- ====================================================================
 local HitboxModuleRef = nil
 local HitboxOrigGet = nil
@@ -250,7 +224,6 @@ local PG_REF = LocalPlayer:FindFirstChildOfClass("PlayerGui")
 local HIDDEN_NAMES = { ["RobloxGui"]=true, ["VL_Menu"]=true, ["VL_Load"]=true }
 
 pcall(function()
-    if not hookmetamethod then return end
     local oldNamecall
     oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
         if self == CG_REF or self == PG_REF then
@@ -520,29 +493,10 @@ task.spawn(function()
     end
 end)
 
-local StatusPhrases = {
-    {time = 0.0, text = "// INITIALIZATION"},
-    {time = 0.5, text = "// LOADING MODULES"},
-    {time = 1.2, text = "// WAIT"},
-    {time = 1.8, text = "// JUST A LITTLE MORE"},
-    {time = 2.4, text = "// FINALIZING"},
-}
-
 local Sound = Instance.new("Sound")
 Sound.SoundId = "rbxassetid://136508094734046"
 Sound.Volume = 1
 Sound.Parent = SoundService
-
-task.spawn(function()
-    task.wait(0.2)
-    for _, phrase in ipairs(StatusPhrases) do
-        task.wait(0.4)
-        if not LoadGui.Parent then break end
-        StatusLabel.Text = phrase.text
-        StatusLabel.TextTransparency = 1
-        TweenService:Create(StatusLabel, TweenInfo.new(0.3), {TextTransparency = 0}):Play()
-    end
-end)
 
 task.spawn(function()
     task.wait(0.3)
@@ -560,11 +514,11 @@ task.spawn(function()
     task.wait(0.3)
     for _, obj in ipairs(LoadGui:GetDescendants()) do
         if obj:IsA("TextLabel") then
-            TweenService:Create(obj, TweenInfo.new(0.4, Enum.EasingStyle.Quad), {TextTransparency = 1}):Play()
+            TweenService:Create(obj, TweenInfo.new(0.4), {TextTransparency = 1}):Play()
         elseif obj:IsA("Frame") then
-            TweenService:Create(obj, TweenInfo.new(0.4, Enum.EasingStyle.Quad), {BackgroundTransparency = 1}):Play()
+            TweenService:Create(obj, TweenInfo.new(0.4), {BackgroundTransparency = 1}):Play()
         elseif obj:IsA("UIStroke") then
-            TweenService:Create(obj, TweenInfo.new(0.4, Enum.EasingStyle.Quad), {Transparency = 1}):Play()
+            TweenService:Create(obj, TweenInfo.new(0.4), {Transparency = 1}):Play()
         end
     end
     task.wait(0.5)
@@ -815,7 +769,7 @@ local LogoVersion = Instance.new("TextLabel")
 LogoVersion.Size = UDim2.new(1, -65, 0, 14)
 LogoVersion.Position = UDim2.new(0, 65, 0, 48)
 LogoVersion.BackgroundTransparency = 1
-LogoVersion.Text = "// FREE 1.7.0"
+LogoVersion.Text = "// FREE 1.9.0"
 LogoVersion.TextColor3 = THEME.TEXT_LOW
 LogoVersion.TextSize = 10
 LogoVersion.Font = Enum.Font.Code
@@ -997,6 +951,9 @@ task.spawn(function()
     end
 end)
 
+-- ====================================================================
+-- BRACKETS (с анимацией как в 1.6)
+-- ====================================================================
 local function CreateBracket(pos, size, anchor, flipX, flipY)
     local bracket = Instance.new("Frame")
     bracket.Size = size
@@ -1075,6 +1032,9 @@ Br.TR_h, Br.TR_v, Br.TR_hg, Br.TR_vg = CreateBracket(UDim2.new(1, 6, 0, -6), UDi
 Br.BL_h, Br.BL_v, Br.BL_hg, Br.BL_vg = CreateBracket(UDim2.new(0, -6, 1, 6), UDim2.new(0, 22, 0, 22), Vector2.new(0, 1), false, true)
 Br.BR_h, Br.BR_v, Br.BR_hg, Br.BR_vg = CreateBracket(UDim2.new(1, 6, 1, 6), UDim2.new(0, 22, 0, 22), Vector2.new(1, 1), true, true)
 
+-- ====================================================================
+-- TABS
+-- ====================================================================
 local TabNames = {"Main", "Visuals", "Combat", "Sky", "Settings"}
 local TabIndexes = { "01", "02", "03", "04", "05" }
 local Tabs = {}
@@ -1190,16 +1150,6 @@ for i, name in ipairs(TabNames) do
     local activeSize = UDim2.new(1, -6, 0, TabHeight + 2)
     local activePos = UDim2.new(0, 3, 0, TabBaseY - 1 + (order - 1) * TabSpacing)
 
-    local function AnimateTo(size, pos, bgColor, bgTrans, strokeColor, strokeTrans, textColor, accentSize, arrowTrans, indexColor)
-        local ti = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-        TweenService:Create(tab, ti, {Size=size, Position=pos, BackgroundColor3=bgColor, BackgroundTransparency=bgTrans}):Play()
-        TweenService:Create(stroke, ti, {Color=strokeColor, Transparency=strokeTrans}):Play()
-        TweenService:Create(textLabel, ti, {TextColor3=textColor}):Play()
-        TweenService:Create(tabAccent, ti, {Size = UDim2.new(0, 4, 0, accentSize)}):Play()
-        TweenService:Create(arrow, ti, {TextTransparency = arrowTrans}):Play()
-        TweenService:Create(tabIndex, ti, {TextColor3 = indexColor}):Play()
-    end
-
     tab.MouseEnter:Connect(function()
         if not Tabs[name].IsActive then
             TweenService:Create(tab, TweenInfo.new(0.15), {BackgroundTransparency = 0.2}):Play()
@@ -1215,24 +1165,23 @@ for i, name in ipairs(TabNames) do
 
     tab.MouseButton1Click:Connect(function()
         PlayTab()
+        -- Сбрасываем ВСЕ вкладки
         for otherName, otherTab in pairs(Tabs) do
-            if otherName ~= name and otherTab.IsActive then
+            if otherTab.IsActive then
                 otherTab.IsActive = false
-                local oT, oS, oX, oA, oAr, oI = otherTab.Button, otherTab.Stroke, otherTab.Text, otherTab.Accent, otherTab.Arrow, otherTab.Index
                 local ti = TweenInfo.new(0.2, Enum.EasingStyle.Quad)
-                TweenService:Create(oT, ti, {Size = otherTab.OriginalSize, Position = otherTab.OriginalPos, BackgroundColor3 = THEME.BG_MID, BackgroundTransparency = 0.5}):Play()
-                TweenService:Create(oS, ti, {Color = THEME.LINE, Transparency = 0.3}):Play()
-                TweenService:Create(oX, ti, {TextColor3 = THEME.TEXT_MID}):Play()
-                TweenService:Create(oA, ti, {Size = UDim2.new(0, 4, 0, 0)}):Play()
-                TweenService:Create(oAr, ti, {TextTransparency = 1}):Play()
-                TweenService:Create(oI, ti, {TextColor3 = THEME.TEXT_LOW}):Play()
+                TweenService:Create(otherTab.Button, ti, {Size = otherTab.OriginalSize, Position = otherTab.OriginalPos, BackgroundColor3 = THEME.BG_MID, BackgroundTransparency = 0.5}):Play()
+                TweenService:Create(otherTab.Stroke, ti, {Color = THEME.LINE, Transparency = 0.3}):Play()
+                TweenService:Create(otherTab.Text, ti, {TextColor3 = THEME.TEXT_MID}):Play()
+                TweenService:Create(otherTab.Accent, ti, {Size = UDim2.new(0, 4, 0, 0)}):Play()
+                TweenService:Create(otherTab.Arrow, ti, {TextTransparency = 1}):Play()
+                TweenService:Create(otherTab.Index, ti, {TextColor3 = THEME.TEXT_LOW}):Play()
             end
         end
         for _, page in pairs(TabPages) do page.Visible = false end
 
-        if Tabs[name].IsActive then
-            Tabs[name].IsActive = false
-            AnimateTo(originalSize, originalPos, THEME.BG_MID, 0.5, THEME.LINE, 0.3, THEME.TEXT_MID, 0, 1, THEME.TEXT_LOW)
+        -- Клик по активной → сворачиваем всё
+        if ActiveTab == name then
             ActiveTab = nil
             TweenService:Create(PageTitle, TweenInfo.new(0.2), {TextTransparency = 1}):Play()
             TweenService:Create(PageIndex, TweenInfo.new(0.2), {TextTransparency = 1}):Play()
@@ -1244,6 +1193,7 @@ for i, name in ipairs(TabNames) do
             return
         end
 
+        -- Активируем новую
         Tabs[name].IsActive = true
         ActiveTab = name
         PageHeader.Visible = true
@@ -1258,295 +1208,25 @@ for i, name in ipairs(TabNames) do
         TweenService:Create(PageTitle, TweenInfo.new(0.25), {TextTransparency = 0}):Play()
         TweenService:Create(PageIndex, TweenInfo.new(0.25), {TextTransparency = 0}):Play()
         TweenService:Create(AccentBar, TweenInfo.new(0.25), {BackgroundTransparency = 0}):Play()
-        AnimateTo(activeSize, activePos, Color3.fromRGB(35, 22, 60), 0, THEME.ACCENT_HOT, 0.3, THEME.TEXT_HI, TabHeight - 8, 0, THEME.ACCENT_HOT)
+        TweenService:Create(tab, TweenInfo.new(0.2), {Size = activeSize, Position = activePos, BackgroundColor3 = Color3.fromRGB(35, 22, 60), BackgroundTransparency = 0}):Play()
+        TweenService:Create(stroke, TweenInfo.new(0.2), {Color = THEME.ACCENT_HOT, Transparency = 0.3}):Play()
+        TweenService:Create(textLabel, TweenInfo.new(0.2), {TextColor3 = THEME.TEXT_HI}):Play()
+        TweenService:Create(tabAccent, TweenInfo.new(0.2), {Size = UDim2.new(0, 4, 0, TabHeight - 8)}):Play()
+        TweenService:Create(arrow, TweenInfo.new(0.2), {TextTransparency = 0}):Play()
+        TweenService:Create(tabIndex, TweenInfo.new(0.2), {TextColor3 = THEME.ACCENT_HOT}):Play()
         if TabPages[name] then TabPages[name].Visible = true end
     end)
 
     Tabs[name] = {
         Button = tab, Text = textLabel, Stroke = stroke, Accent = tabAccent,
-        Arrow = arrow, Index = tabIndex, AccentGradient = tabAccentGradient,
-        IsActive = false, OriginalSize = originalSize, OriginalPos = originalPos,
-        ActiveSize = activeSize, ActivePos = activePos,
+        Arrow = arrow, Index = tabIndex, IsActive = false,
+        OriginalSize = originalSize, OriginalPos = originalPos,
     }
     CreatePage(name)
 end
 
--- MAIN PAGE
-local mainPage = TabPages["Main"]
-mainPage.CanvasSize = UDim2.new(0, 0, 0, 380)
-
-local bannerFrame = Instance.new("Frame")
-bannerFrame.Size = UDim2.new(0.72, 0, 0, 90)
-bannerFrame.Position = UDim2.new(0.5, 0, 0, 3)
-bannerFrame.AnchorPoint = Vector2.new(0.5, 0)
-bannerFrame.BackgroundColor3 = THEME.BG_DARK
-bannerFrame.ClipsDescendants = true
-bannerFrame.ZIndex = 6
-bannerFrame.Parent = mainPage
-local bannerCorner = Instance.new("UICorner", bannerFrame)
-bannerCorner.CornerRadius = UDim.new(0, Config.CornerRadius)
-RegisterCorner(bannerCorner, Config.CornerRadius)
-
-local bannerStroke = Instance.new("UIStroke", bannerFrame)
-bannerStroke.Thickness = 1.5
-bannerStroke.Color = THEME.ACCENT
-bannerStroke.Transparency = 0.3
-
-local bannerGlow = Instance.new("UIStroke", bannerFrame)
-bannerGlow.Thickness = 3
-bannerGlow.Color = THEME.ACCENT_GLOW
-bannerGlow.Transparency = 0.92
-
-local bannerImage = Instance.new("ImageLabel")
-bannerImage.Size = UDim2.new(1, 0, 1, 0)
-bannerImage.BackgroundTransparency = 1
-bannerImage.Image = bannerPath or ""
-bannerImage.ScaleType = Enum.ScaleType.Crop
-bannerImage.ZIndex = 7
-bannerImage.Parent = bannerFrame
-local bannerImgCorner = Instance.new("UICorner", bannerImage)
-bannerImgCorner.CornerRadius = UDim.new(0, Config.CornerRadius)
-RegisterCorner(bannerImgCorner, Config.CornerRadius)
-
-local greetFrame = Instance.new("Frame")
-greetFrame.Size = UDim2.new(1, 0, 0, 58)
-greetFrame.Position = UDim2.new(0, 0, 0, 100)
-greetFrame.BackgroundTransparency = 1
-greetFrame.Parent = mainPage
-
-local greetTitle = Instance.new("TextLabel")
-greetTitle.Size = UDim2.new(1, 0, 0, 16)
-greetTitle.BackgroundTransparency = 1
-greetTitle.Text = "// HEY, I'M A BEGINNER CODER"
-greetTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-greetTitle.TextSize = 11
-greetTitle.Font = Enum.Font.Code
-greetTitle.TextXAlignment = Enum.TextXAlignment.Left
-greetTitle.Parent = greetFrame
-
-local greetTitleGradient = Instance.new("UIGradient", greetTitle)
-greetTitleGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, THEME.ACCENT_GLOW),
-    ColorSequenceKeypoint.new(0.5, THEME.TEXT_HI),
-    ColorSequenceKeypoint.new(1, THEME.ACCENT_HOT),
-})
-
-local greetBody = Instance.new("TextLabel")
-greetBody.Size = UDim2.new(1, 0, 0, 40)
-greetBody.Position = UDim2.new(0, 0, 0, 18)
-greetBody.BackgroundTransparency = 1
-greetBody.Text = "still learning every day - building my own dream piece by piece.\ncode is the canvas, and the game is the art."
-greetBody.TextColor3 = Color3.fromRGB(255, 255, 255)
-greetBody.TextSize = 10
-greetBody.Font = Enum.Font.Gotham
-greetBody.TextWrapped = true
-greetBody.TextXAlignment = Enum.TextXAlignment.Left
-greetBody.LineHeight = 1.15
-greetBody.Parent = greetFrame
-
-local greetBodyGradient = Instance.new("UIGradient", greetBody)
-greetBodyGradient.Rotation = 25
-greetBodyGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, THEME.ACCENT_GLOW),
-    ColorSequenceKeypoint.new(0.4, THEME.TEXT_HI),
-    ColorSequenceKeypoint.new(0.7, THEME.ACCENT_HOT),
-    ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
-})
-
-task.spawn(function()
-    while greetTitleGradient.Parent do
-        for i = -1, 1, 0.03 do greetTitleGradient.Offset = Vector2.new(i, 0); task.wait(0.04) end
-        for i = 1, -1, -0.03 do greetTitleGradient.Offset = Vector2.new(i, 0); task.wait(0.04) end
-    end
-end)
-
-task.spawn(function()
-    while greetBodyGradient.Parent do
-        for i = -1.2, 1.2, 0.02 do greetBodyGradient.Offset = Vector2.new(i, 0); task.wait(0.035) end
-        for i = 1.2, -1.2, -0.02 do greetBodyGradient.Offset = Vector2.new(i, 0); task.wait(0.035) end
-    end
-end)
-
-local splitLine = Instance.new("Frame")
-splitLine.Size = UDim2.new(1, 0, 0, 1)
-splitLine.Position = UDim2.new(0, 0, 0, 162)
-splitLine.BackgroundColor3 = THEME.ACCENT
-splitLine.BorderSizePixel = 0
-splitLine.BackgroundTransparency = 0.7
-splitLine.ZIndex = 6
-splitLine.Parent = mainPage
-
-local splitGrad = Instance.new("UIGradient", splitLine)
-splitGrad.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, THEME.ACCENT_DARK),
-    ColorSequenceKeypoint.new(0.5, THEME.ACCENT_HOT),
-    ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
-})
-splitGrad.Transparency = NumberSequence.new({
-    NumberSequenceKeypoint.new(0, 1),
-    NumberSequenceKeypoint.new(0.5, 0),
-    NumberSequenceKeypoint.new(1, 1),
-})
-
-local statusSection = Instance.new("Frame")
-statusSection.Size = UDim2.new(1, 0, 0, 18)
-statusSection.Position = UDim2.new(0, 0, 0, 172)
-statusSection.BackgroundTransparency = 1
-statusSection.Parent = mainPage
-
-local statusSectionLine = Instance.new("Frame")
-statusSectionLine.Size = UDim2.new(0, 3, 0, 12)
-statusSectionLine.Position = UDim2.new(0, 0, 0.5, -6)
-statusSectionLine.BackgroundColor3 = THEME.ACCENT_HOT
-statusSectionLine.BorderSizePixel = 0
-statusSectionLine.Parent = statusSection
-Instance.new("UICorner", statusSectionLine).CornerRadius = UDim.new(1, 0)
-
-local statusSectionLabel = Instance.new("TextLabel")
-statusSectionLabel.Size = UDim2.new(1, -15, 1, 0)
-statusSectionLabel.Position = UDim2.new(0, 15, 0, 0)
-statusSectionLabel.BackgroundTransparency = 1
-statusSectionLabel.Text = "// LIVE STATUS"
-statusSectionLabel.TextColor3 = THEME.ACCENT_HOT
-statusSectionLabel.TextSize = 11
-statusSectionLabel.Font = Enum.Font.Code
-statusSectionLabel.TextXAlignment = Enum.TextXAlignment.Left
-statusSectionLabel.Parent = statusSection
-
-local gridFrame = Instance.new("Frame")
-gridFrame.Size = UDim2.new(1, -10, 0, 116)
-gridFrame.Position = UDim2.new(0, 5, 0, 194)
-gridFrame.BackgroundTransparency = 1
-gridFrame.Parent = mainPage
-
-local gridLayout = Instance.new("UIGridLayout", gridFrame)
-gridLayout.CellSize = UDim2.new(0.5, -4, 0, 55)
-gridLayout.CellPadding = UDim2.new(0, 8, 0, 5)
-gridLayout.SortOrder = Enum.SortOrder.LayoutOrder
-
-local statTiles = {}
-local statConfigs = {
-    {key = "FPS", label = "FPS", order = 1},
-    {key = "PING", label = "PING", order = 2},
-    {key = "MEMORY", label = "MEMORY", order = 3},
-    {key = "SESSION", label = "SESSION", order = 4},
-}
-
-for _, cfg in ipairs(statConfigs) do
-    local tile = Instance.new("Frame")
-    tile.Size = UDim2.new(0.5, -4, 0, 55)
-    tile.BackgroundColor3 = Color3.fromRGB(14, 11, 22)
-    tile.BackgroundTransparency = 0.15
-    tile.BorderSizePixel = 0
-    tile.LayoutOrder = cfg.order
-    tile.Parent = gridFrame
-    local tileCorner = Instance.new("UICorner", tile)
-    tileCorner.CornerRadius = UDim.new(0, Config.CornerRadius)
-    RegisterCorner(tileCorner, Config.CornerRadius)
-
-    local tileStroke = Instance.new("UIStroke", tile)
-    tileStroke.Thickness = 1
-    tileStroke.Color = THEME.ACCENT
-    tileStroke.Transparency = 0.5
-
-    local tileInnerGlow = Instance.new("UIStroke", tile)
-    tileInnerGlow.Thickness = 2
-    tileInnerGlow.Color = THEME.ACCENT_GLOW
-    tileInnerGlow.Transparency = 0.94
-
-    local tileTopBar = Instance.new("Frame")
-    tileTopBar.Size = UDim2.new(1, -20, 0, 2)
-    tileTopBar.Position = UDim2.new(0, 10, 0, 6)
-    tileTopBar.BackgroundColor3 = THEME.ACCENT_HOT
-    tileTopBar.BorderSizePixel = 0
-    tileTopBar.Parent = tile
-    Instance.new("UICorner", tileTopBar).CornerRadius = UDim.new(1, 0)
-
-    local tileTopGradient = Instance.new("UIGradient", tileTopBar)
-    tileTopGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, THEME.ACCENT_DARK),
-        ColorSequenceKeypoint.new(0.5, THEME.ACCENT_HOT),
-        ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
-    })
-
-    local tileDot = Instance.new("Frame")
-    tileDot.Size = UDim2.new(0, 4, 0, 4)
-    tileDot.Position = UDim2.new(1, -14, 0, 11)
-    tileDot.BackgroundColor3 = THEME.ACCENT_HOT
-    tileDot.BorderSizePixel = 0
-    tileDot.Parent = tile
-    Instance.new("UICorner", tileDot).CornerRadius = UDim.new(1, 0)
-
-    local tileLabel = Instance.new("TextLabel")
-    tileLabel.Size = UDim2.new(1, -20, 0, 12)
-    tileLabel.Position = UDim2.new(0, 10, 0, 11)
-    tileLabel.BackgroundTransparency = 1
-    tileLabel.Text = cfg.label
-    tileLabel.TextColor3 = THEME.TEXT_LOW
-    tileLabel.TextSize = 9
-    tileLabel.Font = Enum.Font.Code
-    tileLabel.TextXAlignment = Enum.TextXAlignment.Left
-    tileLabel.Parent = tile
-
-    local tileValue = Instance.new("TextLabel")
-    tileValue.Size = UDim2.new(1, -20, 0, 24)
-    tileValue.Position = UDim2.new(0, 10, 0, 23)
-    tileValue.BackgroundTransparency = 1
-    tileValue.Text = "--"
-    tileValue.TextColor3 = THEME.ACCENT_HOT
-    tileValue.TextSize = 16
-    tileValue.Font = Enum.Font.GothamBold
-    tileValue.TextXAlignment = Enum.TextXAlignment.Left
-    tileValue.Parent = tile
-
-    local tileValueGradient = Instance.new("UIGradient", tileValue)
-    tileValueGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, THEME.ACCENT_HOT),
-        ColorSequenceKeypoint.new(0.5, THEME.ACCENT_GLOW),
-        ColorSequenceKeypoint.new(1, THEME.ACCENT_HOT),
-    })
-
-    statTiles[cfg.key] = { Value = tileValue }
-
-    table.insert(ColorSyncedElements, {
-        Kind = "StatTile", Stroke = tileStroke, TopBar = tileTopBar,
-        TopGradient = tileTopGradient, Value = tileValue,
-        ValueGradient = tileValueGradient, InnerGlow = tileInnerGlow, Dot = tileDot,
-    })
-end
-
-task.spawn(function()
-    local sessionStart = tick()
-    local frameCount = 0
-    local lastFpsTime = tick()
-    RunService.RenderStepped:Connect(function() frameCount = frameCount + 1 end)
-    while mainPage.Parent do
-        local now = tick()
-        if now - lastFpsTime >= 1 then
-            if statTiles["FPS"] then statTiles["FPS"].Value.Text = tostring(math.floor(frameCount / (now - lastFpsTime))) end
-            frameCount = 0
-            lastFpsTime = now
-        end
-        if statTiles["PING"] then
-            local ping = 0
-            pcall(function() ping = math.floor(LocalPlayer:GetNetworkPing() * 1000) end)
-            statTiles["PING"].Value.Text = tostring(ping) .. "ms"
-        end
-        if statTiles["MEMORY"] then
-            local mem = 0
-            pcall(function() mem = math.floor(game:GetService("Stats"):GetTotalMemoryUsageMb()) end)
-            statTiles["MEMORY"].Value.Text = tostring(mem) .. "MB"
-        end
-        if statTiles["SESSION"] then
-            local secs = math.floor(tick() - sessionStart)
-            statTiles["SESSION"].Value.Text = string.format("%02d:%02d", math.floor(secs/60), secs % 60)
-        end
-        task.wait(1)
-    end
-end)
-
 -- ====================================================================
--- НОВЫЙ DRAG HANDLE (крестик в правом верхнем углу)
+-- DRAG HANDLE
 -- ====================================================================
 local DragHandle = Instance.new("Frame")
 DragHandle.Size = UDim2.new(0, 50, 0, 50)
@@ -1616,6 +1296,9 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
+-- ====================================================================
+-- AVATAR / INFO
+-- ====================================================================
 local AvatarFrame = Instance.new("Frame")
 AvatarFrame.Size = UDim2.new(0, 50, 0, 50)
 AvatarFrame.Position = UDim2.new(0, 10, 1, -64)
@@ -1867,6 +1550,9 @@ task.spawn(function()
     end
 end)
 
+-- ====================================================================
+-- HELPERS
+-- ====================================================================
 local function CreateSection(parent, title, yPos, color)
     local section = Instance.new("Frame")
     section.Size = UDim2.new(1, 0, 0, 24)
@@ -2132,23 +1818,390 @@ local function CreateSlider(parent, name, descText, yPos, minVal, maxVal, defaul
     SliderRegistry[name] = SetValue
 end
 
+-- ====================================================================
+-- MAIN PAGE
+-- ====================================================================
+local mainPage = TabPages["Main"]
+mainPage.CanvasSize = UDim2.new(0, 0, 0, 380)
+
+local bannerFrame = Instance.new("Frame")
+bannerFrame.Size = UDim2.new(0.72, 0, 0, 90)
+bannerFrame.Position = UDim2.new(0.5, 0, 0, 3)
+bannerFrame.AnchorPoint = Vector2.new(0.5, 0)
+bannerFrame.BackgroundColor3 = THEME.BG_DARK
+bannerFrame.ClipsDescendants = true
+bannerFrame.ZIndex = 6
+bannerFrame.Parent = mainPage
+Instance.new("UICorner", bannerFrame).CornerRadius = UDim.new(0, Config.CornerRadius)
+
+local bannerStroke = Instance.new("UIStroke", bannerFrame)
+bannerStroke.Thickness = 1.5
+bannerStroke.Color = THEME.ACCENT
+bannerStroke.Transparency = 0.3
+
+local bannerGlow = Instance.new("UIStroke", bannerFrame)
+bannerGlow.Thickness = 3
+bannerGlow.Color = THEME.ACCENT_GLOW
+bannerGlow.Transparency = 0.92
+
+local bannerImage = Instance.new("ImageLabel")
+bannerImage.Size = UDim2.new(1, 0, 1, 0)
+bannerImage.BackgroundTransparency = 1
+bannerImage.Image = bannerPath or ""
+bannerImage.ScaleType = Enum.ScaleType.Crop
+bannerImage.ZIndex = 7
+bannerImage.Parent = bannerFrame
+Instance.new("UICorner", bannerImage).CornerRadius = UDim.new(0, Config.CornerRadius)
+
+local greetFrame = Instance.new("Frame")
+greetFrame.Size = UDim2.new(1, 0, 0, 58)
+greetFrame.Position = UDim2.new(0, 0, 0, 100)
+greetFrame.BackgroundTransparency = 1
+greetFrame.Parent = mainPage
+
+local greetTitle = Instance.new("TextLabel")
+greetTitle.Size = UDim2.new(1, 0, 0, 16)
+greetTitle.BackgroundTransparency = 1
+greetTitle.Text = "// HEY, I'M A BEGINNER CODER"
+greetTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+greetTitle.TextSize = 11
+greetTitle.Font = Enum.Font.Code
+greetTitle.TextXAlignment = Enum.TextXAlignment.Left
+greetTitle.Parent = greetFrame
+
+local greetTitleGradient = Instance.new("UIGradient", greetTitle)
+greetTitleGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, THEME.ACCENT_GLOW),
+    ColorSequenceKeypoint.new(0.5, THEME.TEXT_HI),
+    ColorSequenceKeypoint.new(1, THEME.ACCENT_HOT),
+})
+
+local greetBody = Instance.new("TextLabel")
+greetBody.Size = UDim2.new(1, 0, 0, 40)
+greetBody.Position = UDim2.new(0, 0, 0, 18)
+greetBody.BackgroundTransparency = 1
+greetBody.Text = "still learning every day - building my own dream piece by piece.\ncode is the canvas, and the game is the art."
+greetBody.TextColor3 = Color3.fromRGB(255, 255, 255)
+greetBody.TextSize = 10
+greetBody.Font = Enum.Font.Gotham
+greetBody.TextWrapped = true
+greetBody.TextXAlignment = Enum.TextXAlignment.Left
+greetBody.LineHeight = 1.15
+greetBody.Parent = greetFrame
+
+local greetBodyGradient = Instance.new("UIGradient", greetBody)
+greetBodyGradient.Rotation = 25
+greetBodyGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, THEME.ACCENT_GLOW),
+    ColorSequenceKeypoint.new(0.4, THEME.TEXT_HI),
+    ColorSequenceKeypoint.new(0.7, THEME.ACCENT_HOT),
+    ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
+})
+
+task.spawn(function()
+    while greetTitleGradient.Parent do
+        for i = -1, 1, 0.03 do greetTitleGradient.Offset = Vector2.new(i, 0); task.wait(0.04) end
+        for i = 1, -1, -0.03 do greetTitleGradient.Offset = Vector2.new(i, 0); task.wait(0.04) end
+    end
+end)
+
+task.spawn(function()
+    while greetBodyGradient.Parent do
+        for i = -1.2, 1.2, 0.02 do greetBodyGradient.Offset = Vector2.new(i, 0); task.wait(0.035) end
+        for i = 1.2, -1.2, -0.02 do greetBodyGradient.Offset = Vector2.new(i, 0); task.wait(0.035) end
+    end
+end)
+
+local splitLine = Instance.new("Frame")
+splitLine.Size = UDim2.new(1, 0, 0, 1)
+splitLine.Position = UDim2.new(0, 0, 0, 162)
+splitLine.BackgroundColor3 = THEME.ACCENT
+splitLine.BorderSizePixel = 0
+splitLine.BackgroundTransparency = 0.7
+splitLine.ZIndex = 6
+splitLine.Parent = mainPage
+
+local splitGrad = Instance.new("UIGradient", splitLine)
+splitGrad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, THEME.ACCENT_DARK),
+    ColorSequenceKeypoint.new(0.5, THEME.ACCENT_HOT),
+    ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
+})
+splitGrad.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 1),
+    NumberSequenceKeypoint.new(0.5, 0),
+    NumberSequenceKeypoint.new(1, 1),
+})
+
+local statusSection = Instance.new("Frame")
+statusSection.Size = UDim2.new(1, 0, 0, 18)
+statusSection.Position = UDim2.new(0, 0, 0, 172)
+statusSection.BackgroundTransparency = 1
+statusSection.Parent = mainPage
+
+local statusSectionLine = Instance.new("Frame")
+statusSectionLine.Size = UDim2.new(0, 3, 0, 12)
+statusSectionLine.Position = UDim2.new(0, 0, 0.5, -6)
+statusSectionLine.BackgroundColor3 = THEME.ACCENT_HOT
+statusSectionLine.BorderSizePixel = 0
+statusSectionLine.Parent = statusSection
+Instance.new("UICorner", statusSectionLine).CornerRadius = UDim.new(1, 0)
+
+local statusSectionLabel = Instance.new("TextLabel")
+statusSectionLabel.Size = UDim2.new(1, -15, 1, 0)
+statusSectionLabel.Position = UDim2.new(0, 15, 0, 0)
+statusSectionLabel.BackgroundTransparency = 1
+statusSectionLabel.Text = "// LIVE STATUS"
+statusSectionLabel.TextColor3 = THEME.ACCENT_HOT
+statusSectionLabel.TextSize = 11
+statusSectionLabel.Font = Enum.Font.Code
+statusSectionLabel.TextXAlignment = Enum.TextXAlignment.Left
+statusSectionLabel.Parent = statusSection
+
+local gridFrame = Instance.new("Frame")
+gridFrame.Size = UDim2.new(1, -10, 0, 116)
+gridFrame.Position = UDim2.new(0, 5, 0, 194)
+gridFrame.BackgroundTransparency = 1
+gridFrame.Parent = mainPage
+
+local gridLayout = Instance.new("UIGridLayout", gridFrame)
+gridLayout.CellSize = UDim2.new(0.5, -4, 0, 55)
+gridLayout.CellPadding = UDim2.new(0, 8, 0, 5)
+gridLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+local statTiles = {}
+local statConfigs = {
+    {key = "FPS", label = "FPS", order = 1},
+    {key = "PING", label = "PING", order = 2},
+    {key = "MEMORY", label = "MEMORY", order = 3},
+    {key = "SESSION", label = "SESSION", order = 4},
+}
+
+for _, cfg in ipairs(statConfigs) do
+    local tile = Instance.new("Frame")
+    tile.Size = UDim2.new(0.5, -4, 0, 55)
+    tile.BackgroundColor3 = Color3.fromRGB(14, 11, 22)
+    tile.BackgroundTransparency = 0.15
+    tile.BorderSizePixel = 0
+    tile.LayoutOrder = cfg.order
+    tile.Parent = gridFrame
+    Instance.new("UICorner", tile).CornerRadius = UDim.new(0, Config.CornerRadius)
+
+    local tileStroke = Instance.new("UIStroke", tile)
+    tileStroke.Thickness = 1
+    tileStroke.Color = THEME.ACCENT
+    tileStroke.Transparency = 0.5
+
+    local tileInnerGlow = Instance.new("UIStroke", tile)
+    tileInnerGlow.Thickness = 2
+    tileInnerGlow.Color = THEME.ACCENT_GLOW
+    tileInnerGlow.Transparency = 0.94
+
+    local tileTopBar = Instance.new("Frame")
+    tileTopBar.Size = UDim2.new(1, -20, 0, 2)
+    tileTopBar.Position = UDim2.new(0, 10, 0, 6)
+    tileTopBar.BackgroundColor3 = THEME.ACCENT_HOT
+    tileTopBar.BorderSizePixel = 0
+    tileTopBar.Parent = tile
+    Instance.new("UICorner", tileTopBar).CornerRadius = UDim.new(1, 0)
+
+    local tileTopGradient = Instance.new("UIGradient", tileTopBar)
+    tileTopGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, THEME.ACCENT_DARK),
+        ColorSequenceKeypoint.new(0.5, THEME.ACCENT_HOT),
+        ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
+    })
+
+    local tileDot = Instance.new("Frame")
+    tileDot.Size = UDim2.new(0, 4, 0, 4)
+    tileDot.Position = UDim2.new(1, -14, 0, 11)
+    tileDot.BackgroundColor3 = THEME.ACCENT_HOT
+    tileDot.BorderSizePixel = 0
+    tileDot.Parent = tile
+    Instance.new("UICorner", tileDot).CornerRadius = UDim.new(1, 0)
+
+    local tileLabel = Instance.new("TextLabel")
+    tileLabel.Size = UDim2.new(1, -20, 0, 12)
+    tileLabel.Position = UDim2.new(0, 10, 0, 11)
+    tileLabel.BackgroundTransparency = 1
+    tileLabel.Text = cfg.label
+    tileLabel.TextColor3 = THEME.TEXT_LOW
+    tileLabel.TextSize = 9
+    tileLabel.Font = Enum.Font.Code
+    tileLabel.TextXAlignment = Enum.TextXAlignment.Left
+    tileLabel.Parent = tile
+
+    local tileValue = Instance.new("TextLabel")
+    tileValue.Size = UDim2.new(1, -20, 0, 24)
+    tileValue.Position = UDim2.new(0, 10, 0, 23)
+    tileValue.BackgroundTransparency = 1
+    tileValue.Text = "--"
+    tileValue.TextColor3 = THEME.ACCENT_HOT
+    tileValue.TextSize = 16
+    tileValue.Font = Enum.Font.GothamBold
+    tileValue.TextXAlignment = Enum.TextXAlignment.Left
+    tileValue.Parent = tile
+
+    local tileValueGradient = Instance.new("UIGradient", tileValue)
+    tileValueGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, THEME.ACCENT_HOT),
+        ColorSequenceKeypoint.new(0.5, THEME.ACCENT_GLOW),
+        ColorSequenceKeypoint.new(1, THEME.ACCENT_HOT),
+    })
+
+    statTiles[cfg.key] = { Value = tileValue }
+
+    table.insert(ColorSyncedElements, {
+        Kind = "StatTile", Stroke = tileStroke, TopBar = tileTopBar,
+        TopGradient = tileTopGradient, Value = tileValue,
+        ValueGradient = tileValueGradient, InnerGlow = tileInnerGlow, Dot = tileDot,
+    })
+end
+
+task.spawn(function()
+    local sessionStart = tick()
+    local frameCount = 0
+    local lastFpsTime = tick()
+    RunService.RenderStepped:Connect(function() frameCount = frameCount + 1 end)
+    while mainPage.Parent do
+        local now = tick()
+        if now - lastFpsTime >= 1 then
+            if statTiles["FPS"] then statTiles["FPS"].Value.Text = tostring(math.floor(frameCount / (now - lastFpsTime))) end
+            frameCount = 0
+            lastFpsTime = now
+        end
+        if statTiles["PING"] then
+            local ping = 0
+            pcall(function() ping = math.floor(LocalPlayer:GetNetworkPing() * 1000) end)
+            statTiles["PING"].Value.Text = tostring(ping) .. "ms"
+        end
+        if statTiles["MEMORY"] then
+            local mem = 0
+            pcall(function() mem = math.floor(game:GetService("Stats"):GetTotalMemoryUsageMb()) end)
+            statTiles["MEMORY"].Value.Text = tostring(mem) .. "MB"
+        end
+        if statTiles["SESSION"] then
+            local secs = math.floor(tick() - sessionStart)
+            statTiles["SESSION"].Value.Text = string.format("%02d:%02d", math.floor(secs/60), secs % 60)
+        end
+        task.wait(1)
+    end
+end)
+
+-- ====================================================================
+-- COMBAT PAGE
+-- ====================================================================
+local combatPage = TabPages["Combat"]
+combatPage.CanvasSize = UDim2.new(0, 0, 0, 500)
+
+CreateSection(combatPage, "// HITBOX EXPANDER", 10, THEME.ACCENT_HOT)
+
+CreateToggle(combatPage, "Hitbox Expander", "Expands impact area + shows sphere around ball", 40, MegaHitbox.Enabled, function(v)
+    MegaHitbox.Enabled = v
+    Config.HitboxEnabled = v
+    if v then
+        MegaHitbox.ExpandedCount = ExpandAllHitboxTemplates()
+        UpdateHitboxHook()
+        _CreateHitboxVisual()
+        print("[VL] Hitbox ENABLED | x" .. MegaHitbox.SizeMultiplier)
+    else
+        UpdateHitboxHook()
+        if not RangeGuard.Enabled then
+            RestoreAllHitboxes()
+            _DestroyHitboxVisual()
+        end
+        print("[VL] Hitbox DISABLED")
+    end
+end)
+
+CreateSlider(combatPage, "Hitbox Size", "Impact area multiplier (x1 - x20)", 95, 10, 200, Config.HitboxSize, "x", function(v)
+    Config.HitboxSize = v    MegaHitbox.SizeMultiplier = v / 10
+    if MegaHitbox.Enabled then
+        ExpandAllHitboxTemplates()
+        UpdateHitboxHook()
+    end
+end)
+
+CreateToggle(combatPage, "Range Guard", "Blocks hit when ball is outside guard radius", 160, RangeGuard.Enabled, function(v)
+    RangeGuard.Enabled = v
+    if v then
+        UpdateHitboxHook()
+        if not HitboxVisual.Sphere then _CreateHitboxVisual() end
+    else
+        UpdateHitboxHook()
+        if not MegaHitbox.Enabled then
+            RestoreAllHitboxes()
+            _DestroyHitboxVisual()
+        end
+    end
+end)
+
+CreateSlider(combatPage, "Guard Radius", "Distance limit in studs", 215, 3, 30, 8, " studs", function(v)
+    RangeGuard.Radius = v
+end)
+
+-- ====================================================================
+-- VISUALS PAGE
+-- ====================================================================
+local visualsPage = TabPages["Visuals"]
+visualsPage.CanvasSize = UDim2.new(0, 0, 0, 600)
+
+CreateSection(visualsPage, "// BALL VISUALS", 10, Color3.fromRGB(120, 220, 255))
+
+CreateToggle(visualsPage, "Ball ESP", "Highlights the ball with aura, sparks and light glow", 40, Config.BallESPEnabled, function(v)
+    Config.BallESPEnabled = v
+    if v then
+        if BallESP.model then _CreateBallESP(BallESP.model) end
+    else
+        _DestroyBallESP()
+    end
+end)
+
+CreateToggle(visualsPage, "Ball Predictor", "Shows landing point of the ball on the ground", 95, Config.BallPredictorEnabled, function(v)
+    Config.BallPredictorEnabled = v
+    if not v then
+        Pred.smoothVel = nil
+        Pred.smoothLand = nil
+        if Pred.ring then Pred.ring.Transparency = 1 end
+    end
+end)
+
+CreateSection(visualsPage, "// PLAYER TRACERS", 155, Color3.fromRGB(255, 100, 180))
+
+CreateToggle(visualsPage, "Player Tracers", "3D beam from each player head showing look direction", 185, Tracers.Enabled, function(v)
+    Tracers.Enabled = v
+end)
+
+CreateToggle(visualsPage, "Enemies Only", "Show tracers only for enemy team", 235, Tracers.OnlyEnemies, function(v)
+    Tracers.OnlyEnemies = v
+end)
+
+CreateSlider(visualsPage, "Tracer Length", "Beam length in studs", 285, 5, 80, 25, " studs", function(v)
+    Tracers.Length = v
+end)
+
+CreateSection(visualsPage, "// CAMERA", 350, Color3.fromRGB(120, 220, 255))
+
+CreateSlider(visualsPage, "Field of View", "Camera zoom out angle (70 - 200)", 380, 70, 200, Config.FOV, "deg", function(v)
+    Config.FOV = v
+    if workspace.CurrentCamera then
+        workspace.CurrentCamera.FieldOfView = v
+    end
+end)
+
+-- ====================================================================
 -- BALL FUNCTIONS
+-- ====================================================================
 local WIPER_GRAY = Color3.fromRGB(163, 162, 165)
 
 local function _WipeCharacter(char)
     if not char then return end
     if ClothesWiper.Wiped[char] then return end
     ClothesWiper.Wiped[char] = true
-
     local shirt = char:FindFirstChildOfClass("Shirt")
     if shirt then pcall(function() shirt.ShirtTemplate = "" end) end
-
     local pants = char:FindFirstChildOfClass("Pants")
     if pants then pcall(function() pants.PantsTemplate = "" end) end
-
-    local shirtGraphic = char:FindFirstChildOfClass("ShirtGraphic")
-    if shirtGraphic then pcall(function() shirtGraphic.Graphic = "" end) end
-
     local bc = char:FindFirstChildOfClass("BodyColors")
     if bc then
         pcall(function()
@@ -2159,24 +2212,6 @@ local function _WipeCharacter(char)
             bc.LeftLegColor3 = WIPER_GRAY
             bc.RightLegColor3 = WIPER_GRAY
         end)
-    end
-
-    for _, obj in ipairs(char:GetDescendants()) do
-        if obj:IsA("Accessory") or obj:IsA("Hat") then
-            for _, part in ipairs(obj:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    pcall(function() part.Transparency = 1 end)
-                elseif part:IsA("Decal") or part:IsA("Texture") then
-                    pcall(function() part.Transparency = 1 end)
-                end
-            end
-        end
-    end
-
-    local head = char:FindFirstChild("Head")
-    if head then
-        local face = head:FindFirstChildOfClass("Decal")
-        if face then pcall(function() face.Transparency = 1 end) end
     end
 end
 
@@ -2195,14 +2230,6 @@ local function _WiperUpdate()
                     bc.LeftLegColor3 = WIPER_GRAY
                     bc.RightLegColor3 = WIPER_GRAY
                 end)
-            end
-            local shirt = char:FindFirstChildOfClass("Shirt")
-            if shirt and shirt.ShirtTemplate ~= "" then
-                pcall(function() shirt.ShirtTemplate = "" end)
-            end
-            local pants = char:FindFirstChildOfClass("Pants")
-            if pants and pants.PantsTemplate ~= "" then
-                pcall(function() pants.PantsTemplate = "" end)
             end
             if not ClothesWiper.Wiped[char] then
                 _WipeCharacter(char)
@@ -2278,40 +2305,22 @@ local function _CreateBallTrail(ball)
     _DestroyBallTrail()
     if not ball or not ball.PrimaryPart then return end
     local primary = ball.PrimaryPart
-
     local att0 = Instance.new("Attachment")
-    att0.Name = "VL_TrailAtt0"
     att0.Position = Vector3.new(0, 0.3, 0)
     att0.Parent = primary
     BallESP.trailAtt0 = att0
-
     local att1 = Instance.new("Attachment")
-    att1.Name = "VL_TrailAtt1"
     att1.Position = Vector3.new(0, -0.3, 0)
     att1.Parent = primary
     BallESP.trailAtt1 = att1
-
     local trail = Instance.new("Trail")
-    trail.Name = "VL_BallTrail"
     trail.Attachment0 = att0
     trail.Attachment1 = att1
     trail.Lifetime = 0.6
-    trail.MinLength = 0.3
     trail.LightEmission = 1
     trail.LightInfluence = 0
-    trail.FaceCamera = true
-    trail.WidthScale = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 1),
-        NumberSequenceKeypoint.new(0.5, 0.6),
-        NumberSequenceKeypoint.new(1, 0),
-    })
-    trail.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.2),
-        NumberSequenceKeypoint.new(1, 1),
-    })
     trail.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, THEME.ACCENT_HOT),
-        ColorSequenceKeypoint.new(0.5, THEME.ACCENT),
         ColorSequenceKeypoint.new(1, THEME.ACCENT_GLOW),
     })
     trail.Parent = primary
@@ -2329,9 +2338,7 @@ local function _CreateBallESP(ball)
     _DestroyBallESP()
     if not ball or not ball.PrimaryPart then return end
     local primary = ball.PrimaryPart
-
     BallESP.highlight = Instance.new("Highlight")
-    BallESP.highlight.Name = "VL_BallESP"
     BallESP.highlight.Adornee = primary
     BallESP.highlight.FillColor = THEME.ACCENT
     BallESP.highlight.OutlineColor = THEME.ACCENT_HOT
@@ -2339,47 +2346,17 @@ local function _CreateBallESP(ball)
     BallESP.highlight.OutlineTransparency = 0
     BallESP.highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     BallESP.highlight.Parent = safeParent
-
-    BallESP.particles = Instance.new("ParticleEmitter")
-    BallESP.particles.Name = "VL_BallSparks"
-    BallESP.particles.Texture = "rbxasset://textures/particles/sparkles_main.dds"
-    BallESP.particles.LightEmission = 1
-    BallESP.particles.LightInfluence = 0
-    BallESP.particles.Size = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0),
-        NumberSequenceKeypoint.new(0.5, 0.35),
-        NumberSequenceKeypoint.new(1, 0),
-    })
-    BallESP.particles.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 1),
-        NumberSequenceKeypoint.new(0.3, 0.2),
-        NumberSequenceKeypoint.new(1, 1),
-    })
-    BallESP.particles.Lifetime = NumberRange.new(0.6, 1.1)
-    BallESP.particles.Rate = 25
-    BallESP.particles.Speed = NumberRange.new(0.4, 1.2)
-    BallESP.particles.SpreadAngle = Vector2.new(360, 360)
-    BallESP.particles.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, THEME.ACCENT),
-        ColorSequenceKeypoint.new(1, THEME.ACCENT_GLOW),
-    })
-    BallESP.particles.Parent = primary
-
     BallESP.light = Instance.new("PointLight")
     BallESP.light.Color = THEME.ACCENT
     BallESP.light.Brightness = 2
     BallESP.light.Range = 10
-    BallESP.light.Shadows = false
     BallESP.light.Parent = primary
-
     _CreateBallTrail(ball)
 end
 
 local function _CreatePredictorVisuals()
     if Pred.ring then Pred.ring:Destroy() end
-
     Pred.ring = Instance.new("Part")
-    Pred.ring.Name = "VL_PredRing"
     Pred.ring.Shape = Enum.PartType.Cylinder
     Pred.ring.Size = Vector3.new(0.1, 4, 4)
     Pred.ring.Anchored = true
@@ -2394,17 +2371,16 @@ end
 
 _CreatePredictorVisuals()
 
--- HITBOX VISUAL (сфера)
+-- ====================================================================
+-- HITBOX VISUAL
+-- ====================================================================
 local function _DestroyHitboxVisual()
     if HitboxVisual.Sphere then pcall(function() HitboxVisual.Sphere:Destroy() end) HitboxVisual.Sphere = nil end
-    if HitboxVisual.Ring then pcall(function() HitboxVisual.Ring:Destroy() end) HitboxVisual.Ring = nil end
 end
 
 local function _CreateHitboxVisual()
     _DestroyHitboxVisual()
-
     local sphere = Instance.new("Part")
-    sphere.Name = "VL_HitboxSphere"
     sphere.Shape = Enum.PartType.Ball
     sphere.Size = Vector3.new(6, 6, 6)
     sphere.Anchored = true
@@ -2417,7 +2393,6 @@ local function _CreateHitboxVisual()
     sphere.Transparency = 0.75
     sphere.Parent = workspace
     HitboxVisual.Sphere = sphere
-
     HitboxVisual.Radius = MegaHitbox.SizeMultiplier * 1.2835
 end
 
@@ -2426,44 +2401,33 @@ local function _UpdateHitboxVisual(dt)
         if HitboxVisual.Sphere then _DestroyHitboxVisual() end
         return
     end
-
     local ball = _FindBall()
     if not ball or not ball.PrimaryPart then
-        if HitboxVisual.Sphere then
-            HitboxVisual.Sphere.Transparency = 1
-        end
+        if HitboxVisual.Sphere then HitboxVisual.Sphere.Transparency = 1 end
         return
     end
-
     if not HitboxVisual.Sphere or not HitboxVisual.Sphere.Parent then
         _CreateHitboxVisual()
     end
-
     local ballPos = ball.PrimaryPart.Position
     local sizeMult = MegaHitbox.Enabled and MegaHitbox.SizeMultiplier or 3
     local desiredRadius = sizeMult * 1.2835
     HitboxVisual.Radius = HitboxVisual.Radius + (desiredRadius - HitboxVisual.Radius) * math.min(dt * 8, 1)
-
     local r = HitboxVisual.Radius
     local sphere = HitboxVisual.Sphere
-
     sphere.Size = Vector3.new(r * 2, r * 2, r * 2)
     sphere.CFrame = CFrame.new(ballPos)
-
     if RangeGuard.Enabled then
         local char = LocalPlayer.Character
         if char and char:FindFirstChild("HumanoidRootPart") then
             local dist = (ballPos - char.HumanoidRootPart.Position).Magnitude
             if dist <= RangeGuard.Radius then
                 sphere.Color = Color3.fromRGB(80, 255, 130)
-                sphere.Transparency = 0.65
+                sphere.Transparency = 0.6
             else
                 sphere.Color = Color3.fromRGB(255, 80, 80)
-                sphere.Transparency = 0.8
+                sphere.Transparency = 0.75
             end
-        else
-            sphere.Color = THEME.ACCENT
-            sphere.Transparency = 0.75
         end
     else
         sphere.Color = THEME.ACCENT
@@ -2476,38 +2440,25 @@ local function ExpandAllHitboxTemplates()
     if not Assets then return 0 end
     local HitboxesNew = Assets:FindFirstChild("HitboxesNew")
     if not HitboxesNew then return 0 end
-
     local count = 0
-    local defaultFolder = HitboxesNew:FindFirstChild("Default")
-    if defaultFolder then
-        local assemblies = defaultFolder:FindFirstChild("Assemblies")
-        if assemblies then
-            for _, assembly in ipairs(assemblies:GetChildren()) do
-                local part = assembly:FindFirstChild("Part")
-                if part then
-                    local orig = part:GetAttribute("VL_OrigSize") or part.Size
-                    part:SetAttribute("VL_OrigSize", orig)
-                    part.Size = orig * MegaHitbox.SizeMultiplier
-                    count = count + 1
-                end
+    local function processAssemblies(assemblies)
+        if not assemblies then return end
+        for _, assembly in ipairs(assemblies:GetChildren()) do
+            local part = assembly:FindFirstChild("Part")
+            if part then
+                local orig = part:GetAttribute("VL_OrigSize") or part.Size
+                part:SetAttribute("VL_OrigSize", orig)
+                part.Size = orig * MegaHitbox.SizeMultiplier
+                count = count + 1
             end
         end
     end
+    local defaultFolder = HitboxesNew:FindFirstChild("Default")
+    if defaultFolder then processAssemblies(defaultFolder:FindFirstChild("Assemblies")) end
     local bySpecial = HitboxesNew:FindFirstChild("BySpecial")
     if bySpecial then
         for _, special in ipairs(bySpecial:GetChildren()) do
-            local assemblies = special:FindFirstChild("Assemblies")
-            if assemblies then
-                for _, assembly in ipairs(assemblies:GetChildren()) do
-                    local part = assembly:FindFirstChild("Part")
-                    if part then
-                        local orig = part:GetAttribute("VL_OrigSize") or part.Size
-                        part:SetAttribute("VL_OrigSize", orig)
-                        part.Size = orig * MegaHitbox.SizeMultiplier
-                        count = count + 1
-                    end
-                end
-            end
+            processAssemblies(special:FindFirstChild("Assemblies"))
         end
     end
     return count
@@ -2526,17 +2477,14 @@ local function RestoreAllHitboxes()
     end
 end
 
+-- ====================================================================
 -- TRACERS
+-- ====================================================================
 local function _TracerGetHead(player)
     local char = player.Character
     if not char then return nil end
     local head = char:FindFirstChild("Head")
     if head and head:IsA("BasePart") then return head end
-    for _, obj in ipairs(char:GetDescendants()) do
-        if obj:IsA("BasePart") and string.lower(obj.Name) == "head" then
-            return obj
-        end
-    end
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if hrp and hrp:IsA("BasePart") then return hrp end
     return nil
@@ -2568,31 +2516,22 @@ local function _TracerCreate(player)
     local head = _TracerGetHead(player)
     if not head then return nil end
     _TracerEnsureFolder()
-
     local att0 = Instance.new("Attachment")
-    att0.Name = "VL_BeamStart"
     att0.Parent = head
-
     local endPart = Instance.new("Part")
-    endPart.Name = "VL_BeamEnd_" .. player.Name
     endPart.Size = Vector3.new(0.6, 0.6, 0.6)
     endPart.Shape = Enum.PartType.Ball
     endPart.Anchored = true
     endPart.CanCollide = false
     endPart.CanQuery = false
     endPart.CanTouch = false
-    endPart.CastShadow = false
     endPart.Material = Enum.Material.Neon
     endPart.Color = THEME.ACCENT_HOT
     endPart.Transparency = 0.2
     endPart.Parent = Tracers.Folder
-
     local att1 = Instance.new("Attachment")
-    att1.Name = "VL_BeamEnd"
     att1.Parent = endPart
-
     local beam = Instance.new("Beam")
-    beam.Name = "VL_Beam"
     beam.Attachment0 = att0
     beam.Attachment1 = att1
     beam.Width0 = 0.3
@@ -2601,15 +2540,8 @@ local function _TracerCreate(player)
     beam.LightEmission = 1
     beam.LightInfluence = 0
     beam.Color = ColorSequence.new(THEME.ACCENT_HOT)
-    beam.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.1),
-        NumberSequenceKeypoint.new(0.5, 0.3),
-        NumberSequenceKeypoint.new(1, 0.6),
-    })
-    beam.Segments = 1
     beam.Parent = endPart
-
-    return { att0 = att0, att1 = att1, beam = beam, endPart = endPart, head = head }
+    return { att0 = att0, endPart = endPart, head = head }
 end
 
 local function _TracerUpdate()
@@ -2623,19 +2555,15 @@ local function _TracerUpdate()
         end
         return
     end
-
     for _, player in ipairs(Players:GetPlayers()) do
         if player ~= LocalPlayer then
-            local isEnemy = _TracerIsEnemy(player)
             local shouldShow = true
-            if Tracers.OnlyEnemies and not isEnemy then shouldShow = false end
-
+            if Tracers.OnlyEnemies and not _TracerIsEnemy(player) then shouldShow = false end
             if shouldShow then
                 local head = _TracerGetHead(player)
                 if head then
                     local t = Tracers.Active[player]
-                    local valid = t and t.att0 and t.att0.Parent and t.endPart and t.endPart.Parent and t.head == head
-                    if not valid then
+                    if not (t and t.att0 and t.att0.Parent and t.endPart and t.endPart.Parent) then
                         _TracerDestroy(player)
                         t = _TracerCreate(player)
                         if t then Tracers.Active[player] = t end
@@ -2643,7 +2571,6 @@ local function _TracerUpdate()
                     if t and t.endPart then
                         local endPos = head.Position + head.CFrame.LookVector * Tracers.Length
                         t.endPart.CFrame = CFrame.new(endPos)
-                        if t.att0.Parent ~= head then t.att0.Parent = head end
                     end
                 else
                     _TracerDestroy(player)
@@ -2651,12 +2578,6 @@ local function _TracerUpdate()
             else
                 _TracerDestroy(player)
             end
-        end
-    end
-
-    for player, _ in pairs(Tracers.Active) do
-        if not player.Parent then
-            _TracerDestroy(player)
         end
     end
 end
@@ -2668,11 +2589,9 @@ task.spawn(function()
     end
 end)
 
-Players.PlayerRemoving:Connect(function(player)
-    _TracerDestroy(player)
-end)
-
+-- ====================================================================
 -- HIT BLOCKER
+-- ====================================================================
 local function _IsBallInGuardRange()
     if not RangeGuard.Enabled then return true end
     local ball = _FindBall()
@@ -2686,44 +2605,18 @@ end
 pcall(function()
     local CAS = game:GetService("ContextActionService")
     CAS:BindActionAtPriority("VL_HitBlock", function(_, state)
-        if state ~= Enum.UserInputState.Begin then
-            return Enum.ContextActionResult.Pass
-        end
-        if not RangeGuard.Enabled then
-            return Enum.ContextActionResult.Pass
-        end
+        if state ~= Enum.UserInputState.Begin then return Enum.ContextActionResult.Pass end
+        if not RangeGuard.Enabled then return Enum.ContextActionResult.Pass end
         if not _IsBallInGuardRange() then
-            local now = tick()
-            if now - HitBlocker.LastBlockTime > 0.1 then
-                HitBlocker.LastBlockTime = now
-                warn("[VL] Удар заблокирован — мяч вне Guard Radius " .. RangeGuard.Radius .. " studs")
-            end
             return Enum.ContextActionResult.Sink
         end
         return Enum.ContextActionResult.Pass
     end, false, 9999, Enum.UserInputType.MouseButton1, Enum.UserInputType.Touch)
 end)
 
-pcall(function()
-    if not hookfunction then return end
-    local oldIsMousePressed = UserInputService.IsMouseButtonPressed
-    if not oldIsMousePressed then return end
-    hookfunction(UserInputService.IsMouseButtonPressed, function(self, button)
-        if RangeGuard.Enabled and button == Enum.UserInputType.MouseButton1 then
-            if not _IsBallInGuardRange() then
-                local now = tick()
-                if now - HitBlocker.LastBlockTime > 0.1 then
-                    HitBlocker.LastBlockTime = now
-                    warn("[VL] IsMouseButtonPressed заблокирован")
-                end
-                return false
-            end
-        end
-        return oldIsMousePressed(self, button)
-    end)
-end)
-
+-- ====================================================================
 -- SKY PRESETS
+-- ====================================================================
 local function _SkyCleanup()
     local Lighting = game:GetService("Lighting")
     for _, obj in ipairs(Lighting:GetChildren()) do
@@ -2742,14 +2635,11 @@ end
 local function _SkyPinkVibe()
     _SkyCleanup()
     local Lighting = game:GetService("Lighting")
-    local RunService = game:GetService("RunService")
-
     for _, obj in ipairs(Lighting:GetChildren()) do
         if obj:IsA("Sky") or obj:IsA("Atmosphere") or obj:IsA("Clouds") or obj:IsA("BloomEffect") or obj:IsA("SunRaysEffect") or obj:IsA("ColorCorrectionEffect") then
             pcall(function() obj:Destroy() end)
         end
     end
-
     local pinkSky = Instance.new("Sky")
     pinkSky.Name = "META_PinkSky"
     pinkSky.SkyboxBk = "rbxassetid://159454299"
@@ -2758,22 +2648,16 @@ local function _SkyPinkVibe()
     pinkSky.SkyboxLf = "rbxassetid://159454286"
     pinkSky.SkyboxRt = "rbxassetid://159454300"
     pinkSky.SkyboxUp = "rbxassetid://159454288"
-    pinkSky.SunAngularSize = 14
-    pinkSky.MoonAngularSize = 12
-    pinkSky.StarCount = 3000
     pinkSky.CelestialBodiesShown = true
     pinkSky.Parent = Lighting
-
     local atmosphere = Instance.new("Atmosphere")
     atmosphere.Name = "META_PinkAtmosphere"
     atmosphere.Density = 0.4
-    atmosphere.Offset = 0.15
     atmosphere.Color = Color3.fromRGB(255, 180, 220)
     atmosphere.Decay = Color3.fromRGB(180, 90, 150)
     atmosphere.Glare = 0.7
     atmosphere.Haze = 2.5
     atmosphere.Parent = Lighting
-
     local cc = Instance.new("ColorCorrectionEffect")
     cc.Name = "META_PinkFilter"
     cc.Brightness = 0.06
@@ -2781,32 +2665,10 @@ local function _SkyPinkVibe()
     cc.Saturation = 0.6
     cc.TintColor = Color3.fromRGB(255, 200, 230)
     cc.Parent = Lighting
-
-    local bloom = Instance.new("BloomEffect")
-    bloom.Name = "META_PinkBloom"
-    bloom.Intensity = 0.75
-    bloom.Size = 22
-    bloom.Threshold = 0.2
-    bloom.Parent = Lighting
-
-    local rays = Instance.new("SunRaysEffect")
-    rays.Name = "META_PinkRays"
-    rays.Intensity = 0.22
-    rays.Spread = 1.2
-    rays.Parent = Lighting
-
     Lighting.Ambient = Color3.fromRGB(140, 100, 130)
     Lighting.OutdoorAmbient = Color3.fromRGB(200, 150, 190)
     Lighting.Brightness = 1.8
     Lighting.ClockTime = 16.5
-    Lighting.GeographicLatitude = 15
-    Lighting.GlobalShadows = true
-    Lighting.EnvironmentDiffuseScale = 0.7
-    Lighting.EnvironmentSpecularScale = 0.9
-    Lighting.ExposureCompensation = 0.08
-    Lighting.FogEnd = 100000
-    Lighting.FogStart = 0
-
     Sky.Connection = RunService.Heartbeat:Connect(function()
         if not cc or not cc.Parent then
             if Sky.Connection then Sky.Connection:Disconnect() Sky.Connection = nil end
@@ -2814,28 +2676,16 @@ local function _SkyPinkVibe()
         end
         local wave = (math.sin(tick() * 0.5) + 1) / 2
         cc.TintColor = Color3.fromRGB(240 + wave * 15, 190 + wave * 20, 220 + wave * 25)
-        atmosphere.Color = Color3.fromRGB(240 + wave * 15, 170 + wave * 25, 210 + wave * 30)
-        bloom.Intensity = 0.6 + wave * 0.3
     end)
-
     Sky.Current = "PinkVibe"
-    print("[VL] Sky: Pink Vibe activated")
 end
 
 local function _SkyAtmosh()
     _SkyCleanup()
     local Lighting = game:GetService("Lighting")
-
     local oldSky = Lighting:FindFirstChildOfClass("Sky")
     if oldSky then pcall(function() oldSky:Destroy() end) end
-    for _, obj in ipairs(Lighting:GetChildren()) do
-        if obj:IsA("ColorCorrectionEffect") or obj:IsA("Atmosphere") or obj:IsA("BloomEffect") then
-            pcall(function() obj:Destroy() end)
-        end
-    end
-
     local PINK_ID = "rbxassetid://1001627653"
-
     local sky = Instance.new("Sky")
     sky.Name = "META_AtmoshSky"
     sky.SkyboxBk = PINK_ID
@@ -2844,69 +2694,20 @@ local function _SkyAtmosh()
     sky.SkyboxLf = PINK_ID
     sky.SkyboxRt = PINK_ID
     sky.SkyboxUp = PINK_ID
-    sky.CelestialBodiesShown = true
-    sky.StarCount = 3000
     sky.Parent = Lighting
-
-    local atm = Instance.new("Atmosphere")
-    atm.Name = "META_AtmoshAtmosphere"
-    atm.Density = 0.35
-    atm.Offset = 0.1
-    atm.Color = Color3.fromRGB(255, 200, 230)
-    atm.Decay = Color3.fromRGB(180, 120, 170)
-    atm.Glare = 0.4
-    atm.Haze = 2.5
-    atm.Parent = Lighting
-
     Lighting.ClockTime = 17.5
     Lighting.Brightness = 2.2
-    Lighting.Ambient = Color3.fromRGB(90, 60, 100)
-    Lighting.OutdoorAmbient = Color3.fromRGB(200, 140, 180)
-    Lighting.EnvironmentDiffuseScale = 1
-    Lighting.EnvironmentSpecularScale = 1
-    Lighting.FogEnd = 1000
-    Lighting.FogStart = 150
-    Lighting.FogColor = Color3.fromRGB(255, 200, 230)
-
-    local REFLECT = 0.2
-    for _, part in ipairs(workspace:GetDescendants()) do
-        if part:IsA("BasePart") and part.Name ~= "Terrain" then
-            pcall(function() part.Reflectance = REFLECT end)
-        end
-    end
-
-    workspace.DescendantAdded:Connect(function(obj)
-        if obj:IsA("BasePart") then
-            task.wait(0.1)
-            pcall(function() obj.Reflectance = REFLECT end)
-        end
-    end)
-
-    task.spawn(function()
-        local angle = 0
-        while sky.Parent do
-            angle = (angle + 0.03) % 360
-            pcall(function()
-                sky.SkyboxOrientation = Vector3.new(5, angle, 0)
-            end)
-            task.wait(0.05)
-        end
-    end)
-
     Sky.Current = "Atmosh"
-    print("[VL] Sky: Atmosh Sky activated")
 end
 
 local function _SkyTwilight()
     _SkyCleanup()
     local Lighting = game:GetService("Lighting")
-
     for _, obj in ipairs(Lighting:GetChildren()) do
-        if obj:IsA("Sky") or obj:IsA("Atmosphere") or obj:IsA("Clouds") or obj:IsA("BloomEffect") or obj:IsA("SunRaysEffect") or obj:IsA("ColorCorrectionEffect") then
+        if obj:IsA("Sky") or obj:IsA("Atmosphere") or obj:IsA("Clouds") then
             pcall(function() obj:Destroy() end)
         end
     end
-
     local sky = Instance.new("Sky")
     sky.Name = "META_TwilightSky"
     sky.SkyboxBk = "rbxassetid://159454299"
@@ -2915,94 +2716,10 @@ local function _SkyTwilight()
     sky.SkyboxLf = "rbxassetid://159454286"
     sky.SkyboxRt = "rbxassetid://159454300"
     sky.SkyboxUp = "rbxassetid://159454288"
-    sky.CelestialBodiesShown = true
-    sky.StarCount = 5000
-    sky.SunAngularSize = 12
-    sky.MoonAngularSize = 6
     sky.Parent = Lighting
-
-    local clouds = Instance.new("Clouds")
-    clouds.Name = "META_TwilightClouds"
-    clouds.Cover = 0.5
-    clouds.Density = 0.7
-    clouds.Color = Color3.fromRGB(255, 220, 235)
-    clouds.Parent = Lighting
-
-    local atm = Instance.new("Atmosphere")
-    atm.Name = "META_TwilightAtmosphere"
-    atm.Density = 0.38
-    atm.Offset = 0.12
-    atm.Color = Color3.fromRGB(255, 210, 230)
-    atm.Decay = Color3.fromRGB(140, 90, 160)
-    atm.Glare = 0.5
-    atm.Haze = 2
-    atm.Parent = Lighting
-
     Lighting.ClockTime = 17.8
     Lighting.Brightness = 2.5
-    Lighting.Ambient = Color3.fromRGB(80, 70, 100)
-    Lighting.OutdoorAmbient = Color3.fromRGB(200, 150, 180)
-    Lighting.EnvironmentDiffuseScale = 1
-    Lighting.EnvironmentSpecularScale = 1
-    Lighting.ExposureCompensation = 0.1
-    Lighting.GlobalShadows = true
-    Lighting.ShadowSoftness = 0.4
-
-    pcall(function()
-        Lighting.LightingStyle = Enum.LightingStyle.Realistic
-    end)
-
-    local bloom = Instance.new("BloomEffect")
-    bloom.Name = "META_TwilightBloom"
-    bloom.Intensity = 0.7
-    bloom.Size = 28
-    bloom.Threshold = 0.3
-    bloom.Parent = Lighting
-
-    local rays = Instance.new("SunRaysEffect")
-    rays.Name = "META_TwilightRays"
-    rays.Intensity = 0.3
-    rays.Spread = 1.3
-    rays.Parent = Lighting
-
-    local cc = Instance.new("ColorCorrectionEffect")
-    cc.Name = "META_TwilightFilter"
-    cc.Brightness = 0.05
-    cc.Contrast = 0.15
-    cc.Saturation = 0.2
-    cc.TintColor = Color3.fromRGB(255, 210, 230)
-    cc.Parent = Lighting
-
-    local REFLECT = 0.18
-    for _, obj in ipairs(workspace:GetDescendants()) do
-        if obj:IsA("BasePart") and obj.Name ~= "Terrain" then
-            pcall(function() obj.Reflectance = REFLECT end)
-        end
-    end
-
-    workspace.DescendantAdded:Connect(function(obj)
-        if obj:IsA("BasePart") then
-            task.wait(0.1)
-            pcall(function() obj.Reflectance = REFLECT end)
-        end
-    end)
-
-    task.spawn(function()
-        local t = 0
-        while sky.Parent do
-            t = t + 0.03
-            local wave = (math.sin(t * 0.4) + 1) / 2
-            pcall(function()
-                cc.TintColor = Color3.fromRGB(245 + wave * 10, 200 + wave * 20, 225 + wave * 10)
-                clouds.Color = Color3.fromRGB(240 + wave * 15, 210 + wave * 20, 230 + wave * 15)
-                atm.Color = Color3.fromRGB(245 + wave * 10, 200 + wave * 20, 225 + wave * 10)
-            end)
-            task.wait(0.05)
-        end
-    end)
-
     Sky.Current = "Twilight"
-    print("[VL] Sky: Twilight Bloom activated")
 end
 
 Sky.Presets = {
@@ -3011,123 +2728,9 @@ Sky.Presets = {
     { name = "Twilight Bloom", func = _SkyTwilight },
 }
 
--- COMBAT PAGE
-local combatPage = TabPages["Combat"]
-combatPage.CanvasSize = UDim2.new(0, 0, 0, 500)
-
-CreateSection(combatPage, "// HITBOX EXPANDER", 10, THEME.ACCENT_HOT)
-
-CreateToggle(combatPage, "Hitbox Expander", "Expands impact area + shows sphere around ball", 40, MegaHitbox.Enabled, function(v)
-    MegaHitbox.Enabled = v
-    Config.HitboxEnabled = v
-    if v then
-        MegaHitbox.ExpandedCount = ExpandAllHitboxTemplates()
-        UpdateHitboxHook()
-        _CreateHitboxVisual()
-        task.spawn(function()
-            while MegaHitbox.Enabled or RangeGuard.Enabled do
-                local ok, err = pcall(_UpdateHitboxVisual, 0.03)
-                if not ok then warn("[VL] HitboxVisual error: " .. tostring(err)) end
-                task.wait(0.03)
-            end
-        end)
-        print("[VL] Hitbox ENABLED | x" .. MegaHitbox.SizeMultiplier)
-    else
-        UpdateHitboxHook()
-        if not RangeGuard.Enabled then
-            RestoreAllHitboxes()
-            _DestroyHitboxVisual()
-        end
-        print("[VL] Hitbox DISABLED")
-    end
-end)
-
-CreateSlider(combatPage, "Hitbox Size", "Impact area multiplier (x1 - x20)", 95, 10, 200, Config.HitboxSize, "x", function(v)
-    Config.HitboxSize = v
-    MegaHitbox.SizeMultiplier = v / 10
-    if MegaHitbox.Enabled then
-        MegaHitbox.ExpandedCount = ExpandAllHitboxTemplates()
-        UpdateHitboxHook()
-    end
-end)
-
-CreateToggle(combatPage, "Range Guard", "Blocks hit when ball is outside guard radius", 160, RangeGuard.Enabled, function(v)
-    RangeGuard.Enabled = v
-    if v then
-        UpdateHitboxHook()
-        if not HitboxVisual.Sphere then
-            _CreateHitboxVisual()
-        end
-        task.spawn(function()
-            while MegaHitbox.Enabled or RangeGuard.Enabled do
-                local ok, err = pcall(_UpdateHitboxVisual, 0.03)
-                if not ok then warn("[VL] HitboxVisual error: " .. tostring(err)) end
-                task.wait(0.03)
-            end
-        end)
-        print("[VL] Range Guard ENABLED | radius " .. RangeGuard.Radius)
-    else
-        UpdateHitboxHook()
-        if not MegaHitbox.Enabled then
-            RestoreAllHitboxes()
-            _DestroyHitboxVisual()
-        end
-        print("[VL] Range Guard DISABLED")
-    end
-end)
-
-CreateSlider(combatPage, "Guard Radius", "Distance limit in studs", 215, 3, 30, 8, " studs", function(v)
-    RangeGuard.Radius = v
-end)
-
--- VISUALS PAGE
-local visualsPage = TabPages["Visuals"]
-visualsPage.CanvasSize = UDim2.new(0, 0, 0, 600)
-
-CreateSection(visualsPage, "// BALL VISUALS", 10, Color3.fromRGB(120, 220, 255))
-
-CreateToggle(visualsPage, "Ball ESP", "Highlights the ball with aura, sparks and light glow", 40, Config.BallESPEnabled, function(v)
-    Config.BallESPEnabled = v
-    if v then
-        if BallESP.model then _CreateBallESP(BallESP.model) end
-    else
-        _DestroyBallESP()
-    end
-end)
-
-CreateToggle(visualsPage, "Ball Predictor", "Shows landing point of the ball on the ground", 95, Config.BallPredictorEnabled, function(v)
-    Config.BallPredictorEnabled = v
-    if not v then
-        Pred.smoothVel = nil
-        Pred.smoothLand = nil
-        if Pred.ring then Pred.ring.Transparency = 1 end
-    end
-end)
-
-CreateSection(visualsPage, "// PLAYER TRACERS", 155, Color3.fromRGB(255, 100, 180))
-
-CreateToggle(visualsPage, "Player Tracers", "3D beam from each player head showing look direction", 185, Tracers.Enabled, function(v)
-    Tracers.Enabled = v
-end)
-
-CreateToggle(visualsPage, "Enemies Only", "Show tracers only for enemy team", 235, Tracers.OnlyEnemies, function(v)
-    Tracers.OnlyEnemies = v
-end)
-
-CreateSlider(visualsPage, "Tracer Length", "Beam length in studs", 285, 5, 80, 25, " studs", function(v)
-    Tracers.Length = v
-end)
-
-CreateSection(visualsPage, "// CAMERA", 350, Color3.fromRGB(120, 220, 255))
-
-CreateSlider(visualsPage, "Field of View", "Camera zoom out angle (70 - 200)", 380, 70, 200, Config.FOV, "deg", function(v)
-    Config.FOV = v
-    if workspace.CurrentCamera then
-        workspace.CurrentCamera.FieldOfView = v
-    end
-end)
-
+-- ====================================================================
 -- SKY PAGE
+-- ====================================================================
 local skyPage = TabPages["Sky"]
 skyPage.CanvasSize = UDim2.new(0, 0, 0, 700)
 
@@ -3136,118 +2739,85 @@ CreateSection(skyPage, "// SKY SELECTOR", 10, Color3.fromRGB(255, 150, 200))
 local skyY = 50
 local skyButtons = {}
 
-local function CreateSkyButton(preset, yPos)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 60)
-    frame.Position = UDim2.new(0, 0, 0, yPos)
-    frame.BackgroundColor3 = Color3.fromRGB(30, 22, 50)
-    frame.BackgroundTransparency = 0.3
+local function CreateSkyButton(preset, yPos, index)
+    local frame = Instance.new("TextButton")
+    frame.Size = UDim2.new(1, -16, 0, 40)
+    frame.Position = UDim2.new(0, 8, 0, yPos)
+    frame.BackgroundColor3 = Color3.fromRGB(22, 15, 34)
+    frame.BackgroundTransparency = 0.15
     frame.BorderSizePixel = 0
+    frame.Text = ""
+    frame.AutoButtonColor = false
     frame.Parent = skyPage
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 6)
 
     local stroke = Instance.new("UIStroke", frame)
     stroke.Thickness = 1
-    stroke.Color = Color3.fromRGB(255, 150, 200)
-    stroke.Transparency = 0.5
+    stroke.Color = THEME.ACCENT_DARK
+    stroke.Transparency = 0.55
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
-    local frameGradient = Instance.new("UIGradient", frame)
-    frameGradient.Rotation = 45
-    frameGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 25, 65)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(70, 30, 80)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 25, 65)),
+    local accent = Instance.new("Frame")
+    accent.Size = UDim2.new(0, 2, 1, -12)
+    accent.Position = UDim2.new(0, 0, 0, 6)
+    accent.BackgroundColor3 = THEME.ACCENT_HOT
+    accent.BorderSizePixel = 0
+    accent.ZIndex = 6
+    accent.Parent = frame
+    Instance.new("UICorner", accent).CornerRadius = UDim.new(1, 0)
+
+    local accentGradient = Instance.new("UIGradient", accent)
+    accentGradient.Rotation = 90
+    accentGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, THEME.ACCENT_DARK),
+        ColorSequenceKeypoint.new(0.5, THEME.ACCENT_HOT),
+        ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
     })
 
     task.spawn(function()
-        while frameGradient.Parent do
+        while accentGradient.Parent do
             for i = -1, 1, 0.04 do
-                if not frameGradient.Parent then break end
-                frameGradient.Offset = Vector2.new(i, 0)
+                if not accentGradient.Parent then break end
+                accentGradient.Offset = Vector2.new(0, i)
                 task.wait(0.05)
             end
             for i = 1, -1, -0.04 do
-                if not frameGradient.Parent then break end
-                frameGradient.Offset = Vector2.new(i, 0)
+                if not accentGradient.Parent then break end
+                accentGradient.Offset = Vector2.new(0, i)
                 task.wait(0.05)
             end
         end
     end)
 
-    local shineLine = Instance.new("Frame")
-    shineLine.Size = UDim2.new(0, 3, 1, -12)
-    shineLine.Position = UDim2.new(0, 0, 0, 6)
-    shineLine.BackgroundColor3 = Color3.fromRGB(255, 150, 200)
-    shineLine.BorderSizePixel = 0
-    shineLine.Parent = frame
-    Instance.new("UICorner", shineLine).CornerRadius = UDim.new(1, 0)
-
-    local shineGradient = Instance.new("UIGradient", shineLine)
-    shineGradient.Rotation = 90
-    shineGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(180, 80, 255)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 60, 180)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 80, 255)),
-    })
-
-    task.spawn(function()
-        while shineGradient.Parent do
-            for i = -1, 1, 0.05 do
-                if not shineGradient.Parent then break end
-                shineGradient.Offset = Vector2.new(0, i)
-                task.wait(0.04)
-            end
-            for i = 1, -1, -0.05 do
-                if not shineGradient.Parent then break end
-                shineGradient.Offset = Vector2.new(0, i)
-                task.wait(0.04)
-            end
-        end
-    end)
-
-    local iconBox = Instance.new("Frame")
-    iconBox.Size = UDim2.new(0, 36, 0, 36)
-    iconBox.Position = UDim2.new(0, 14, 0.5, -18)
-    iconBox.BackgroundColor3 = Color3.fromRGB(40, 25, 60)
-    iconBox.BackgroundTransparency = 0.2
-    iconBox.BorderSizePixel = 0
-    iconBox.Parent = frame
-    Instance.new("UICorner", iconBox).CornerRadius = UDim.new(1, 0)
-
-    local iconStroke = Instance.new("UIStroke", iconBox)
-    iconStroke.Thickness = 1.5
-    iconStroke.Color = Color3.fromRGB(255, 150, 200)
-    iconStroke.Transparency = 0.3
-
-    local iconDot = Instance.new("Frame")
-    iconDot.Size = UDim2.new(0, 14, 0, 14)
-    iconDot.Position = UDim2.new(0.5, -7, 0.5, -7)
-    iconDot.BackgroundColor3 = Color3.fromRGB(255, 150, 200)
-    iconDot.BorderSizePixel = 0
-    iconDot.Parent = iconBox
-    Instance.new("UICorner", iconDot).CornerRadius = UDim.new(1, 0)
-
-    local iconGlow = Instance.new("UIStroke", iconDot)
-    iconGlow.Thickness = 3
-    iconGlow.Color = Color3.fromRGB(255, 100, 180)
-    iconGlow.Transparency = 0.5
+    local idxLabel = Instance.new("TextLabel")
+    idxLabel.Size = UDim2.new(0, 22, 1, 0)
+    idxLabel.Position = UDim2.new(0, 12, 0, 0)
+    idxLabel.BackgroundTransparency = 1
+    idxLabel.Text = string.format("%02d", index)
+    idxLabel.TextColor3 = THEME.TEXT_LOW
+    idxLabel.TextSize = 10
+    idxLabel.Font = Enum.Font.Code
+    idxLabel.TextXAlignment = Enum.TextXAlignment.Left
+    idxLabel.ZIndex = 7
+    idxLabel.Parent = frame
 
     local nameLabel = Instance.new("TextLabel")
-    nameLabel.Size = UDim2.new(1, -170, 0, 24)
-    nameLabel.Position = UDim2.new(0, 62, 0, 18)
+    nameLabel.Size = UDim2.new(0.6, 0, 1, 0)
+    nameLabel.Position = UDim2.new(0, 38, 0, 0)
     nameLabel.BackgroundTransparency = 1
     nameLabel.Text = preset.name
     nameLabel.TextColor3 = THEME.TEXT_HI
-    nameLabel.TextSize = 15
-    nameLabel.Font = Enum.Font.GothamBold
+    nameLabel.TextSize = 12
+    nameLabel.Font = Enum.Font.Gotham
     nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+    nameLabel.ZIndex = 7
     nameLabel.Parent = frame
 
     local nameGradient = Instance.new("UIGradient", nameLabel)
     nameGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 220, 240)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 150, 210)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(220, 150, 255)),
+        ColorSequenceKeypoint.new(0, THEME.ACCENT_GLOW),
+        ColorSequenceKeypoint.new(0.5, THEME.TEXT_HI),
+        ColorSequenceKeypoint.new(1, THEME.ACCENT_HOT),
     })
 
     task.spawn(function()
@@ -3266,29 +2836,35 @@ local function CreateSkyButton(preset, yPos)
     end)
 
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 90, 0, 36)
-    btn.Position = UDim2.new(1, -102, 0.5, -18)
-    btn.BackgroundColor3 = Color3.fromRGB(255, 100, 180)
-    btn.BackgroundTransparency = 0.2
+    btn.Size = UDim2.new(0, 60, 0, 24)
+    btn.Position = UDim2.new(1, -68, 0.5, -12)
+    btn.BackgroundColor3 = Color3.fromRGB(28, 18, 44)
+    btn.BackgroundTransparency = 0.15
     btn.Text = "APPLY"
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.TextSize = 13
-    btn.Font = Enum.Font.GothamBold
+    btn.TextColor3 = THEME.ACCENT_HOT
+    btn.TextSize = 10
+    btn.Font = Enum.Font.Gotham
     btn.AutoButtonColor = false
+    btn.ZIndex = 7
     btn.Parent = frame
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
 
     local btnStroke = Instance.new("UIStroke", btn)
-    btnStroke.Thickness = 1.5
-    btnStroke.Color = Color3.fromRGB(255, 150, 200)
-    btnStroke.Transparency = 0.2
+    btnStroke.Thickness = 1
+    btnStroke.Color = THEME.ACCENT_DARK
+    btnStroke.Transparency = 0.35
 
     local btnGradient = Instance.new("UIGradient", btn)
     btnGradient.Rotation = 45
+    btnGradient.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.85),
+        NumberSequenceKeypoint.new(0.5, 0.4),
+        NumberSequenceKeypoint.new(1, 0.85),
+    })
     btnGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 60, 180)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 100, 200)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 80, 255)),
+        ColorSequenceKeypoint.new(0, THEME.ACCENT_DARK),
+        ColorSequenceKeypoint.new(0.5, THEME.ACCENT_HOT),
+        ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
     })
 
     task.spawn(function()
@@ -3296,49 +2872,60 @@ local function CreateSkyButton(preset, yPos)
             for i = -1, 1, 0.05 do
                 if not btnGradient.Parent then break end
                 btnGradient.Offset = Vector2.new(i, 0)
-                task.wait(0.04)
+                task.wait(0.05)
             end
             for i = 1, -1, -0.05 do
                 if not btnGradient.Parent then break end
                 btnGradient.Offset = Vector2.new(i, 0)
-                task.wait(0.04)
+                task.wait(0.05)
             end
         end
     end)
 
+    frame.MouseEnter:Connect(function()
+        TweenService:Create(frame, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(28, 19, 42)}):Play()
+        TweenService:Create(stroke, TweenInfo.new(0.15), {Transparency = 0.3}):Play()
+    end)
+    frame.MouseLeave:Connect(function()
+        TweenService:Create(frame, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(22, 15, 34)}):Play()
+        TweenService:Create(stroke, TweenInfo.new(0.15), {Transparency = 0.55}):Play()
+    end)
+
     btn.MouseEnter:Connect(function()
         TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundTransparency = 0}):Play()
+        TweenService:Create(btnStroke, TweenInfo.new(0.15), {Transparency = 0.15}):Play()
     end)
     btn.MouseLeave:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundTransparency = 0.2}):Play()
+        TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundTransparency = 0.15}):Play()
+        TweenService:Create(btnStroke, TweenInfo.new(0.15), {Transparency = 0.35}):Play()
     end)
+
     btn.MouseButton1Click:Connect(function()
         PlayTab()
         preset.func()
         for _, b in ipairs(skyButtons) do
-            TweenService:Create(b.stroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(255, 150, 200), Transparency = 0.5}):Play()
+            TweenService:Create(b.stroke, TweenInfo.new(0.2), {Color = THEME.ACCENT_DARK, Transparency = 0.55}):Play()
         end
-        TweenService:Create(stroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(80, 255, 130), Transparency = 0.2}):Play()
+        TweenService:Create(stroke, TweenInfo.new(0.2), {Color = THEME.ACCENT_HOT, Transparency = 0.2}):Play()
     end)
 
-    table.insert(skyButtons, { frame = frame, stroke = stroke, name = preset.name })
+    table.insert(skyButtons, { frame = frame, stroke = stroke })
 end
 
 for i, preset in ipairs(Sky.Presets) do
-    CreateSkyButton(preset, skyY + (i - 1) * 68)
+    CreateSkyButton(preset, skyY + (i - 1) * 48, i)
 end
 
-skyY = skyY + #Sky.Presets * 68 + 25
+skyY = skyY + #Sky.Presets * 48 + 20
 
--- ⚡ DISABLE SKY: прозрачная кнопка, только текст
 local disableBtn = Instance.new("TextButton")
-disableBtn.Size = UDim2.new(1, -50, 0, 40)
-disableBtn.Position = UDim2.new(0, 0, 0, skyY)
+disableBtn.Size = UDim2.new(1, -16, 0, 30)
+disableBtn.Position = UDim2.new(0, 8, 0, skyY)
 disableBtn.BackgroundTransparency = 1
 disableBtn.Text = "DISABLE SKY (Reset to default)"
 disableBtn.TextColor3 = Color3.fromRGB(255, 100, 120)
-disableBtn.TextSize = 13
-disableBtn.Font = Enum.Font.GothamBold
+disableBtn.TextSize = 12
+disableBtn.Font = Enum.Font.Gotham
 disableBtn.AutoButtonColor = false
 disableBtn.Parent = skyPage
 
@@ -3355,14 +2942,14 @@ disableBtn.MouseButton1Click:Connect(function()
     Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
     Lighting.Brightness = 2
     Lighting.ClockTime = 14
-    Lighting.FogEnd = 100000
-    Lighting.FogStart = 0
     for _, b in ipairs(skyButtons) do
-        TweenService:Create(b.stroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(255, 150, 200), Transparency = 0.5}):Play()
+        TweenService:Create(b.stroke, TweenInfo.new(0.2), {Color = THEME.ACCENT_DARK, Transparency = 0.55}):Play()
     end
 end)
 
+-- ====================================================================
 -- SETTINGS PAGE
+-- ====================================================================
 local settingsPage = TabPages["Settings"]
 settingsPage.CanvasSize = UDim2.new(0, 0, 0, 1180)
 
@@ -3413,7 +3000,9 @@ CreateSlider(settingsPage, "Corner Radius", "Round corners", 420, 0, 16, 8, "px"
     end
 end)
 
+-- ====================================================================
 -- COLOR PICKER
+-- ====================================================================
 local colorSectionLine = CreateSection(settingsPage, "// COLOR", 500, Color3.fromRGB(120, 220, 255))
 
 local paletteSize = 140
@@ -3452,25 +3041,7 @@ previewBox.Size = UDim2.new(0, 60, 0, 60)
 previewBox.Position = UDim2.new(0, paletteSize + 20, 0, 530 + (paletteSize - 60) / 2 - 30)
 previewBox.BackgroundColor3 = THEME.ACCENT
 previewBox.Parent = settingsPage
-local previewCorner = Instance.new("UICorner", previewBox)
-previewCorner.CornerRadius = UDim.new(0, 6)
-RegisterCorner(previewCorner, 6)
-
-local previewStroke = Instance.new("UIStroke", previewBox)
-previewStroke.Thickness = 1.5
-previewStroke.Color = THEME.ACCENT_HOT
-previewStroke.Transparency = 0.4
-
-local hexLabel = Instance.new("TextLabel")
-hexLabel.Size = UDim2.new(0, 80, 0, 18)
-hexLabel.Position = UDim2.new(0, paletteSize + 20, 0, 530 + (paletteSize - 60) / 2 + 38)
-hexLabel.BackgroundTransparency = 1
-hexLabel.Text = "#B450FF"
-hexLabel.TextColor3 = THEME.TEXT_HI
-hexLabel.TextSize = 12
-hexLabel.Font = Enum.Font.Code
-hexLabel.TextXAlignment = Enum.TextXAlignment.Left
-hexLabel.Parent = settingsPage
+Instance.new("UICorner", previewBox).CornerRadius = UDim.new(0, 6)
 
 local resetColorBtn = Instance.new("TextButton")
 resetColorBtn.Size = UDim2.new(1, -50, 0, 32)
@@ -3482,23 +3053,6 @@ resetColorBtn.TextSize = 13
 resetColorBtn.Font = Enum.Font.Gotham
 resetColorBtn.AutoButtonColor = false
 resetColorBtn.Parent = settingsPage
-local resetColorCorner = Instance.new("UICorner", resetColorBtn)
-resetColorCorner.CornerRadius = UDim.new(0, 6)
-RegisterCorner(resetColorCorner, 6)
-
-local resetStroke = Instance.new("UIStroke", resetColorBtn)
-resetStroke.Thickness = 1
-resetStroke.Color = Color3.fromRGB(120, 220, 255)
-resetStroke.Transparency = 1
-
-resetColorBtn.MouseEnter:Connect(function()
-    TweenService:Create(resetColorBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0.85}):Play()
-    TweenService:Create(resetStroke, TweenInfo.new(0.2), {Transparency = 0.5}):Play()
-end)
-resetColorBtn.MouseLeave:Connect(function()
-    TweenService:Create(resetColorBtn, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
-    TweenService:Create(resetStroke, TweenInfo.new(0.2), {Transparency = 1}):Play()
-end)
 
 local colorDragArea = Instance.new("TextButton")
 colorDragArea.Size = UDim2.new(1, 0, 1, 0)
@@ -3506,11 +3060,6 @@ colorDragArea.BackgroundTransparency = 1
 colorDragArea.Text = ""
 colorDragArea.ZIndex = 10
 colorDragArea.Parent = paletteFrame
-
-local function ColorToHex(c)
-    return string.format("#%02X%02X%02X",
-        math.floor(c.R * 255 + 0.5), math.floor(c.G * 255 + 0.5), math.floor(c.B * 255 + 0.5))
-end
 
 local function ApplyAccentColor(color)
     local h, s, v = Color3.toHSV(color)
@@ -3526,6 +3075,7 @@ local function ApplyAccentColor(color)
     THEME.ACCENT_DARK = newDark
     THEME.ACCENT_GLOW = newGlow
 
+    -- Main
     MainStroke.Color = newAccent
     if MainStrokeGradient then
         MainStrokeGradient.Color = ColorSequence.new({
@@ -3537,9 +3087,15 @@ local function ApplyAccentColor(color)
         })
     end
     MainGlow.Color = newGlow
+
+    -- Logo / Avatar
     LogoBadgeGlow.Color = newGlow
     AvatarStroke.Color = newHot
     AvatarGlow.Color = newGlow
+    PlayerTag.TextColor3 = newHot
+    CloseIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
+
+    -- Divider
     Divider.BackgroundColor3 = newAccent
     DividerGradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, newDark),
@@ -3548,6 +3104,8 @@ local function ApplyAccentColor(color)
         ColorSequenceKeypoint.new(0.75, newHot),
         ColorSequenceKeypoint.new(1, newDark),
     })
+
+    -- Header
     AccentBar.BackgroundColor3 = newAccent
     AccentGradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, newDark),
@@ -3559,38 +3117,12 @@ local function ApplyAccentColor(color)
     HeaderBaseLine.BackgroundColor3 = newDark
     HeaderRunner.BackgroundColor3 = newHot
     HeaderPulse.BackgroundColor3 = newGlow
+
+    -- Scan / Status
     ScanLine.BackgroundColor3 = newHot
     StatusDot.BackgroundColor3 = newHot
-    PlayerTag.TextColor3 = newHot
-    CloseIcon.ImageColor3 = newGlow
-    paletteStroke.Color = newDark
-    bannerStroke.Color = newAccent
-    bannerGlow.Color = newGlow
-    statusSectionLine.BackgroundColor3 = newHot
-    statusSectionLabel.TextColor3 = newHot
-    splitLine.BackgroundColor3 = newAccent
 
-    greetTitleGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, newGlow),
-        ColorSequenceKeypoint.new(0.5, THEME.TEXT_HI),
-        ColorSequenceKeypoint.new(1, newHot),
-    })
-    greetBodyGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, newGlow),
-        ColorSequenceKeypoint.new(0.4, THEME.TEXT_HI),
-        ColorSequenceKeypoint.new(0.7, newHot),
-        ColorSequenceKeypoint.new(1, newDark),
-    })
-    splitGrad.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, newDark),
-        ColorSequenceKeypoint.new(0.5, newHot),
-        ColorSequenceKeypoint.new(1, newDark),
-    })
-    RunnerGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, newDark),
-        ColorSequenceKeypoint.new(0.5, newHot),
-        ColorSequenceKeypoint.new(1, newDark),
-    })
+    -- Logo gradients
     LogoTitleGradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, newDark),
         ColorSequenceKeypoint.new(0.5, THEME.TEXT_HI),
@@ -3601,22 +3133,12 @@ local function ApplyAccentColor(color)
         ColorSequenceKeypoint.new(0.5, newHot),
         ColorSequenceKeypoint.new(1, newDark),
     })
-    FpsGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, newDark),
-        ColorSequenceKeypoint.new(0.5, newHot),
-        ColorSequenceKeypoint.new(1, newDark),
-    })
-    DotGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, newDark),
-        ColorSequenceKeypoint.new(0.5, newHot),
-        ColorSequenceKeypoint.new(1, newDark),
-    })
-    ScanGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, newHot),
-        ColorSequenceKeypoint.new(0.5, newGlow),
-        ColorSequenceKeypoint.new(1, newHot),
-    })
 
+    -- Picker
+    paletteStroke.Color = newDark
+    previewBox.BackgroundColor3 = newAccent
+
+    -- Bracket
     if Br.TL_hg then
         local gradSeq = ColorSequence.new({
             ColorSequenceKeypoint.new(0, newDark),
@@ -3632,19 +3154,24 @@ local function ApplyAccentColor(color)
         Br.BL_vg.Color = gradSeq
         Br.BR_vg.Color = gradSeq
     end
+    Br.TL_h.BackgroundColor3 = newHot
+    Br.TL_v.BackgroundColor3 = newHot
+    Br.TR_h.BackgroundColor3 = newHot
+    Br.TR_v.BackgroundColor3 = newHot
+    Br.BL_h.BackgroundColor3 = newHot
+    Br.BL_v.BackgroundColor3 = newHot
+    Br.BR_h.BackgroundColor3 = newHot
+    Br.BR_v.BackgroundColor3 = newHot
 
+    -- Dots
     for _, d in ipairs(Config.Dots) do
         if d.Frame then d.Frame.BackgroundColor3 = newHot end
     end
 
+    -- Tabs
     for _, tData in pairs(Tabs) do
         tData.Accent.BackgroundColor3 = newHot
-        tData.Arrow.TextColor3 = newHot
-        tData.AccentGradient.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, newDark),
-            ColorSequenceKeypoint.new(0.5, newHot),
-            ColorSequenceKeypoint.new(1, newDark),
-        })
+        if tData.Arrow then tData.Arrow.TextColor3 = newHot end
         if tData.IsActive then
             tData.Button.BackgroundColor3 = Color3.fromRGB(
                 math.floor(newAccent.R * 60 + 10),
@@ -3658,28 +3185,75 @@ local function ApplyAccentColor(color)
         end
     end
 
-    previewBox.BackgroundColor3 = newAccent
-    previewStroke.Color = newHot
-    hexLabel.Text = ColorToHex(newAccent)
+    -- FPS gradient
+    if FpsGradient then
+        FpsGradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, newDark),
+            ColorSequenceKeypoint.new(0.5, newHot),
+            ColorSequenceKeypoint.new(1, newDark),
+        })
+    end
 
-    Br.TL_h.BackgroundColor3 = newHot
-    Br.TL_v.BackgroundColor3 = newHot
-    Br.TR_h.BackgroundColor3 = newHot
-    Br.TR_v.BackgroundColor3 = newHot
-    Br.BL_h.BackgroundColor3 = newHot
-    Br.BL_v.BackgroundColor3 = newHot
-    Br.BR_h.BackgroundColor3 = newHot
-    Br.BR_v.BackgroundColor3 = newHot
+    -- Dot gradient
+    if DotGradient then
+        DotGradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, newDark),
+            ColorSequenceKeypoint.new(0.5, newHot),
+            ColorSequenceKeypoint.new(1, newDark),
+        })
+    end
 
+    -- Runner gradient
+    if RunnerGradient then
+        RunnerGradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, newDark),
+            ColorSequenceKeypoint.new(0.5, newHot),
+            ColorSequenceKeypoint.new(1, newDark),
+        })
+    end
+
+    -- Scan gradient
+    if ScanGradient then
+        ScanGradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, newHot),
+            ColorSequenceKeypoint.new(0.5, newGlow),
+            ColorSequenceKeypoint.new(1, newHot),
+        })
+    end
+
+    -- Greet
+    greetTitleGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, newGlow),
+        ColorSequenceKeypoint.new(0.5, THEME.TEXT_HI),
+        ColorSequenceKeypoint.new(1, newHot),
+    })
+    greetBodyGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, newGlow),
+        ColorSequenceKeypoint.new(0.4, THEME.TEXT_HI),
+        ColorSequenceKeypoint.new(0.7, newHot),
+        ColorSequenceKeypoint.new(1, newDark),
+    })
+
+    -- Split line
+    splitLine.BackgroundColor3 = newAccent
+    splitGrad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, newDark),
+        ColorSequenceKeypoint.new(0.5, newHot),
+        ColorSequenceKeypoint.new(1, newDark),
+    })
+
+    -- Status section
+    statusSectionLine.BackgroundColor3 = newHot
+    statusSectionLabel.TextColor3 = newHot
+
+    -- Banner
+    bannerStroke.Color = newAccent
+    bannerGlow.Color = newGlow
+
+    -- Ball ESP
     if BallESP.highlight then
         BallESP.highlight.FillColor = newAccent
         BallESP.highlight.OutlineColor = newHot
-    end
-    if BallESP.particles then
-        BallESP.particles.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, newAccent),
-            ColorSequenceKeypoint.new(1, newGlow),
-        })
     end
     if BallESP.light then BallESP.light.Color = newAccent end
     if BallESP.trail then
@@ -3697,6 +3271,7 @@ local function ApplyAccentColor(color)
         if t.endPart then t.endPart.Color = newHot end
     end
 
+    -- All synced elements (toggles, sliders, stat tiles)
     for _, el in ipairs(ColorSyncedElements) do
         if el.Kind == "Toggle" then
             local on = el.GetState and el.GetState() or false
@@ -3783,10 +3358,11 @@ resetColorBtn.MouseButton1Click:Connect(function()
     PlayTab()
     ApplyAccentColor(Color3.fromRGB(180, 80, 255))
     pickerDot.Position = UDim2.new(0.5, 0, 0.5, 0)
-    hexLabel.Text = "#B450FF"
 end)
 
+-- ====================================================================
 -- ACTIONS
+-- ====================================================================
 CreateSection(settingsPage, "// ACTIONS", 750, Color3.fromRGB(255, 100, 120))
 
 local function MakeActionButton(text, yPos, color, onClick)
@@ -3800,21 +3376,6 @@ local function MakeActionButton(text, yPos, color, onClick)
     btn.Font = Enum.Font.Gotham
     btn.AutoButtonColor = false
     btn.Parent = settingsPage
-    local c = Instance.new("UICorner", btn)
-    c.CornerRadius = UDim.new(0, 6)
-    RegisterCorner(c, 6)
-    local s = Instance.new("UIStroke", btn)
-    s.Thickness = 1
-    s.Color = color
-    s.Transparency = 1
-    btn.MouseEnter:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundTransparency = 0.85}):Play()
-        TweenService:Create(s, TweenInfo.new(0.2), {Transparency = 0.5}):Play()
-    end)
-    btn.MouseLeave:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
-        TweenService:Create(s, TweenInfo.new(0.2), {Transparency = 1}):Play()
-    end)
     btn.MouseButton1Click:Connect(function()
         PlayTab()
         onClick()
@@ -3877,7 +3438,6 @@ MakeActionButton("Reset Settings", 785, Color3.fromRGB(255, 180, 100), function(
     if ScanLine then ScanLine.Visible = true end
     ApplyAccentColor(Color3.fromRGB(180, 80, 255))
     pickerDot.Position = UDim2.new(0.5, 0, 0.5, 0)
-    hexLabel.Text = "#B450FF"
 end)
 
 MakeActionButton("Unload Script", 830, Color3.fromRGB(255, 80, 100), function()
@@ -3909,7 +3469,9 @@ MakeActionButton("Rejoin Server", 875, THEME.ACCENT_HOT, function()
     end)
 end)
 
+-- ====================================================================
 -- MAIN UPDATE LOOP
+-- ====================================================================
 task.spawn(function()
     while true do
         if not ScreenGui.Parent then
@@ -3929,14 +3491,6 @@ task.spawn(function()
                     _CreateBallESP(ball)
                 else
                     BallESP.highlight.Adornee = ball.PrimaryPart
-                    BallESP.highlight.FillColor = THEME.ACCENT
-                    BallESP.highlight.OutlineColor = THEME.ACCENT_HOT
-                    if BallESP.particles and BallESP.particles.Parent ~= ball.PrimaryPart then
-                        BallESP.particles.Parent = ball.PrimaryPart
-                    end
-                    if BallESP.light and BallESP.light.Parent ~= ball.PrimaryPart then
-                        BallESP.light.Parent = ball.PrimaryPart
-                    end
                 end
             else
                 if BallESP.highlight then _DestroyBallESP() end
@@ -3966,12 +3520,11 @@ task.spawn(function()
                     local fp = Pred.smoothLand
                     Pred.ring.CFrame = CFrame.new(fp.X, fp.Y + 0.05, fp.Z) * CFrame.Angles(0, 0, math.rad(90))
                     Pred.ring.Transparency = 0.3
-                    Pred.ring.Color = THEME.ACCENT_HOT
                 else
                     Pred.ring.Transparency = 1
                 end
             else
-                Pred.ring.Transparency = 1
+                if Pred.ring then Pred.ring.Transparency = 1 end
             end
         else
             if BallESP.highlight then _DestroyBallESP() end
@@ -3995,7 +3548,9 @@ task.spawn(function()
     end
 end)
 
+-- ====================================================================
 -- DROP-IN
+-- ====================================================================
 task.spawn(function()
     task.wait(1.6)
     local dropTween = TweenService:Create(MainFrame,
@@ -4034,6 +3589,4 @@ HeaderBaseLine.BackgroundTransparency = 0.7
 HeaderRunner.BackgroundTransparency = 0
 HeaderPulse.BackgroundTransparency = 0.6
 
-print("[VL] Loaded v1.7: task.spawn обход + логотипы + крестик + хук Hitbox")
-
-end) -- конец task.spawn
+print("[VL] Loaded v1.9: табы-фикс + пикер полный + Br-анимации + хук Hitbox + крестик")
