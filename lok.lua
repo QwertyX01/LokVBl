@@ -1,6 +1,7 @@
 -- ====================================================================
--- VOLLEYBALL LEGENDS - AGGRESSIVE SPORT EDITION (PREMIUM v2.1)
+-- VOLLEYBALL LEGENDS - AGGRESSIVE SPORT EDITION (PREMIUM v2.2)
 -- FIXED: сфера хитбокса привязана к мячу (единый цикл)
+-- ADDED: Purge Character в Visuals + П.5 (дубликат цикла) + П.3 (утечки)
 -- ====================================================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -75,6 +76,7 @@ local Config = {
 
 local S = {
     Corner = {}, ColorSynced = {}, Sliders = {}, Toggles = {}, Br = {},
+    Connections = {},  -- [NEW] П.3: сюда пишем все RunService коннекты для Unload
     BallESP = { model = nil, highlight = nil, particles = nil, light = nil, trail = nil, trailAtt0 = nil, trailAtt1 = nil },
     Pred = { ring = nil, lastPos = nil, lastTime = nil, smoothVel = nil, smoothLand = nil },
     HitboxVisual = { Sphere = nil, Radius = 0 },
@@ -84,6 +86,22 @@ local S = {
     Tracers = { Enabled = false, Length = 25, OnlyEnemies = false, Folder = nil, Active = {} },
     ClothesWiper = { Enabled = false, Wiped = {} },
     Sky = { Current = nil, Connection = nil, Objects = {}, Presets = {}, Buttons = {} },
+    -- [NEW] Purge Character
+    Purge = {
+        Enabled = false,
+        Eyes = true,
+        Sparkles = true,
+        Gray = true,
+        Leg = true,
+        Head = true,
+        Tracked = {},      -- [player] = { char, bc, conns, pulseConn, origColors }
+        EyeColor = Color3.fromRGB(180, 80, 255),
+        SparkleColor = Color3.fromRGB(255, 150, 255),
+        GrayBase = Color3.fromRGB(185, 185, 192),
+        BrightnessMin = 0.35,
+        BrightnessMax = 1.0,
+        PulseSpeed = 0.9,
+    },
 }
 
 local logoPath = nil
@@ -116,7 +134,7 @@ pcall(function()
             downloadImage("https://i.ibb.co/RkDbPKvG/IMG-20260912-124847.jpg", "vl_logo.png")
         end
         if not isfile("vl_brand.png") then
-            downloadImage("https://i.ibb.co/WWDZY4jc/14289-removebg-preview.png", "vl_brand.png")
+            downloadImage("https://i.ibb.co/WWWZY4jc/14289-removebg-preview.png", "vl_brand.png")
         end
         if not isfile("vl_banner.png") then
             downloadImage("https://i.ibb.co/tMsVBqwG/IMG-20260828-160933.png", "vl_banner.png")
@@ -760,7 +778,7 @@ local LogoVersion = Instance.new("TextLabel")
 LogoVersion.Size = UDim2.new(1, -65, 0, 14)
 LogoVersion.Position = UDim2.new(0, 65, 0, 48)
 LogoVersion.BackgroundTransparency = 1
-LogoVersion.Text = "// FREE 2.1.0"
+LogoVersion.Text = "// FREE 2.2.0"
 LogoVersion.TextColor3 = THEME.TEXT_LOW
 LogoVersion.TextSize = 10
 LogoVersion.Font = Enum.Font.Code
@@ -1214,7 +1232,7 @@ for i, name in ipairs(TabNames) do
 end
 
 -- ====================================================================
--- DRAG HANDLE (только тянет, не закрывает)
+-- DRAG HANDLE
 -- ====================================================================
 local DragHandle = Instance.new("Frame")
 DragHandle.Size = UDim2.new(0, 50, 0, 50)
@@ -1270,7 +1288,6 @@ UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         if isDraggingMenu then
             TweenService:Create(CloseIcon, TweenInfo.new(0.15), {ImageColor3 = Color3.fromRGB(255, 255, 255)}):Play()
-            -- Только тянет, не закрывает
         end
         isDraggingMenu = false
     end
@@ -1386,7 +1403,7 @@ end)
 task.spawn(function()
     local frames = 0
     local lastTime = tick()
-    RunService.RenderStepped:Connect(function()
+    local conn = RunService.RenderStepped:Connect(function()
         frames = frames + 1
         local now = tick()
         if now - lastTime >= 1 then
@@ -1395,6 +1412,7 @@ task.spawn(function()
             lastTime = now
         end
     end)
+    table.insert(S.Connections, conn)
 end)
 
 local DotContainer = Instance.new("Frame")
@@ -2041,7 +2059,8 @@ task.spawn(function()
     local sessionStart = tick()
     local frameCount = 0
     local lastFpsTime = tick()
-    RunService.RenderStepped:Connect(function() frameCount = frameCount + 1 end)
+    local conn = RunService.RenderStepped:Connect(function() frameCount = frameCount + 1 end)
+    table.insert(S.Connections, conn)
     while mainPage.Parent do
         local now = tick()
         if now - lastFpsTime >= 1 then
@@ -2124,7 +2143,7 @@ end)
 -- VISUALS PAGE
 -- ====================================================================
 local visualsPage = TabPages["Visuals"]
-visualsPage.CanvasSize = UDim2.new(0, 0, 0, 600)
+visualsPage.CanvasSize = UDim2.new(0, 0, 0, 900)  -- [CHANGED] больше места под Purge
 
 CreateSection(visualsPage, "// BALL VISUALS", 10, Color3.fromRGB(120, 220, 255))
 
@@ -2168,6 +2187,320 @@ CreateSlider(visualsPage, "Field of View", "Camera zoom out angle (70 - 200)", 3
         workspace.CurrentCamera.FieldOfView = v
     end
 end)
+
+-- [NEW] ====== PURGE CHARACTER SECTION ======
+CreateSection(visualsPage, "// PURGE CHARACTER", 450, Color3.fromRGB(180, 80, 255))
+
+CreateToggle(visualsPage, "Purge Character", "Headless + Korblox + accessories + gray shift", 480, S.Purge.Enabled, function(v)
+    S.Purge.Enabled = v
+    if v then
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p.Character then _ApplyPurge(p.Character, p) end
+        end
+    else
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p.Character then _RestorePurge(p.Character, p) end
+        end
+    end
+end)
+
+CreateToggle(visualsPage, "Glow Eyes", "Neon eyes (work even when head is hidden)", 530, S.Purge.Eyes, function(v)
+    S.Purge.Eyes = v
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p.Character then _TogglePurgeEyes(p.Character, v) end
+    end
+end)
+
+CreateToggle(visualsPage, "Sparkles", "Sparkle particles around body", 580, S.Purge.Sparkles, function(v)
+    S.Purge.Sparkles = v
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p.Character then _TogglePurgeSparkles(p.Character, v) end
+    end
+end)
+
+CreateToggle(visualsPage, "Corpse Gray", "Pulsing gray body color", 630, S.Purge.Gray, function(v)
+    S.Purge.Gray = v
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p.Character then _TogglePurgeGray(p.Character, v) end
+    end
+end)
+
+CreateToggle(visualsPage, "Remove Leg", "Korblox - hide right leg", 680, S.Purge.Leg, function(v)
+    S.Purge.Leg = v
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p.Character then _TogglePurgeLeg(p.Character, v) end
+    end
+end)
+
+-- ====================================================================
+-- PURGE FUNCTIONS
+-- ====================================================================
+local function _HidePart(part)
+    if not part or not part:IsA("BasePart") then return end
+    pcall(function()
+        part.Transparency = 1
+        part.CanCollide = false
+        part.CanQuery = false
+        part.CanTouch = false
+        part.CastShadow = false
+    end)
+    for _, d in ipairs(part:GetChildren()) do
+        if d:IsA("Decal") or d:IsA("Texture") then
+            pcall(function() d.Transparency = 1 end)
+        end
+    end
+end
+
+local function _RemoveAccessories(char)
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
+    if humanoid then pcall(function() humanoid:RemoveAccessories() end) end
+    for _, child in ipairs(char:GetChildren()) do
+        if child:IsA("Accoutrement") or child:IsA("Accessory") or child:IsA("Hat") then
+            pcall(function() child:Destroy() end)
+        end
+    end
+    for _, d in ipairs(char:GetDescendants()) do
+        if d:IsA("Accoutrement") or d:IsA("Accessory") or d:IsA("Hat") then
+            pcall(function() d:Destroy() end)
+        end
+    end
+end
+
+local function _HideHead(char)
+    local head = char:FindFirstChild("Head")
+    if head then _HidePart(head) end
+    if head then
+        for _, child in ipairs(head:GetChildren()) do
+            if child:IsA("Decal") or child:IsA("Texture") then
+                pcall(function() child.Transparency = 1 end)
+            elseif child:IsA("Accoutrement") or child:IsA("Accessory") or child:IsA("Hat") then
+                pcall(function() child:Destroy() end)
+            end
+        end
+    end
+end
+
+local function _HideOneLeg(char)
+    local legName = "Right Leg"
+    local leg = char:FindFirstChild(legName)
+    if leg then _HidePart(leg) end
+    for _, name in ipairs({"RightUpperLeg", "RightLowerLeg", "RightFoot"}) do
+        _HidePart(char:FindFirstChild(name))
+    end
+end
+
+local function _BuildPurgeEyes(char)
+    local head = char:FindFirstChild("Head")
+    if not head or not head:IsA("BasePart") then return end
+    local oldL = char:FindFirstChild("VLEyeL")
+    local oldR = char:FindFirstChild("VLEyeR")
+    if oldL then oldL:Destroy() end
+    if oldR then oldR:Destroy() end
+    local oldLight = head:FindFirstChild("VLEyeLight")
+    if oldLight then oldLight:Destroy() end
+
+    for _, side in ipairs({-1, 1}) do
+        local eye = Instance.new("Part")
+        eye.Name = side == -1 and "VLEyeL" or "VLEyeR"
+        eye.Shape = Enum.PartType.Ball
+        eye.Size = Vector3.new(0.4, 0.4, 0.4)
+        eye.Anchored = false
+        eye.CanCollide = false
+        eye.CanQuery = false
+        eye.CanTouch = false
+        eye.CastShadow = false
+        eye.Material = Enum.Material.Neon
+        eye.Color = S.Purge.EyeColor
+        eye.Transparency = 0
+        eye.Parent = char
+        local weld = Instance.new("Weld")
+        weld.Part0 = head
+        weld.Part1 = eye
+        weld.C0 = CFrame.new(side * 0.35, 0.3, -0.6)
+        weld.Parent = eye
+    end
+
+    local light = Instance.new("PointLight")
+    light.Name = "VLEyeLight"
+    light.Color = S.Purge.EyeColor
+    light.Brightness = 4
+    light.Range = 10
+    light.Shadows = false
+    light.Parent = head
+end
+
+local function _AddPurgeSparkles(char)
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    local old = hrp:FindFirstChild("VLSparkles")
+    if old then old:Destroy() end
+    local sp = Instance.new("Sparkles")
+    sp.Name = "VLSparkles"
+    sp.SparkleColor = S.Purge.SparkleColor
+    sp.Enabled = true
+    sp.Parent = hrp
+end
+
+local function _ApplyPurgeGray(bc)
+    if not bc or not bc.Parent then return end
+    local t = tick() * S.Purge.PulseSpeed
+    local wave = (math.sin(t) + 1) / 2
+    local b = S.Purge.BrightnessMin + (S.Purge.BrightnessMax - S.Purge.BrightnessMin) * wave
+    local c = Color3.new(
+        math.clamp(S.Purge.GrayBase.R * b, 0, 1),
+        math.clamp(S.Purge.GrayBase.G * b, 0, 1),
+        math.clamp(S.Purge.GrayBase.B * b, 0, 1)
+    )
+    pcall(function()
+        bc.HeadColor3 = c
+        bc.TorsoColor3 = c
+        bc.LeftArmColor3 = c
+        bc.RightArmColor3 = c
+        bc.LeftLegColor3 = c
+        bc.RightLegColor3 = c
+    end)
+end
+
+function _TogglePurgeEyes(char, on)
+    if on then _BuildPurgeEyes(char)
+    else
+        local e1 = char:FindFirstChild("VLEyeL") if e1 then e1:Destroy() end
+        local e2 = char:FindFirstChild("VLEyeR") if e2 then e2:Destroy() end
+        local head = char:FindFirstChild("Head")
+        if head then
+            local l = head:FindFirstChild("VLEyeLight") if l then l:Destroy() end
+        end
+    end
+end
+
+function _TogglePurgeSparkles(char, on)
+    if on then _AddPurgeSparkles(char)
+    else
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local sp = hrp:FindFirstChild("VLSparkles")
+            if sp then sp:Destroy() end
+        end
+    end
+end
+
+function _TogglePurgeGray(char, on)
+    -- ничего дополнительного: цикл сам обновляет если S.Purge.Gray == true
+end
+
+function _TogglePurgeLeg(char, on)
+    if on then _HideOneLeg(char)
+    else
+        for _, name in ipairs({"Right Leg", "RightUpperLeg", "RightLowerLeg", "RightFoot"}) do
+            local p = char:FindFirstChild(name)
+            if p and p:IsA("BasePart") then
+                p.Transparency = 0
+                p.CanCollide = true
+                p.CanQuery = true
+                p.CanTouch = true
+            end
+        end
+    end
+end
+
+function _ApplyPurge(char, player)
+    if not char or not char.Parent then return end
+    player = player or Players:GetPlayerFromCharacter(char)
+
+    local data = S.Purge.Tracked[player]
+    if not data then
+        data = { char = char, conns = {}, pulseConn = nil }
+        S.Purge.Tracked[player] = data
+    end
+    data.char = char
+
+    -- голова
+    if S.Purge.Head then _HideHead(char) end
+
+    -- аксессуары
+    _RemoveAccessories(char)
+
+    -- нога
+    if S.Purge.Leg then _HideOneLeg(char) end
+
+    -- глаза
+    if S.Purge.Eyes then _BuildPurgeEyes(char) end
+
+    -- блёстки
+    if S.Purge.Sparkles then _AddPurgeSparkles(char) end
+
+    -- реагируем на новые аксессуары
+    local connAdd = char.ChildAdded:Connect(function(child)
+        if not S.Purge.Enabled then return end
+        if child:IsA("Accoutrement") or child:IsA("Accessory") or child:IsA("Hat") then
+            pcall(function() child:Destroy() end)
+        end
+    end)
+    table.insert(data.conns, connAdd)
+
+    -- пульсация серых цветов
+    if not data.pulseConn then
+        data.pulseConn = RunService.Heartbeat:Connect(function()
+            if not S.Purge.Enabled or not S.Purge.Gray then return end
+            local bc = char:FindFirstChildOfClass("BodyColors")
+            if bc then _ApplyPurgeGray(bc) end
+        end)
+        table.insert(S.Connections, data.pulseConn)
+    end
+end
+
+function _RestorePurge(char, player)
+    if not char then return end
+    player = player or Players:GetPlayerFromCharacter(char)
+    local data = S.Purge.Tracked[player]
+    if data then
+        if data.conns then
+            for _, c in ipairs(data.conns) do pcall(function() c:Disconnect() end) end
+        end
+        if data.pulseConn then
+            pcall(function() data.pulseConn:Disconnect() end)
+        end
+        S.Purge.Tracked[player] = nil
+    end
+
+    local head = char:FindFirstChild("Head")
+    if head then
+        head.Transparency = 0
+        head.CanCollide = false
+        head.CanQuery = true
+        head.CanTouch = true
+        head.CastShadow = true
+    end
+
+    for _, name in ipairs({"Right Leg", "RightUpperLeg", "RightLowerLeg", "RightFoot"}) do
+        local p = char:FindFirstChild(name)
+        if p and p:IsA("BasePart") then
+            p.Transparency = 0
+            p.CanCollide = true
+            p.CanQuery = true
+            p.CanTouch = true
+        end
+    end
+
+    _TogglePurgeEyes(char, false)
+    _TogglePurgeSparkles(char, false)
+end
+
+-- Подписка на игроков для Purge
+local function _PurgeOnPlayer(player)
+    player.CharacterAdded:Connect(function(char)
+        task.wait(0.4)
+        if S.Purge.Enabled then _ApplyPurge(char, player) end
+    end)
+    if player.Character and S.Purge.Enabled then
+        task.spawn(function()
+            task.wait(0.4)
+            if S.Purge.Enabled then _ApplyPurge(player.Character, player) end
+        end)
+    end
+end
+for _, p in ipairs(Players:GetPlayers()) do _PurgeOnPlayer(p) end
+Players.PlayerAdded:Connect(_PurgeOnPlayer)
 
 -- ====================================================================
 -- BALL FUNCTIONS
@@ -2577,8 +2910,7 @@ function _IsBallInGuardRange()
     local ball = _FindBall()
     if not ball or not ball.PrimaryPart then return true end
     local char = LocalPlayer.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return true end
-    local dist = (ball.PrimaryPart.Position - char.HumanoidRootPart.Position).Magnitude
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return true end    local dist = (ball.PrimaryPart.Position - char.HumanoidRootPart.Position).Magnitude
     return dist <= S.RangeGuard.Radius
 end
 
@@ -2745,29 +3077,6 @@ function CreateSkyButton(preset, yPos, index)
     accent.ZIndex = 6
     accent.Parent = frame
     Instance.new("UICorner", accent).CornerRadius = UDim.new(1, 0)
-
-    local accentGradient = Instance.new("UIGradient", accent)
-    accentGradient.Rotation = 90
-    accentGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, THEME.ACCENT_DARK),
-        ColorSequenceKeypoint.new(0.5, THEME.ACCENT_HOT),
-        ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
-    })
-
-    task.spawn(function()
-        while accentGradient.Parent do
-            for i = -1, 1, 0.04 do
-                if not accentGradient.Parent then break end
-                accentGradient.Offset = Vector2.new(0, i)
-                task.wait(0.05)
-            end
-            for i = 1, -1, -0.04 do
-                if not accentGradient.Parent then break end
-                accentGradient.Offset = Vector2.new(0, i)
-                task.wait(0.05)
-            end
-        end
-    end)
 
     local idxLabel = Instance.new("TextLabel")
     idxLabel.Size = UDim2.new(0, 22, 1, 0)
@@ -3061,7 +3370,6 @@ function ApplyAccent_Core(newAccent, newHot, newDark, newGlow)
     AvatarStroke.Color = newHot
     AvatarGlow.Color = newGlow
     PlayerTag.TextColor3 = newHot
-    CloseIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
 end
 
 function ApplyAccent_Header(newAccent, newHot, newDark, newGlow)
@@ -3260,6 +3568,8 @@ function ApplyAccentColor(color)
     ApplyAccent_Header(newAccent, newHot, newDark, newGlow)
     ApplyAccent_UI(newAccent, newHot, newDark, newGlow)
     ApplyAccent_Elements(newAccent, newHot, newDark, newGlow)
+    S.Purge.EyeColor = newHot
+    S.Purge.SparkleColor = newGlow
 end
 
 local isDraggingColor = false
@@ -3344,33 +3654,20 @@ MakeActionButton("Reset Settings", 785, Color3.fromRGB(255, 180, 100), function(
     if S.Toggles["Enemies Only"] then S.Toggles["Enemies Only"](false, true) end
     if S.Toggles["Range Guard"] then S.Toggles["Range Guard"](false, true) end
     if S.Toggles["Wipe Clothes"] then S.Toggles["Wipe Clothes"](false, true) end
+    if S.Toggles["Purge Character"] then S.Toggles["Purge Character"](false, true) end
+    if S.Toggles["Glow Eyes"] then S.Toggles["Glow Eyes"](true, true) end
+    if S.Toggles["Sparkles"] then S.Toggles["Sparkles"](true, true) end
+    if S.Toggles["Corpse Gray"] then S.Toggles["Corpse Gray"](true, true) end
+    if S.Toggles["Remove Leg"] then S.Toggles["Remove Leg"](true, true) end
     if S.Sliders["Menu Scale"] then S.Sliders["Menu Scale"](100, true) end
     if S.Sliders["Corner Radius"] then S.Sliders["Corner Radius"](8, true) end
     if S.Sliders["Hitbox Size"] then S.Sliders["Hitbox Size"](30, true) end
     if S.Sliders["Guard Radius"] then S.Sliders["Guard Radius"](8, true) end
     if S.Sliders["Tracer Length"] then S.Sliders["Tracer Length"](25, true) end
     if S.Sliders["Field of View"] then S.Sliders["Field of View"](70, true) end
-    Config.FlyingDotsEnabled = true
-    Config.SoundEnabled = true
-    Config.ScanLineEnabled = true
-    Config.FpsCounterEnabled = false
-    Config.MenuScale = 100
-    Config.CornerRadius = 8
-    Config.HitboxEnabled = false
-    Config.HitboxSize = 30
-    Config.BallESPEnabled = false
-    Config.BallPredictorEnabled = false
-    Config.FOV = 70
     if workspace.CurrentCamera then
         workspace.CurrentCamera.FieldOfView = 70
     end
-    S.MegaHitbox.Enabled = false
-    S.MegaHitbox.SizeMultiplier = 3
-    S.RangeGuard.Enabled = false
-    S.RangeGuard.Radius = 8
-    S.Tracers.Enabled = false
-    S.Tracers.Length = 25
-    S.Tracers.OnlyEnemies = false
     S.ClothesWiper.Enabled = false
     S.ClothesWiper.Wiped = {}
     RestoreAllHitboxes()
@@ -3390,6 +3687,7 @@ MakeActionButton("Reset Settings", 785, Color3.fromRGB(255, 180, 100), function(
 end)
 
 MakeActionButton("Unload Script", 830, Color3.fromRGB(255, 80, 100), function()
+    -- [FIX] П.3: чистим все коннекты, партиклы, трекеры
     _DestroyBallESP()
     _DestroyHitboxVisual()
     if S.Pred.ring then S.Pred.ring:Destroy() end
@@ -3397,6 +3695,19 @@ MakeActionButton("Unload Script", 830, Color3.fromRGB(255, 80, 100), function()
         _TracerDestroy(player)
     end
     if S.Tracers.Folder then pcall(function() S.Tracers.Folder:Destroy() end) end
+    -- чистим Purge
+    for player, data in pairs(S.Purge.Tracked) do
+        if data.conns then
+            for _, c in ipairs(data.conns) do pcall(function() c:Disconnect() end) end
+        end
+        if data.pulseConn then pcall(function() data.pulseConn:Disconnect() end) end
+        S.Purge.Tracked[player] = nil
+    end
+    -- все RunService коннекты
+    for _, c in ipairs(S.Connections) do
+        pcall(function() c:Disconnect() end)
+    end
+    S.Connections = {}
     _SkyCleanup()
     S.ClothesWiper.Enabled = false
     S.ClothesWiper.Wiped = {}
@@ -3416,6 +3727,60 @@ MakeActionButton("Rejoin Server", 875, THEME.ACCENT_HOT, function()
     pcall(function()
         TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
     end)
+end)
+
+-- ====================================================================
+-- [FIX] П.3: UTRACK ПО ВЫХОДУ ИГРОКА
+-- ====================================================================
+Players.PlayerRemoving:Connect(function(player)
+    -- Tracers
+    if S.Tracers.Active[player] then
+        _TracerDestroy(player)
+    end
+    -- ClothesWiper
+    if S.ClothesWiper.Wiped then
+        if player.Character then
+            S.ClothesWiper.Wiped[player.Character] = nil
+        end
+    end
+    -- Purge
+    if S.Purge.Tracked[player] then
+        local data = S.Purge.Tracked[player]
+        if data.conns then
+            for _, c in ipairs(data.conns) do pcall(function() c:Disconnect() end) end
+        end
+        if data.pulseConn then pcall(function() data.pulseConn:Disconnect() end) end
+        S.Purge.Tracked[player] = nil
+    end
+end)
+
+-- Периодическая зачистка мёртвых ссылок (раз в 30 сек)
+task.spawn(function()
+    while ScreenGui.Parent do
+        task.wait(30)
+        -- Tracers
+        for player, _ in pairs(S.Tracers.Active) do
+            if not player or not player.Parent then
+                _TracerDestroy(player)
+            end
+        end
+        -- ClothesWiper
+        for char, _ in pairs(S.ClothesWiper.Wiped) do
+            if not char or not char.Parent then
+                S.ClothesWiper.Wiped[char] = nil
+            end
+        end
+        -- Purge
+        for player, data in pairs(S.Purge.Tracked) do
+            if not player or not player.Parent then
+                if data.conns then
+                    for _, c in ipairs(data.conns) do pcall(function() c:Disconnect() end) end
+                end
+                if data.pulseConn then pcall(function() data.pulseConn:Disconnect() end) end
+                S.Purge.Tracked[player] = nil
+            end
+        end
+    end
 end)
 
 -- ====================================================================
@@ -3479,6 +3844,7 @@ task.spawn(function()
             if S.BallESP.highlight then _DestroyBallESP() end
             if S.Pred.ring then S.Pred.ring.Transparency = 1 end
         end
+        -- [FIX] П.5: единственный вызов _UpdateHitboxVisual
         pcall(_UpdateHitboxVisual, 0.03)
         pcall(_WiperUpdate)
         task.wait(0.03)
@@ -3495,16 +3861,7 @@ task.spawn(function()
     end
 end)
 
--- ⚡ ГЛАВНЫЙ ЦИКЛ ОБНОВЛЕНИЯ СФЕРЫ ХИТБОКСА
-task.spawn(function()
-    while ScreenGui.Parent do
-        if S.MegaHitbox.Enabled or S.RangeGuard.Enabled then
-            local ok, err = pcall(_UpdateHitboxVisual, 0.03)
-            if not ok then warn("[VL Hitbox] " .. tostring(err)) end
-        end
-        task.wait(0.03)
-    end
-end)
+-- [FIX] П.5: удалён дубликат "⚡ ГЛАВНЫЙ ЦИКЛ ОБНОВЛЕНИЯ СФЕРЫ ХИТБОКСА"
 
 -- ====================================================================
 -- DROP-IN
@@ -3547,4 +3904,4 @@ HeaderBaseLine.BackgroundTransparency = 0.7
 HeaderRunner.BackgroundTransparency = 0
 HeaderPulse.BackgroundTransparency = 0.6
 
-print("[VL] Loaded v2.1: сфера хитбокса привязана к мячу + крестик только тянет")
+print("[VL] Loaded v2.2: Purge Character + П.5 + П.3 fixed")
