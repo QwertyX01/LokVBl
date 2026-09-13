@@ -1,7 +1,3 @@
--- ====================================================================
--- VOLLEYBALL LEGENDS - AGGRESSIVE SPORT EDITION (PREMIUM v3.1)
--- Combat: Auto Serve | Visuals: Ball Info + Purge | Sports HUD
--- ====================================================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
@@ -137,9 +133,6 @@ pcall(function()
     if isfile and isfile("vl_banner.png") then bannerPath = getAssetPath("vl_banner.png") end
 end)
 
--- ====================================================================
--- HITBOX HOOK
--- ====================================================================
 local HitboxModuleRef = nil
 local HitboxOrigGet = nil
 
@@ -193,9 +186,6 @@ function UpdateHitboxHook()
     return true
 end
 
--- ====================================================================
--- SCREEN GUI
--- ====================================================================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "RobloxGui"
 ScreenGui.ResetOnSpawn = false
@@ -251,9 +241,6 @@ function PlayTab()
     if Config.SoundEnabled then pcall(function() TabSound:Play() end) end
 end
 
--- ====================================================================
--- LOADING SCREEN
--- ====================================================================
 local LoadGui = Instance.new("ScreenGui")
 LoadGui.Name = "VL_Load"
 LoadGui.ResetOnSpawn = false
@@ -533,9 +520,6 @@ task.spawn(function()
     pcall(function() Sound:Play() end)
 end)
 
--- ====================================================================
--- MAIN PANEL
--- ====================================================================
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 680, 0, 490)
@@ -950,9 +934,7 @@ task.spawn(function()
         task.wait(0.6)
     end
 end)
--- ====================================================================
--- BRACKETS
--- ====================================================================
+
 function CreateBracket(pos, size, anchor, flipX, flipY)
     local bracket = Instance.new("Frame")
     bracket.Size = size
@@ -1030,10 +1012,6 @@ S.Br.TL_h, S.Br.TL_v, S.Br.TL_hg, S.Br.TL_vg = CreateBracket(UDim2.new(0, -6, 0,
 S.Br.TR_h, S.Br.TR_v, S.Br.TR_hg, S.Br.TR_vg = CreateBracket(UDim2.new(1, 6, 0, -6), UDim2.new(0, 22, 0, 22), Vector2.new(1, 0), true, false)
 S.Br.BL_h, S.Br.BL_v, S.Br.BL_hg, S.Br.BL_vg = CreateBracket(UDim2.new(0, -6, 1, 6), UDim2.new(0, 22, 0, 22), Vector2.new(0, 1), false, true)
 S.Br.BR_h, S.Br.BR_v, S.Br.BR_hg, S.Br.BR_vg = CreateBracket(UDim2.new(1, 6, 1, 6), UDim2.new(0, 22, 0, 22), Vector2.new(1, 1), true, true)
-
--- ====================================================================
--- TABS
--- ====================================================================
 local TabNames = {"Main", "Visuals", "Combat", "Sky", "Settings"}
 local TabIndexes = { "01", "02", "03", "04", "05" }
 local Tabs = {}
@@ -1073,16 +1051,13 @@ for i, name in ipairs(TabNames) do
     tab.AutoButtonColor = false
     tab.ZIndex = 10
     tab.Parent = LeftPanel
-
     local tabCorner = Instance.new("UICorner", tab)
     tabCorner.CornerRadius = UDim.new(0, 4)
     RegisterCorner(tabCorner, 4)
-
     local stroke = Instance.new("UIStroke", tab)
     stroke.Thickness = 1
     stroke.Color = THEME.LINE
     stroke.Transparency = 0.3
-
     local tabAccent = Instance.new("Frame")
     tabAccent.Size = UDim2.new(0, 4, 0, 0)
     tabAccent.Position = UDim2.new(0, 2, 0.5, 0)
@@ -1092,7 +1067,6 @@ for i, name in ipairs(TabNames) do
     tabAccent.ZIndex = 11
     tabAccent.Parent = tab
     Instance.new("UICorner", tabAccent).CornerRadius = UDim.new(1, 0)
-
     local tabAccentGradient = Instance.new("UIGradient", tabAccent)
     tabAccentGradient.Rotation = 90
     tabAccentGradient.Color = ColorSequence.new({
@@ -1100,14 +1074,12 @@ for i, name in ipairs(TabNames) do
         ColorSequenceKeypoint.new(0.5, THEME.ACCENT_HOT),
         ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
     })
-
     task.spawn(function()
         while tabAccent.Parent do
             for j = -1, 1, 0.05 do tabAccentGradient.Offset = Vector2.new(0, j); task.wait(0.05) end
             for j = 1, -1, -0.05 do tabAccentGradient.Offset = Vector2.new(0, j); task.wait(0.05) end
         end
     end)
-
     local tabIndex = Instance.new("TextLabel")
     tabIndex.Size = UDim2.new(0, 25, 1, 0)
     tabIndex.Position = UDim2.new(0, 14, 0, 0)
@@ -1119,7 +1091,6 @@ for i, name in ipairs(TabNames) do
     tabIndex.TextXAlignment = Enum.TextXAlignment.Left
     tabIndex.ZIndex = 11
     tabIndex.Parent = tab
-
     local textLabel = Instance.new("TextLabel")
     textLabel.Size = UDim2.new(1, -40, 1, 0)
     textLabel.Position = UDim2.new(0, 42, 0, 0)
@@ -1131,7 +1102,6 @@ for i, name in ipairs(TabNames) do
     textLabel.TextXAlignment = Enum.TextXAlignment.Left
     textLabel.ZIndex = 11
     textLabel.Parent = tab
-
     local arrow = Instance.new("TextLabel")
     arrow.Size = UDim2.new(0, 20, 1, 0)
     arrow.Position = UDim2.new(1, -25, 0, 0)
@@ -1143,12 +1113,10 @@ for i, name in ipairs(TabNames) do
     arrow.TextTransparency = 1
     arrow.ZIndex = 11
     arrow.Parent = tab
-
     local originalSize = UDim2.new(1, -20, 0, TabHeight)
     local originalPos = UDim2.new(0, 10, 0, TabBaseY + (order - 1) * TabSpacing)
     local activeSize = UDim2.new(1, -6, 0, TabHeight + 2)
     local activePos = UDim2.new(0, 3, 0, TabBaseY - 1 + (order - 1) * TabSpacing)
-
     tab.MouseEnter:Connect(function()
         if not Tabs[name].IsActive then
             TweenService:Create(tab, TweenInfo.new(0.15), {BackgroundTransparency = 0.2}):Play()
@@ -1161,7 +1129,6 @@ for i, name in ipairs(TabNames) do
             TweenService:Create(textLabel, TweenInfo.new(0.15), {TextColor3 = THEME.TEXT_MID}):Play()
         end
     end)
-
     tab.MouseButton1Click:Connect(function()
         PlayTab()
         for otherName, otherTab in pairs(Tabs) do
@@ -1177,7 +1144,6 @@ for i, name in ipairs(TabNames) do
             end
         end
         for _, page in pairs(TabPages) do page.Visible = false end
-
         if ActiveTab == name then
             ActiveTab = nil
             TweenService:Create(PageTitle, TweenInfo.new(0.2), {TextTransparency = 1}):Play()
@@ -1189,7 +1155,6 @@ for i, name in ipairs(TabNames) do
             task.delay(0.2, function() PageHeader.Visible = false end)
             return
         end
-
         Tabs[name].IsActive = true
         ActiveTab = name
         PageHeader.Visible = true
@@ -1212,7 +1177,6 @@ for i, name in ipairs(TabNames) do
         TweenService:Create(tabIndex, TweenInfo.new(0.2), {TextColor3 = THEME.ACCENT_HOT}):Play()
         if TabPages[name] then TabPages[name].Visible = true end
     end)
-
     Tabs[name] = {
         Button = tab, Text = textLabel, Stroke = stroke, Accent = tabAccent,
         Arrow = arrow, Index = tabIndex, IsActive = false,
@@ -1221,38 +1185,29 @@ for i, name in ipairs(TabNames) do
     CreatePage(name)
 end
 
--- ====================================================================
--- DRAG HANDLE
--- ====================================================================
 local DragHandle = Instance.new("Frame")
 DragHandle.Size = UDim2.new(0, 50, 0, 50)
 DragHandle.Position = UDim2.new(1, -55, 0, 5)
 DragHandle.BackgroundTransparency = 1
 DragHandle.ZIndex = 250
 DragHandle.Parent = MainFrame
-
 local CloseIcon = Instance.new("ImageLabel")
 CloseIcon.Size = UDim2.new(0, 26, 0, 26)
 CloseIcon.Position = UDim2.new(0.5, -13, 0.5, -13)
 CloseIcon.BackgroundTransparency = 1
 CloseIcon.Image = "rbxassetid://134892275535697"
 CloseIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
-CloseIcon.ImageTransparency = 0
 CloseIcon.ZIndex = 252
 CloseIcon.Parent = DragHandle
-
 local DragButton = Instance.new("TextButton")
 DragButton.Size = UDim2.new(1, 0, 1, 0)
-DragButton.Position = UDim2.new(0, 0, 0, 0)
 DragButton.BackgroundTransparency = 1
 DragButton.Text = ""
 DragButton.ZIndex = 253
 DragButton.Parent = DragHandle
-
 local isDraggingMenu = false
 local dragStartMouse = Vector2.new(0, 0)
 local dragStartFrame = UDim2.new(0, 0, 0, 0)
-
 DragButton.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         isDraggingMenu = true
@@ -1261,19 +1216,14 @@ DragButton.InputBegan:Connect(function(input)
         TweenService:Create(CloseIcon, TweenInfo.new(0.15), {ImageColor3 = THEME.ACCENT_HOT}):Play()
     end
 end)
-
 UserInputService.InputChanged:Connect(function(input)
     if not isDraggingMenu then return end
     if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
         local deltaX = input.Position.X - dragStartMouse.X
         local deltaY = input.Position.Y - dragStartMouse.Y
-        MainFrame.Position = UDim2.new(
-            dragStartFrame.X.Scale, dragStartFrame.X.Offset + deltaX,
-            dragStartFrame.Y.Scale, dragStartFrame.Y.Offset + deltaY
-        )
+        MainFrame.Position = UDim2.new(dragStartFrame.X.Scale, dragStartFrame.X.Offset + deltaX, dragStartFrame.Y.Scale, dragStartFrame.Y.Offset + deltaY)
     end
 end)
-
 UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         if isDraggingMenu then
@@ -1283,9 +1233,6 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- ====================================================================
--- AVATAR / INFO
--- ====================================================================
 local AvatarFrame = Instance.new("Frame")
 AvatarFrame.Size = UDim2.new(0, 50, 0, 50)
 AvatarFrame.Position = UDim2.new(0, 10, 1, -64)
@@ -1294,17 +1241,14 @@ AvatarFrame.BackgroundTransparency = 0.2
 AvatarFrame.ZIndex = 10
 AvatarFrame.Parent = LeftPanel
 Instance.new("UICorner", AvatarFrame).CornerRadius = UDim.new(1, 0)
-
 local AvatarStroke = Instance.new("UIStroke", AvatarFrame)
 AvatarStroke.Thickness = 1
 AvatarStroke.Color = THEME.ACCENT_HOT
 AvatarStroke.Transparency = 0.6
-
 local AvatarGlow = Instance.new("UIStroke", AvatarFrame)
 AvatarGlow.Thickness = 2
 AvatarGlow.Color = THEME.ACCENT_GLOW
 AvatarGlow.Transparency = 0.92
-
 local AvatarImage = Instance.new("ImageLabel")
 AvatarImage.Size = UDim2.new(1, -4, 1, -4)
 AvatarImage.Position = UDim2.new(0, 2, 0, 2)
@@ -1313,7 +1257,6 @@ AvatarImage.Image = "rbxthumb://type=AvatarHeadShot&id=" .. LocalPlayer.UserId .
 AvatarImage.ZIndex = 11
 AvatarImage.Parent = AvatarFrame
 Instance.new("UICorner", AvatarImage).CornerRadius = UDim.new(1, 0)
-
 local PlayerName = Instance.new("TextLabel")
 PlayerName.Size = UDim2.new(0, 85, 0, 18)
 PlayerName.Position = UDim2.new(0, 68, 1, -60)
@@ -1326,7 +1269,6 @@ PlayerName.TextXAlignment = Enum.TextXAlignment.Left
 PlayerName.TextTruncate = Enum.TextTruncate.AtEnd
 PlayerName.ZIndex = 10
 PlayerName.Parent = LeftPanel
-
 local PlayerTag = Instance.new("TextLabel")
 PlayerTag.Size = UDim2.new(0, 85, 0, 14)
 PlayerTag.Position = UDim2.new(0, 68, 1, -42)
@@ -1339,14 +1281,12 @@ PlayerTag.TextXAlignment = Enum.TextXAlignment.Left
 PlayerTag.TextTruncate = Enum.TextTruncate.AtEnd
 PlayerTag.ZIndex = 10
 PlayerTag.Parent = LeftPanel
-
 local BrandFrame = Instance.new("Frame")
 BrandFrame.Size = UDim2.new(0, 42, 0, 42)
 BrandFrame.Position = UDim2.new(1, -52, 1, -60)
 BrandFrame.BackgroundTransparency = 1
 BrandFrame.ZIndex = 10
 BrandFrame.Parent = LeftPanel
-
 local BrandImage = Instance.new("ImageLabel")
 BrandImage.Size = UDim2.new(1, -4, 1, -4)
 BrandImage.Position = UDim2.new(0, 2, 0, 2)
@@ -1364,7 +1304,6 @@ FpsFrame.BackgroundTransparency = 1
 FpsFrame.ZIndex = 20
 FpsFrame.Visible = false
 FpsFrame.Parent = LeftPanel
-
 local FpsLabel = Instance.new("TextLabel")
 FpsLabel.Size = UDim2.new(1, 0, 1, 0)
 FpsLabel.BackgroundTransparency = 1
@@ -1375,21 +1314,18 @@ FpsLabel.Font = Enum.Font.Gotham
 FpsLabel.TextXAlignment = Enum.TextXAlignment.Right
 FpsLabel.ZIndex = 21
 FpsLabel.Parent = FpsFrame
-
 local FpsGradient = Instance.new("UIGradient", FpsLabel)
 FpsGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0, THEME.ACCENT_DARK),
     ColorSequenceKeypoint.new(0.5, THEME.ACCENT_HOT),
     ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
 })
-
 task.spawn(function()
     while ScreenGui.Parent do
         for i = -1, 1, 0.02 do FpsGradient.Offset = Vector2.new(i, 0); task.wait(0.04) end
         for i = 1, -1, -0.02 do FpsGradient.Offset = Vector2.new(i, 0); task.wait(0.04) end
     end
 end)
-
 task.spawn(function()
     local frames = 0
     local lastTime = tick()
@@ -1478,14 +1414,12 @@ StatusDot.BorderSizePixel = 0
 StatusDot.ZIndex = 200
 StatusDot.Parent = MainFrame
 Instance.new("UICorner", StatusDot).CornerRadius = UDim.new(1, 0)
-
 local DotGradient = Instance.new("UIGradient", StatusDot)
 DotGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0, THEME.ACCENT_DARK),
     ColorSequenceKeypoint.new(0.5, THEME.ACCENT_HOT),
     ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
 })
-
 task.spawn(function()
     while ScreenGui.Parent do
         for i = -1, 1, 0.01 do DotGradient.Offset = Vector2.new(i, 0); task.wait(0.04) end
@@ -1500,14 +1434,12 @@ ScanLine.BorderSizePixel = 0
 ScanLine.BackgroundTransparency = 0.5
 ScanLine.ZIndex = 100
 ScanLine.Parent = MainFrame
-
 local ScanGradient = Instance.new("UIGradient", ScanLine)
 ScanGradient.Transparency = NumberSequence.new({
     NumberSequenceKeypoint.new(0, 1),
     NumberSequenceKeypoint.new(0.5, 0),
     NumberSequenceKeypoint.new(1, 1),
 })
-
 task.spawn(function()
     while ScreenGui.Parent do
         if Config.ScanLineEnabled then
@@ -1523,7 +1455,6 @@ task.spawn(function()
         end
     end
 end)
-
 task.spawn(function()
     while ScreenGui.Parent do
         TweenService:Create(LogoBadgeGlow, TweenInfo.new(0.8), {Transparency = 0.3}):Play()
@@ -1537,16 +1468,12 @@ task.spawn(function()
     end
 end)
 
--- ====================================================================
--- HELPERS
--- ====================================================================
 function CreateSection(parent, title, yPos, color)
     local section = Instance.new("Frame")
     section.Size = UDim2.new(1, 0, 0, 24)
     section.Position = UDim2.new(0, 0, 0, yPos)
     section.BackgroundTransparency = 1
     section.Parent = parent
-
     local line = Instance.new("Frame")
     line.Size = UDim2.new(0, 3, 0, 14)
     line.Position = UDim2.new(0, 0, 0.5, -7)
@@ -1554,7 +1481,6 @@ function CreateSection(parent, title, yPos, color)
     line.BorderSizePixel = 0
     line.Parent = section
     Instance.new("UICorner", line).CornerRadius = UDim.new(1, 0)
-
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, -15, 1, 0)
     label.Position = UDim2.new(0, 15, 0, 0)
@@ -1565,7 +1491,6 @@ function CreateSection(parent, title, yPos, color)
     label.Font = Enum.Font.Code
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.Parent = section
-
     return line, label
 end
 
@@ -1575,7 +1500,6 @@ function CreateToggle(parent, name, descText, yPos, default, callback)
     frame.Position = UDim2.new(0, 0, 0, yPos)
     frame.BackgroundTransparency = 1
     frame.Parent = parent
-
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(0.75, 0, 0, 18)
     label.BackgroundTransparency = 1
@@ -1585,7 +1509,6 @@ function CreateToggle(parent, name, descText, yPos, default, callback)
     label.Font = Enum.Font.Gotham
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.Parent = frame
-
     local desc = Instance.new("TextLabel")
     desc.Size = UDim2.new(0.75, 0, 0, 14)
     desc.Position = UDim2.new(0, 0, 0, 20)
@@ -1596,7 +1519,6 @@ function CreateToggle(parent, name, descText, yPos, default, callback)
     desc.Font = Enum.Font.Gotham
     desc.TextXAlignment = Enum.TextXAlignment.Left
     desc.Parent = frame
-
     local toggleBg = Instance.new("Frame")
     toggleBg.Size = UDim2.new(0, 42, 0, 22)
     toggleBg.Position = UDim2.new(1, -50, 0, 13)
@@ -1604,12 +1526,10 @@ function CreateToggle(parent, name, descText, yPos, default, callback)
     toggleBg.BorderSizePixel = 0
     toggleBg.Parent = frame
     Instance.new("UICorner", toggleBg).CornerRadius = UDim.new(1, 0)
-
     local toggleStroke = Instance.new("UIStroke", toggleBg)
     toggleStroke.Thickness = 1
     toggleStroke.Color = default and THEME.ACCENT_HOT or THEME.LINE
     toggleStroke.Transparency = 0.5
-
     local handle = Instance.new("Frame")
     handle.Size = UDim2.new(0, 16, 0, 16)
     handle.Position = default and UDim2.new(0, 23, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
@@ -1617,7 +1537,6 @@ function CreateToggle(parent, name, descText, yPos, default, callback)
     handle.BorderSizePixel = 0
     handle.Parent = toggleBg
     Instance.new("UICorner", handle).CornerRadius = UDim.new(1, 0)
-
     local state = default
     local clickArea = Instance.new("TextButton")
     clickArea.Size = UDim2.new(0, 42, 0, 22)
@@ -1626,7 +1545,6 @@ function CreateToggle(parent, name, descText, yPos, default, callback)
     clickArea.Text = ""
     clickArea.ZIndex = 10
     clickArea.Parent = frame
-
     local function SetState(value, animate)
         state = value
         local ti = TweenInfo.new(0.2, Enum.EasingStyle.Quad)
@@ -1644,17 +1562,14 @@ function CreateToggle(parent, name, descText, yPos, default, callback)
         end
         if callback then callback(value) end
     end
-
     clickArea.MouseButton1Click:Connect(function()
         PlayTab()
         SetState(not state, true)
     end)
-
     table.insert(S.ColorSynced, {
         Kind = "Toggle", ToggleBg = toggleBg, ToggleStroke = toggleStroke,
         GetState = function() return state end,
     })
-
     S.Toggles[name] = SetState
 end
 
@@ -1664,7 +1579,6 @@ function CreateSlider(parent, name, descText, yPos, minVal, maxVal, default, suf
     frame.Position = UDim2.new(0, 0, 0, yPos)
     frame.BackgroundTransparency = 1
     frame.Parent = parent
-
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(0.5, 0, 0, 18)
     label.BackgroundTransparency = 1
@@ -1674,7 +1588,6 @@ function CreateSlider(parent, name, descText, yPos, minVal, maxVal, default, suf
     label.Font = Enum.Font.Gotham
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.Parent = frame
-
     local desc = Instance.new("TextLabel")
     desc.Size = UDim2.new(0.7, 0, 0, 14)
     desc.Position = UDim2.new(0, 0, 0, 18)
@@ -1685,7 +1598,6 @@ function CreateSlider(parent, name, descText, yPos, minVal, maxVal, default, suf
     desc.Font = Enum.Font.Gotham
     desc.TextXAlignment = Enum.TextXAlignment.Left
     desc.Parent = frame
-
     local valueLabel = Instance.new("TextLabel")
     valueLabel.Size = UDim2.new(0, 60, 0, 18)
     valueLabel.Position = UDim2.new(1, -60, 0, 0)
@@ -1696,7 +1608,6 @@ function CreateSlider(parent, name, descText, yPos, minVal, maxVal, default, suf
     valueLabel.Font = Enum.Font.Gotham
     valueLabel.TextXAlignment = Enum.TextXAlignment.Right
     valueLabel.Parent = frame
-
     local barBg = Instance.new("Frame")
     barBg.Size = UDim2.new(1, -50, 0, 5)
     barBg.Position = UDim2.new(0, 0, 0, 40)
@@ -1704,7 +1615,6 @@ function CreateSlider(parent, name, descText, yPos, minVal, maxVal, default, suf
     barBg.BorderSizePixel = 0
     barBg.Parent = frame
     Instance.new("UICorner", barBg).CornerRadius = UDim.new(1, 0)
-
     local startPercent = (default - minVal) / (maxVal - minVal)
     local barFill = Instance.new("Frame")
     barFill.Size = UDim2.new(startPercent, 0, 1, 0)
@@ -1712,14 +1622,12 @@ function CreateSlider(parent, name, descText, yPos, minVal, maxVal, default, suf
     barFill.BorderSizePixel = 0
     barFill.Parent = barBg
     Instance.new("UICorner", barFill).CornerRadius = UDim.new(1, 0)
-
     local barFillGradient = Instance.new("UIGradient", barFill)
     barFillGradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, THEME.ACCENT_DARK),
         ColorSequenceKeypoint.new(0.5, THEME.ACCENT_HOT),
         ColorSequenceKeypoint.new(1, THEME.ACCENT_GLOW),
     })
-
     task.spawn(function()
         while barFill.Parent do
             for i = -1, 1, 0.03 do
@@ -1734,7 +1642,6 @@ function CreateSlider(parent, name, descText, yPos, minVal, maxVal, default, suf
             end
         end
     end)
-
     local handle = Instance.new("Frame")
     handle.Size = UDim2.new(0, 14, 0, 14)
     handle.Position = UDim2.new(startPercent, -7, 0.5, -7)
@@ -1742,12 +1649,10 @@ function CreateSlider(parent, name, descText, yPos, minVal, maxVal, default, suf
     handle.BorderSizePixel = 0
     handle.Parent = barBg
     Instance.new("UICorner", handle).CornerRadius = UDim.new(1, 0)
-
     local handleGlow = Instance.new("UIStroke", handle)
     handleGlow.Thickness = 1
     handleGlow.Color = THEME.ACCENT_HOT
     handleGlow.Transparency = 0.4
-
     local dragArea = Instance.new("TextButton")
     dragArea.Size = UDim2.new(1, -50, 0, 20)
     dragArea.Position = UDim2.new(0, 0, 0, 33)
@@ -1755,9 +1660,7 @@ function CreateSlider(parent, name, descText, yPos, minVal, maxVal, default, suf
     dragArea.Text = ""
     dragArea.ZIndex = 10
     dragArea.Parent = frame
-
     local isDragging = false
-
     local function SetValue(val, animate)
         val = math.clamp(val, minVal, maxVal)
         local p = (val - minVal) / (maxVal - minVal)
@@ -1771,7 +1674,6 @@ function CreateSlider(parent, name, descText, yPos, minVal, maxVal, default, suf
         valueLabel.Text = tostring(math.floor(val + 0.5)) .. (suffix or "")
         if callback then callback(math.floor(val + 0.5)) end
     end
-
     local function UpdateFromMouse(mouseX)
         local absPos = barBg.AbsolutePosition.X
         local width = barBg.AbsoluteSize.X
@@ -1779,7 +1681,6 @@ function CreateSlider(parent, name, descText, yPos, minVal, maxVal, default, suf
         local percent = math.clamp((mouseX - absPos) / width, 0, 1)
         SetValue(minVal + percent * (maxVal - minVal), false)
     end
-
     dragArea.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             isDragging = true
@@ -1796,19 +1697,14 @@ function CreateSlider(parent, name, descText, yPos, minVal, maxVal, default, suf
             isDragging = false
         end
     end)
-
     table.insert(S.ColorSynced, {
         Kind = "Slider", BarFill = barFill, BarFillGradient = barFillGradient,
         ValueLabel = valueLabel, HandleGlow = handleGlow,
     })
-
     S.Sliders[name] = SetValue
 end
-
--- ====================================================================
 -- AUTO SERVE LOGIC
--- ====================================================================
-local function FindPowerBar()
+function FindPowerBar()
     if not getgc then return nil, nil end
     for _, obj in ipairs(getgc(true)) do
         if type(obj) == "table" and type(rawget(obj, "get")) == "function" then
@@ -1824,8 +1720,7 @@ local function FindPowerBar()
     end
     return nil, nil
 end
-
-local function ReadServeState()
+function ReadServeState()
     if not S.AutoServe.PowerBar or not S.AutoServe.Props then
         S.AutoServe.PowerBar, S.AutoServe.Props = FindPowerBar()
         if not S.AutoServe.PowerBar then return nil, false end
@@ -1835,8 +1730,7 @@ local function ReadServeState()
     pcall(function() isServing = S.AutoServe.Props.IsServing:get() == true end)
     return power, isServing
 end
-
-local function VirtualClick()
+function VirtualClick()
     local vim = game:GetService("VirtualInputManager")
     if vim then
         vim:SendMouseButtonEvent(0, 0, 0, true, game, 0)
@@ -1851,7 +1745,6 @@ local function VirtualClick()
     end
     return false
 end
-
 task.spawn(function()
     while ScreenGui.Parent do
         task.wait(0.03)
@@ -1874,12 +1767,9 @@ task.spawn(function()
     end
 end)
 
--- ====================================================================
--- BALL INFO LOGIC (Drawing)
--- ====================================================================
+-- BALL INFO LOGIC
 local DrawingLib = Drawing
 local MC_FONT = (DrawingLib and DrawingLib.Fonts and DrawingLib.Fonts.Code) or 1
-
 local function CreateTextWithShadow(color, size, text)
     if not DrawingLib then return nil, nil end
     local shadow = DrawingLib.new("Text")
@@ -1891,7 +1781,6 @@ local function CreateTextWithShadow(color, size, text)
     shadow.Color = Color3.fromRGB(0, 0, 0)
     shadow.Transparency = 0.6
     shadow.Text = text
-
     local main = DrawingLib.new("Text")
     main.Visible = false
     main.Center = false
@@ -1901,32 +1790,26 @@ local function CreateTextWithShadow(color, size, text)
     main.Color = color
     main.Transparency = 1
     main.Text = text
-
     return shadow, main
 end
-
 if DrawingLib then
     S.BallInfo.TitleShadow, S.BallInfo.TitleText = CreateTextWithShadow(THEME.ACCENT_HOT, Config.BallInfoFontSize + 1, "BALL INFO")
     S.BallInfo.SpeedShadow, S.BallInfo.SpeedText = CreateTextWithShadow(Color3.fromRGB(255, 200, 80), Config.BallInfoFontSize, "SPD 0.0")
     S.BallInfo.DistShadow, S.BallInfo.DistText = CreateTextWithShadow(Color3.fromRGB(100, 220, 255), Config.BallInfoFontSize, "DST 0.0")
     S.BallInfo.HeightShadow, S.BallInfo.HeightText = CreateTextWithShadow(Color3.fromRGB(180, 160, 255), Config.BallInfoFontSize, "HGT 0.0")
-
     S.BallInfo.SpeedIcon = DrawingLib.new("Square")
     S.BallInfo.SpeedIcon.Visible = false
     S.BallInfo.SpeedIcon.Filled = true
     S.BallInfo.SpeedIcon.Thickness = 0
-
     S.BallInfo.DistIcon = DrawingLib.new("Square")
     S.BallInfo.DistIcon.Visible = false
     S.BallInfo.DistIcon.Filled = true
     S.BallInfo.DistIcon.Thickness = 0
-
     S.BallInfo.HeightIcon = DrawingLib.new("Square")
     S.BallInfo.HeightIcon.Visible = false
     S.BallInfo.HeightIcon.Filled = true
     S.BallInfo.HeightIcon.Thickness = 0
 end
-
 local function GetGradientColor(t)
     local colors = {
         Color3.fromRGB(255, 60, 180),
@@ -1944,7 +1827,6 @@ local function GetGradientColor(t)
     local c2 = colors[math.min(idx + 2, n)]
     return Color3.new(c1.R + (c2.R - c1.R) * frac, c1.G + (c2.G - c1.G) * frac, c1.B + (c2.B - c1.B) * frac)
 end
-
 local function FindBallInfo()
     for _, obj in ipairs(workspace:GetChildren()) do
         if obj:IsA("Model") and obj.PrimaryPart then
@@ -1971,7 +1853,6 @@ local function FindBallInfo()
     end
     return nil
 end
-
 local function GetFloorYInfo(pos)
     local rp = RaycastParams.new()
     rp.FilterType = Enum.RaycastFilterType.Exclude
@@ -1980,7 +1861,6 @@ local function GetFloorYInfo(pos)
     if hit then return hit.Position.Y end
     return 0
 end
-
 local function HideBallInfo()
     if not DrawingLib then return end
     if S.BallInfo.TitleText then S.BallInfo.TitleText.Visible = false end
@@ -1995,17 +1875,13 @@ local function HideBallInfo()
     if S.BallInfo.DistIcon then S.BallInfo.DistIcon.Visible = false end
     if S.BallInfo.HeightIcon then S.BallInfo.HeightIcon.Visible = false end
 end
-
 task.spawn(function()
     if not DrawingLib then return end
     local currentBall = nil
     local ballPart = nil
     while ScreenGui.Parent do
         RunService.RenderStepped:Wait()
-        if not Config.BallInfoEnabled then
-            HideBallInfo()
-            continue
-        end
+        if not Config.BallInfoEnabled then HideBallInfo() continue end
         if not currentBall or not currentBall.Parent then
             currentBall = FindBallInfo()
             ballPart = nil
@@ -2026,21 +1902,15 @@ task.spawn(function()
         local ballPos = ballPart.Position
         local worldPos = ballPos + Vector3.new(0, 3.5, 0)
         local screenPos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(worldPos)
-        if not onScreen then
-            HideBallInfo()
-            continue
-        end
+        if not onScreen then HideBallInfo() continue end
         local now = tick()
         local speed = 0
         if S.BallInfo.LastPos then
             local dt = now - S.BallInfo.LastTime
-            if dt > 0.001 then
-                speed = (ballPos - S.BallInfo.LastPos).Magnitude / dt
-            end
+            if dt > 0.001 then speed = (ballPos - S.BallInfo.LastPos).Magnitude / dt end
         end
         S.BallInfo.LastPos = ballPos
         S.BallInfo.LastTime = now
-
         local distance = 0
         local char = LocalPlayer.Character
         if char and char:FindFirstChild("HumanoidRootPart") then
@@ -2048,26 +1918,18 @@ task.spawn(function()
         end
         local floorY = GetFloorYInfo(ballPos)
         local height = ballPos.Y - floorY
-
         local smoothFactor = 0.2
         S.BallInfo.Smoothed.speed = S.BallInfo.Smoothed.speed + (speed - S.BallInfo.Smoothed.speed) * (1 - smoothFactor)
         S.BallInfo.Smoothed.dist = S.BallInfo.Smoothed.dist + (distance - S.BallInfo.Smoothed.dist) * (1 - smoothFactor)
         S.BallInfo.Smoothed.height = S.BallInfo.Smoothed.height + (height - S.BallInfo.Smoothed.height) * (1 - smoothFactor)
-
         local shiftTime = tick() * 0.45
-        local titleColor = GetGradientColor(shiftTime + 0.0)
-        local speedColor = GetGradientColor(shiftTime + 0.2)
-        local distColor = GetGradientColor(shiftTime + 0.4)
-        local heightColor = GetGradientColor(shiftTime + 0.6)
-
-        S.BallInfo.TitleText.Color = titleColor
-        S.BallInfo.SpeedText.Color = speedColor
-        S.BallInfo.DistText.Color = distColor
-        S.BallInfo.HeightText.Color = heightColor
-        S.BallInfo.SpeedIcon.Color = speedColor
-        S.BallInfo.DistIcon.Color = distColor
-        S.BallInfo.HeightIcon.Color = heightColor
-
+        S.BallInfo.TitleText.Color = GetGradientColor(shiftTime + 0.0)
+        S.BallInfo.SpeedText.Color = GetGradientColor(shiftTime + 0.2)
+        S.BallInfo.DistText.Color = GetGradientColor(shiftTime + 0.4)
+        S.BallInfo.HeightText.Color = GetGradientColor(shiftTime + 0.6)
+        S.BallInfo.SpeedIcon.Color = GetGradientColor(shiftTime + 0.2)
+        S.BallInfo.DistIcon.Color = GetGradientColor(shiftTime + 0.4)
+        S.BallInfo.HeightIcon.Color = GetGradientColor(shiftTime + 0.6)
         local centerX = screenPos.X
         local centerY = screenPos.Y
         local textX = centerX - 55
@@ -2076,12 +1938,10 @@ task.spawn(function()
         local row1Y = centerY - 18
         local row2Y = centerY
         local row3Y = centerY + 18
-
         S.BallInfo.TitleShadow.Visible = true
         S.BallInfo.TitleShadow.Position = Vector2.new(textX + 1, titleY + 1)
         S.BallInfo.TitleText.Visible = true
         S.BallInfo.TitleText.Position = Vector2.new(textX, titleY)
-
         S.BallInfo.SpeedShadow.Visible = true
         S.BallInfo.SpeedShadow.Text = string.format("SPD %.1f", S.BallInfo.Smoothed.speed)
         S.BallInfo.SpeedShadow.Position = Vector2.new(textX + 1, row1Y + 1)
@@ -2091,7 +1951,6 @@ task.spawn(function()
         S.BallInfo.SpeedIcon.Visible = true
         S.BallInfo.SpeedIcon.Size = Vector2.new(5, 5)
         S.BallInfo.SpeedIcon.Position = Vector2.new(iconX, row1Y + 6)
-
         S.BallInfo.DistShadow.Visible = true
         S.BallInfo.DistShadow.Text = string.format("DST %.1f", S.BallInfo.Smoothed.dist)
         S.BallInfo.DistShadow.Position = Vector2.new(textX + 1, row2Y + 1)
@@ -2101,7 +1960,6 @@ task.spawn(function()
         S.BallInfo.DistIcon.Visible = true
         S.BallInfo.DistIcon.Size = Vector2.new(5, 5)
         S.BallInfo.DistIcon.Position = Vector2.new(iconX, row2Y + 6)
-
         S.BallInfo.HeightShadow.Visible = true
         S.BallInfo.HeightShadow.Text = string.format("HGT %.1f", S.BallInfo.Smoothed.height)
         S.BallInfo.HeightShadow.Position = Vector2.new(textX + 1, row3Y + 1)
@@ -2114,12 +1972,9 @@ task.spawn(function()
     end
 end)
 
--- ====================================================================
 -- MAIN PAGE
--- ====================================================================
 local mainPage = TabPages["Main"]
 mainPage.CanvasSize = UDim2.new(0, 0, 0, 380)
-
 local bannerFrame = Instance.new("Frame")
 bannerFrame.Size = UDim2.new(0.72, 0, 0, 90)
 bannerFrame.Position = UDim2.new(0.5, 0, 0, 3)
@@ -2129,17 +1984,6 @@ bannerFrame.ClipsDescendants = true
 bannerFrame.ZIndex = 6
 bannerFrame.Parent = mainPage
 Instance.new("UICorner", bannerFrame).CornerRadius = UDim.new(0, Config.CornerRadius)
-
-local bannerStroke = Instance.new("UIStroke", bannerFrame)
-bannerStroke.Thickness = 1.5
-bannerStroke.Color = THEME.ACCENT
-bannerStroke.Transparency = 0.3
-
-local bannerGlow = Instance.new("UIStroke", bannerFrame)
-bannerGlow.Thickness = 3
-bannerGlow.Color = THEME.ACCENT_GLOW
-bannerGlow.Transparency = 0.92
-
 local bannerImage = Instance.new("ImageLabel")
 bannerImage.Size = UDim2.new(1, 0, 1, 0)
 bannerImage.BackgroundTransparency = 1
@@ -2148,22 +1992,11 @@ bannerImage.ScaleType = Enum.ScaleType.Crop
 bannerImage.ZIndex = 7
 bannerImage.Parent = bannerFrame
 Instance.new("UICorner", bannerImage).CornerRadius = UDim.new(0, Config.CornerRadius)
-
-task.spawn(function()
-    while bannerGlow.Parent do
-        TweenService:Create(bannerGlow, TweenInfo.new(0.8), {Transparency = 0.7}):Play()
-        task.wait(0.8)
-        TweenService:Create(bannerGlow, TweenInfo.new(0.8), {Transparency = 0.92}):Play()
-        task.wait(0.8)
-    end
-end)
-
 local greetFrame = Instance.new("Frame")
 greetFrame.Size = UDim2.new(1, 0, 0, 58)
 greetFrame.Position = UDim2.new(0, 0, 0, 100)
 greetFrame.BackgroundTransparency = 1
 greetFrame.Parent = mainPage
-
 local greetTitle = Instance.new("TextLabel")
 greetTitle.Size = UDim2.new(1, 0, 0, 16)
 greetTitle.BackgroundTransparency = 1
@@ -2173,77 +2006,29 @@ greetTitle.TextSize = 11
 greetTitle.Font = Enum.Font.Code
 greetTitle.TextXAlignment = Enum.TextXAlignment.Left
 greetTitle.Parent = greetFrame
-
-local greetTitleGradient = Instance.new("UIGradient", greetTitle)
-greetTitleGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, THEME.ACCENT_GLOW),
-    ColorSequenceKeypoint.new(0.5, THEME.TEXT_HI),
-    ColorSequenceKeypoint.new(1, THEME.ACCENT_HOT),
-})
-
 local greetBody = Instance.new("TextLabel")
 greetBody.Size = UDim2.new(1, 0, 0, 40)
 greetBody.Position = UDim2.new(0, 0, 0, 18)
 greetBody.BackgroundTransparency = 1
 greetBody.Text = "still learning every day - building my own dream piece by piece.\ncode is the canvas, and the game is the art."
-greetBody.TextColor3 = Color3.fromRGB(255, 255, 255)
+greetBody.TextColor3 = Color3.fromRGB(200, 200, 220)
 greetBody.TextSize = 10
 greetBody.Font = Enum.Font.Gotham
 greetBody.TextWrapped = true
 greetBody.TextXAlignment = Enum.TextXAlignment.Left
-greetBody.LineHeight = 1.15
 greetBody.Parent = greetFrame
-
-local greetBodyGradient = Instance.new("UIGradient", greetBody)
-greetBodyGradient.Rotation = 25
-greetBodyGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, THEME.ACCENT_GLOW),
-    ColorSequenceKeypoint.new(0.4, THEME.TEXT_HI),
-    ColorSequenceKeypoint.new(0.7, THEME.ACCENT_HOT),
-    ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
-})
-
-task.spawn(function()
-    while greetTitleGradient.Parent do
-        for i = -1, 1, 0.03 do greetTitleGradient.Offset = Vector2.new(i, 0); task.wait(0.04) end
-        for i = 1, -1, -0.03 do greetTitleGradient.Offset = Vector2.new(i, 0); task.wait(0.04) end
-    end
-end)
-
-task.spawn(function()
-    while greetBodyGradient.Parent do
-        for i = -1.2, 1.2, 0.02 do greetBodyGradient.Offset = Vector2.new(i, 0); task.wait(0.035) end
-        for i = 1.2, -1.2, -0.02 do greetBodyGradient.Offset = Vector2.new(i, 0); task.wait(0.035) end
-    end
-end)
-
 local splitLine = Instance.new("Frame")
 splitLine.Size = UDim2.new(1, 0, 0, 1)
 splitLine.Position = UDim2.new(0, 0, 0, 162)
 splitLine.BackgroundColor3 = THEME.ACCENT
 splitLine.BorderSizePixel = 0
 splitLine.BackgroundTransparency = 0.7
-splitLine.ZIndex = 6
 splitLine.Parent = mainPage
-
-local splitGrad = Instance.new("UIGradient", splitLine)
-splitGrad.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, THEME.ACCENT_DARK),
-    ColorSequenceKeypoint.new(0.5, THEME.ACCENT_HOT),
-    ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
-})
-splitGrad.Transparency = NumberSequence.new({
-    NumberSequenceKeypoint.new(0, 1),
-    NumberSequenceKeypoint.new(0.5, 0),
-    NumberSequenceKeypoint.new(1, 1),
-})
-
 local statusSection = Instance.new("Frame")
 statusSection.Size = UDim2.new(1, 0, 0, 18)
 statusSection.Position = UDim2.new(0, 0, 0, 172)
 statusSection.BackgroundTransparency = 1
 statusSection.Parent = mainPage
-
 local statusSectionLine = Instance.new("Frame")
 statusSectionLine.Size = UDim2.new(0, 3, 0, 12)
 statusSectionLine.Position = UDim2.new(0, 0, 0.5, -6)
@@ -2251,7 +2036,6 @@ statusSectionLine.BackgroundColor3 = THEME.ACCENT_HOT
 statusSectionLine.BorderSizePixel = 0
 statusSectionLine.Parent = statusSection
 Instance.new("UICorner", statusSectionLine).CornerRadius = UDim.new(1, 0)
-
 local statusSectionLabel = Instance.new("TextLabel")
 statusSectionLabel.Size = UDim2.new(1, -15, 1, 0)
 statusSectionLabel.Position = UDim2.new(0, 15, 0, 0)
@@ -2262,18 +2046,15 @@ statusSectionLabel.TextSize = 11
 statusSectionLabel.Font = Enum.Font.Code
 statusSectionLabel.TextXAlignment = Enum.TextXAlignment.Left
 statusSectionLabel.Parent = statusSection
-
 local gridFrame = Instance.new("Frame")
 gridFrame.Size = UDim2.new(1, -10, 0, 116)
 gridFrame.Position = UDim2.new(0, 5, 0, 194)
 gridFrame.BackgroundTransparency = 1
 gridFrame.Parent = mainPage
-
 local gridLayout = Instance.new("UIGridLayout", gridFrame)
 gridLayout.CellSize = UDim2.new(0.5, -4, 0, 55)
 gridLayout.CellPadding = UDim2.new(0, 8, 0, 5)
 gridLayout.SortOrder = Enum.SortOrder.LayoutOrder
-
 local statTiles = {}
 local statConfigs = {
     {key = "FPS", label = "FPS", order = 1},
@@ -2281,7 +2062,6 @@ local statConfigs = {
     {key = "MEMORY", label = "MEMORY", order = 3},
     {key = "SESSION", label = "SESSION", order = 4},
 }
-
 for _, cfg in ipairs(statConfigs) do
     local tile = Instance.new("Frame")
     tile.Size = UDim2.new(0.5, -4, 0, 55)
@@ -2291,17 +2071,10 @@ for _, cfg in ipairs(statConfigs) do
     tile.LayoutOrder = cfg.order
     tile.Parent = gridFrame
     Instance.new("UICorner", tile).CornerRadius = UDim.new(0, Config.CornerRadius)
-
     local tileStroke = Instance.new("UIStroke", tile)
     tileStroke.Thickness = 1
     tileStroke.Color = THEME.ACCENT
     tileStroke.Transparency = 0.5
-
-    local tileInnerGlow = Instance.new("UIStroke", tile)
-    tileInnerGlow.Thickness = 2
-    tileInnerGlow.Color = THEME.ACCENT_GLOW
-    tileInnerGlow.Transparency = 0.94
-
     local tileTopBar = Instance.new("Frame")
     tileTopBar.Size = UDim2.new(1, -20, 0, 2)
     tileTopBar.Position = UDim2.new(0, 10, 0, 6)
@@ -2309,14 +2082,6 @@ for _, cfg in ipairs(statConfigs) do
     tileTopBar.BorderSizePixel = 0
     tileTopBar.Parent = tile
     Instance.new("UICorner", tileTopBar).CornerRadius = UDim.new(1, 0)
-
-    local tileTopGradient = Instance.new("UIGradient", tileTopBar)
-    tileTopGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, THEME.ACCENT_DARK),
-        ColorSequenceKeypoint.new(0.5, THEME.ACCENT_HOT),
-        ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
-    })
-
     local tileDot = Instance.new("Frame")
     tileDot.Size = UDim2.new(0, 4, 0, 4)
     tileDot.Position = UDim2.new(1, -14, 0, 11)
@@ -2324,7 +2089,6 @@ for _, cfg in ipairs(statConfigs) do
     tileDot.BorderSizePixel = 0
     tileDot.Parent = tile
     Instance.new("UICorner", tileDot).CornerRadius = UDim.new(1, 0)
-
     local tileLabel = Instance.new("TextLabel")
     tileLabel.Size = UDim2.new(1, -20, 0, 12)
     tileLabel.Position = UDim2.new(0, 10, 0, 11)
@@ -2335,7 +2099,6 @@ for _, cfg in ipairs(statConfigs) do
     tileLabel.Font = Enum.Font.Code
     tileLabel.TextXAlignment = Enum.TextXAlignment.Left
     tileLabel.Parent = tile
-
     local tileValue = Instance.new("TextLabel")
     tileValue.Size = UDim2.new(1, -20, 0, 24)
     tileValue.Position = UDim2.new(0, 10, 0, 23)
@@ -2346,23 +2109,8 @@ for _, cfg in ipairs(statConfigs) do
     tileValue.Font = Enum.Font.GothamBold
     tileValue.TextXAlignment = Enum.TextXAlignment.Left
     tileValue.Parent = tile
-
-    local tileValueGradient = Instance.new("UIGradient", tileValue)
-    tileValueGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, THEME.ACCENT_HOT),
-        ColorSequenceKeypoint.new(0.5, THEME.ACCENT_GLOW),
-        ColorSequenceKeypoint.new(1, THEME.ACCENT_HOT),
-    })
-
     statTiles[cfg.key] = { Value = tileValue }
-
-    table.insert(S.ColorSynced, {
-        Kind = "StatTile", Stroke = tileStroke, TopBar = tileTopBar,
-        TopGradient = tileTopGradient, Value = tileValue,
-        ValueGradient = tileValueGradient, InnerGlow = tileInnerGlow, Dot = tileDot,
-    })
 end
-
 task.spawn(function()
     local sessionStart = tick()
     local frameCount = 0
@@ -2393,10 +2141,6 @@ task.spawn(function()
         task.wait(1)
     end
 end)
-
--- ====================================================================
--- SPORTS HUD
--- ====================================================================
 local sportsFrame = Instance.new("Frame")
 sportsFrame.Size = UDim2.new(1, -10, 0, 40)
 sportsFrame.Position = UDim2.new(0, 5, 0, 320)
@@ -2405,12 +2149,10 @@ sportsFrame.BackgroundTransparency = 0.15
 sportsFrame.BorderSizePixel = 0
 sportsFrame.Parent = mainPage
 Instance.new("UICorner", sportsFrame).CornerRadius = UDim.new(0, Config.CornerRadius)
-
 local sportsStroke = Instance.new("UIStroke", sportsFrame)
 sportsStroke.Thickness = 1
 sportsStroke.Color = Color3.fromRGB(255, 200, 60)
 sportsStroke.Transparency = 0.5
-
 local sportsTopBar = Instance.new("Frame")
 sportsTopBar.Size = UDim2.new(1, -20, 0, 2)
 sportsTopBar.Position = UDim2.new(0, 10, 0, 4)
@@ -2418,14 +2160,6 @@ sportsTopBar.BackgroundColor3 = Color3.fromRGB(255, 200, 60)
 sportsTopBar.BorderSizePixel = 0
 sportsTopBar.Parent = sportsFrame
 Instance.new("UICorner", sportsTopBar).CornerRadius = UDim.new(1, 0)
-
-local sportsGrad = Instance.new("UIGradient", sportsTopBar)
-sportsGrad.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, THEME.ACCENT_DARK),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 200, 60)),
-    ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
-})
-
 local sportsIcon = Instance.new("TextLabel")
 sportsIcon.Size = UDim2.new(0, 30, 1, 0)
 sportsIcon.Position = UDim2.new(0, 8, 0, 0)
@@ -2435,7 +2169,6 @@ sportsIcon.TextColor3 = Color3.fromRGB(255, 200, 60)
 sportsIcon.TextSize = 22
 sportsIcon.Font = Enum.Font.GothamBold
 sportsIcon.Parent = sportsFrame
-
 local sportsLabel = Instance.new("TextLabel")
 sportsLabel.Size = UDim2.new(0, 100, 1, 0)
 sportsLabel.Position = UDim2.new(0, 40, 0, 0)
@@ -2446,7 +2179,6 @@ sportsLabel.TextSize = 10
 sportsLabel.Font = Enum.Font.Code
 sportsLabel.TextXAlignment = Enum.TextXAlignment.Left
 sportsLabel.Parent = sportsFrame
-
 local sportsValue = Instance.new("TextLabel")
 sportsValue.Size = UDim2.new(1, -150, 1, 0)
 sportsValue.Position = UDim2.new(1, -150, 0, 0)
@@ -2457,28 +2189,10 @@ sportsValue.TextSize = 20
 sportsValue.Font = Enum.Font.GothamBold
 sportsValue.TextXAlignment = Enum.TextXAlignment.Right
 sportsValue.Parent = sportsFrame
-
-local sportsValueGradient = Instance.new("UIGradient", sportsValue)
-sportsValueGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 240, 100)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 180, 40)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 240, 100)),
-})
-
-task.spawn(function()
-    while sportsValueGradient.Parent do
-        for i = -1, 1, 0.05 do sportsValueGradient.Offset = Vector2.new(i, 0); task.wait(0.05) end
-        for i = 1, -1, -0.05 do sportsValueGradient.Offset = Vector2.new(i, 0); task.wait(0.05) end
-    end
-end)
-
 task.spawn(function()
     while sportsFrame.Parent do
         task.wait(0.5)
-        if not Config.SportsHUDEnabled then
-            sportsValue.Text = "OFF"
-            continue
-        end
+        if not Config.SportsHUDEnabled then sportsValue.Text = "OFF" continue end
         local streak = 0
         pcall(function()
             local stats = LocalPlayer:FindFirstChild("leaderstats")
@@ -2491,38 +2205,25 @@ task.spawn(function()
     end
 end)
 
-mainPage.CanvasSize = UDim2.new(0, 0, 0, 380)
-
--- ====================================================================
 -- COMBAT PAGE
--- ====================================================================
 local combatPage = TabPages["Combat"]
 combatPage.CanvasSize = UDim2.new(0, 0, 0, 800)
-
 CreateSection(combatPage, "// AUTO SERVE", 10, Color3.fromRGB(80, 255, 130))
-
 CreateToggle(combatPage, "Auto Powerful Serve", "Clicks at the peak of the serve bar automatically", 40, Config.AutoServeEnabled, function(v)
     Config.AutoServeEnabled = v
     if v then
         S.AutoServe.PowerBar, S.AutoServe.Props = FindPowerBar()
-        if S.AutoServe.PowerBar then
-            print("[AutoServe] PowerBar found")
-        else
-            print("[AutoServe] PowerBar not found — will retry on serve")
-        end
+        if S.AutoServe.PowerBar then print("[AutoServe] PowerBar found")
+        else print("[AutoServe] PowerBar not found — will retry on serve") end
     end
 end)
-
 CreateSlider(combatPage, "Peak Threshold", "Peak threshold (85-99%)", 95, 85, 99, 90, "%", function(v)
     Config.AutoServeThreshold = v / 100
 end)
-
 CreateSlider(combatPage, "Click Cooldown", "Pause between clicks", 160, 1, 10, 3, " x0.1s", function(v)
     Config.AutoServeCooldown = v / 10
 end)
-
 CreateSection(combatPage, "// HITBOX EXPANDER", 250, THEME.ACCENT_HOT)
-
 CreateToggle(combatPage, "Hitbox Expander", "Expands impact area + shows sphere around ball", 280, S.MegaHitbox.Enabled, function(v)
     S.MegaHitbox.Enabled = v
     Config.HitboxEnabled = v
@@ -2530,56 +2231,32 @@ CreateToggle(combatPage, "Hitbox Expander", "Expands impact area + shows sphere 
         S.MegaHitbox.ExpandedCount = ExpandAllHitboxTemplates()
         UpdateHitboxHook()
         _CreateHitboxVisual()
-        print("[VL] Hitbox ENABLED | x" .. S.MegaHitbox.SizeMultiplier)
     else
         UpdateHitboxHook()
-        if not S.RangeGuard.Enabled then
-            RestoreAllHitboxes()
-            _DestroyHitboxVisual()
-        end
-        print("[VL] Hitbox DISABLED")
+        if not S.RangeGuard.Enabled then RestoreAllHitboxes() _DestroyHitboxVisual() end
     end
 end)
-
 CreateSlider(combatPage, "Hitbox Size", "Impact area multiplier (x1 - x20)", 335, 10, 200, Config.HitboxSize, "x", function(v)
     Config.HitboxSize = v
     S.MegaHitbox.SizeMultiplier = v / 10
-    if S.MegaHitbox.Enabled then
-        ExpandAllHitboxTemplates()
-        UpdateHitboxHook()
-    end
+    if S.MegaHitbox.Enabled then ExpandAllHitboxTemplates() UpdateHitboxHook() end
 end)
-
 CreateToggle(combatPage, "Range Guard", "Blocks hit when ball is outside guard radius", 400, S.RangeGuard.Enabled, function(v)
     S.RangeGuard.Enabled = v
-    if v then
-        UpdateHitboxHook()
-        if not S.HitboxVisual.Sphere then _CreateHitboxVisual() end
-    else
-        UpdateHitboxHook()
-        if not S.MegaHitbox.Enabled then
-            RestoreAllHitboxes()
-            _DestroyHitboxVisual()
-        end
-    end
+    if v then UpdateHitboxHook() if not S.HitboxVisual.Sphere then _CreateHitboxVisual() end
+    else UpdateHitboxHook() if not S.MegaHitbox.Enabled then RestoreAllHitboxes() _DestroyHitboxVisual() end end
 end)
-
 CreateSlider(combatPage, "Guard Radius", "Distance limit in studs", 455, 3, 30, 8, " studs", function(v)
     S.RangeGuard.Radius = v
 end)
 
--- ====================================================================
 -- VISUALS PAGE
--- ====================================================================
 local visualsPage = TabPages["Visuals"]
 visualsPage.CanvasSize = UDim2.new(0, 0, 0, 1100)
-
 CreateSection(visualsPage, "// BALL INFO", 10, Color3.fromRGB(255, 60, 180))
-
 CreateToggle(visualsPage, "Ball Info", "Shows ball info above it (SPD / DST / HGT)", 40, Config.BallInfoEnabled, function(v)
     Config.BallInfoEnabled = v
 end)
-
 CreateSlider(visualsPage, "Ball Info Font", "Font size", 95, 10, 20, Config.BallInfoFontSize, "px", function(v)
     Config.BallInfoFontSize = v
     if S.BallInfo.TitleText then
@@ -2589,18 +2266,12 @@ CreateSlider(visualsPage, "Ball Info Font", "Font size", 95, 10, 20, Config.Ball
         S.BallInfo.HeightText.Size = v
     end
 end)
-
 CreateSection(visualsPage, "// BALL VISUALS", 170, Color3.fromRGB(120, 220, 255))
-
 CreateToggle(visualsPage, "Ball ESP", "Highlights the ball with aura, sparks and light glow", 200, Config.BallESPEnabled, function(v)
     Config.BallESPEnabled = v
-    if v then
-        if S.BallESP.model then _CreateBallESP(S.BallESP.model) end
-    else
-        _DestroyBallESP()
-    end
+    if v then if S.BallESP.model then _CreateBallESP(S.BallESP.model) end
+    else _DestroyBallESP() end
 end)
-
 CreateToggle(visualsPage, "Ball Predictor", "Shows landing point of the ball on the ground", 255, Config.BallPredictorEnabled, function(v)
     Config.BallPredictorEnabled = v
     if not v then
@@ -2609,75 +2280,47 @@ CreateToggle(visualsPage, "Ball Predictor", "Shows landing point of the ball on 
         if S.Pred.ring then S.Pred.ring.Transparency = 1 end
     end
 end)
-
 CreateSection(visualsPage, "// PLAYER TRACERS", 325, Color3.fromRGB(255, 100, 180))
-
 CreateToggle(visualsPage, "Player Tracers", "3D beam from each player head showing look direction", 355, S.Tracers.Enabled, function(v)
     S.Tracers.Enabled = v
 end)
-
 CreateToggle(visualsPage, "Enemies Only", "Show tracers only for enemy team", 405, S.Tracers.OnlyEnemies, function(v)
     S.Tracers.OnlyEnemies = v
 end)
-
 CreateSlider(visualsPage, "Tracer Length", "Beam length in studs", 455, 5, 80, 25, " studs", function(v)
     S.Tracers.Length = v
 end)
-
 CreateSection(visualsPage, "// CAMERA", 520, Color3.fromRGB(120, 220, 255))
-
 CreateSlider(visualsPage, "Field of View", "Camera zoom out angle (70 - 200)", 550, 70, 200, Config.FOV, "deg", function(v)
     Config.FOV = v
-    if workspace.CurrentCamera then
-        workspace.CurrentCamera.FieldOfView = v
-    end
+    if workspace.CurrentCamera then workspace.CurrentCamera.FieldOfView = v end
 end)
-
 CreateSection(visualsPage, "// PURGE CHARACTER", 620, Color3.fromRGB(180, 80, 255))
-
 CreateToggle(visualsPage, "Purge Character", "Headless + Korblox + accessories + gray shift", 650, S.Purge.Enabled, function(v)
     S.Purge.Enabled = v
     if v then
-        for _, p in ipairs(Players:GetPlayers()) do
-            if p.Character then _ApplyPurge(p.Character, p) end
-        end
+        for _, p in ipairs(Players:GetPlayers()) do if p.Character then _ApplyPurge(p.Character, p) end end
     else
-        for _, p in ipairs(Players:GetPlayers()) do
-            if p.Character then _RestorePurge(p.Character, p) end
-        end
+        for _, p in ipairs(Players:GetPlayers()) do if p.Character then _RestorePurge(p.Character, p) end end
     end
 end)
-
 CreateToggle(visualsPage, "Glow Eyes", "Neon eyes (work even when head is hidden)", 700, S.Purge.Eyes, function(v)
     S.Purge.Eyes = v
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p.Character then _TogglePurgeEyes(p.Character, v) end
-    end
+    for _, p in ipairs(Players:GetPlayers()) do if p.Character then _TogglePurgeEyes(p.Character, v) end end
 end)
-
 CreateToggle(visualsPage, "Sparkles", "Sparkle particles around body", 750, S.Purge.Sparkles, function(v)
     S.Purge.Sparkles = v
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p.Character then _TogglePurgeSparkles(p.Character, v) end
-    end
+    for _, p in ipairs(Players:GetPlayers()) do if p.Character then _TogglePurgeSparkles(p.Character, v) end end
 end)
-
 CreateToggle(visualsPage, "Corpse Gray", "Pulsing gray body color", 800, S.Purge.Gray, function(v)
     S.Purge.Gray = v
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p.Character then _TogglePurgeGray(p.Character, v) end
-    end
+    for _, p in ipairs(Players:GetPlayers()) do if p.Character then _TogglePurgeGray(p.Character, v) end end
 end)
-
 CreateToggle(visualsPage, "Remove Leg", "Korblox - hide right leg", 850, S.Purge.Leg, function(v)
     S.Purge.Leg = v
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p.Character then _TogglePurgeLeg(p.Character, v) end
-    end
+    for _, p in ipairs(Players:GetPlayers()) do if p.Character then _TogglePurgeLeg(p.Character, v) end end
 end)
--- ====================================================================
 -- PURGE FUNCTIONS
--- ====================================================================
 local function _HidePart(part)
     if not part or not part:IsA("BasePart") then return end
     pcall(function()
@@ -2693,7 +2336,6 @@ local function _HidePart(part)
         end
     end
 end
-
 local function _RemoveAccessories(char)
     local humanoid = char:FindFirstChildOfClass("Humanoid")
     if humanoid then pcall(function() humanoid:RemoveAccessories() end) end
@@ -2708,7 +2350,6 @@ local function _RemoveAccessories(char)
         end
     end
 end
-
 local function _HideHead(char)
     local head = char:FindFirstChild("Head")
     if head then _HidePart(head) end
@@ -2722,7 +2363,6 @@ local function _HideHead(char)
         end
     end
 end
-
 local function _HideOneLeg(char)
     local legName = "Right Leg"
     local leg = char:FindFirstChild(legName)
@@ -2731,7 +2371,6 @@ local function _HideOneLeg(char)
         _HidePart(char:FindFirstChild(name))
     end
 end
-
 local function _BuildPurgeEyes(char)
     local head = char:FindFirstChild("Head")
     if not head or not head:IsA("BasePart") then return end
@@ -2741,7 +2380,6 @@ local function _BuildPurgeEyes(char)
     if oldR then oldR:Destroy() end
     local oldLight = head:FindFirstChild("VLEyeLight")
     if oldLight then oldLight:Destroy() end
-
     for _, side in ipairs({-1, 1}) do
         local eye = Instance.new("Part")
         eye.Name = side == -1 and "VLEyeL" or "VLEyeR"
@@ -2762,7 +2400,6 @@ local function _BuildPurgeEyes(char)
         weld.C0 = CFrame.new(side * 0.35, 0.3, -0.6)
         weld.Parent = eye
     end
-
     local light = Instance.new("PointLight")
     light.Name = "VLEyeLight"
     light.Color = S.Purge.EyeColor
@@ -2771,7 +2408,6 @@ local function _BuildPurgeEyes(char)
     light.Shadows = false
     light.Parent = head
 end
-
 local function _AddPurgeSparkles(char)
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
@@ -2783,7 +2419,6 @@ local function _AddPurgeSparkles(char)
     sp.Enabled = true
     sp.Parent = hrp
 end
-
 local function _ApplyPurgeGray(bc)
     if not bc or not bc.Parent then return end
     local t = tick() * S.Purge.PulseSpeed
@@ -2803,10 +2438,8 @@ local function _ApplyPurgeGray(bc)
         bc.RightLegColor3 = c
     end)
 end
-
 function _TogglePurgeEyes(char, on)
-    if on then
-        _BuildPurgeEyes(char)
+    if on then _BuildPurgeEyes(char)
     else
         local e1 = char:FindFirstChild("VLEyeL")
         if e1 then e1:Destroy() end
@@ -2819,10 +2452,8 @@ function _TogglePurgeEyes(char, on)
         end
     end
 end
-
 function _TogglePurgeSparkles(char, on)
-    if on then
-        _AddPurgeSparkles(char)
+    if on then _AddPurgeSparkles(char)
     else
         local hrp = char:FindFirstChild("HumanoidRootPart")
         if hrp then
@@ -2831,18 +2462,13 @@ function _TogglePurgeSparkles(char, on)
         end
     end
 end
-
 function _TogglePurgeGray(char, on)
     local bc = char:FindFirstChildOfClass("BodyColors")
     if not bc then return end
-    if on then
-        _ApplyPurgeGray(bc)
-    end
+    if on then _ApplyPurgeGray(bc) end
 end
-
 function _TogglePurgeLeg(char, on)
-    if on then
-        _HideOneLeg(char)
+    if on then _HideOneLeg(char)
     else
         for _, name in ipairs({"Right Leg", "RightUpperLeg", "RightLowerLeg", "RightFoot"}) do
             local p = char:FindFirstChild(name)
@@ -2855,24 +2481,20 @@ function _TogglePurgeLeg(char, on)
         end
     end
 end
-
 function _ApplyPurge(char, player)
     if not char or not char.Parent then return end
     player = player or Players:GetPlayerFromCharacter(char)
-
     local data = S.Purge.Tracked[player]
     if not data then
         data = { char = char, conns = {}, pulseConn = nil }
         S.Purge.Tracked[player] = data
     end
     data.char = char
-
     if S.Purge.Head then _HideHead(char) end
     _RemoveAccessories(char)
     if S.Purge.Leg then _HideOneLeg(char) end
     if S.Purge.Eyes then _BuildPurgeEyes(char) end
     if S.Purge.Sparkles then _AddPurgeSparkles(char) end
-
     local connAdd = char.ChildAdded:Connect(function(child)
         if not S.Purge.Enabled then return end
         if child:IsA("Accoutrement") or child:IsA("Accessory") or child:IsA("Hat") then
@@ -2880,7 +2502,6 @@ function _ApplyPurge(char, player)
         end
     end)
     table.insert(data.conns, connAdd)
-
     if not data.pulseConn then
         data.pulseConn = RunService.Heartbeat:Connect(function()
             if not S.Purge.Enabled or not S.Purge.Gray then return end
@@ -2890,7 +2511,6 @@ function _ApplyPurge(char, player)
         table.insert(S.Connections, data.pulseConn)
     end
 end
-
 function _RestorePurge(char, player)
     if not char then return end
     player = player or Players:GetPlayerFromCharacter(char)
@@ -2899,12 +2519,9 @@ function _RestorePurge(char, player)
         if data.conns then
             for _, c in ipairs(data.conns) do pcall(function() c:Disconnect() end) end
         end
-        if data.pulseConn then
-            pcall(function() data.pulseConn:Disconnect() end)
-        end
+        if data.pulseConn then pcall(function() data.pulseConn:Disconnect() end) end
         S.Purge.Tracked[player] = nil
     end
-
     local head = char:FindFirstChild("Head")
     if head then
         head.Transparency = 0
@@ -2913,7 +2530,6 @@ function _RestorePurge(char, player)
         head.CanTouch = true
         head.CastShadow = true
     end
-
     for _, name in ipairs({"Right Leg", "RightUpperLeg", "RightLowerLeg", "RightFoot"}) do
         local p = char:FindFirstChild(name)
         if p and p:IsA("BasePart") then
@@ -2923,11 +2539,9 @@ function _RestorePurge(char, player)
             p.CanTouch = true
         end
     end
-
     _TogglePurgeEyes(char, false)
     _TogglePurgeSparkles(char, false)
 end
-
 local function _PurgeOnPlayer(player)
     player.CharacterAdded:Connect(function(char)
         task.wait(0.4)
@@ -2943,11 +2557,8 @@ end
 for _, p in ipairs(Players:GetPlayers()) do _PurgeOnPlayer(p) end
 Players.PlayerAdded:Connect(_PurgeOnPlayer)
 
--- ====================================================================
 -- BALL FUNCTIONS
--- ====================================================================
 local WIPER_GRAY = Color3.fromRGB(163, 162, 165)
-
 function _WipeCharacter(char)
     if not char then return end
     if S.ClothesWiper.Wiped[char] then return end
@@ -2968,7 +2579,6 @@ function _WipeCharacter(char)
         end)
     end
 end
-
 function _WiperUpdate()
     if not S.ClothesWiper.Enabled then return end
     for _, player in ipairs(Players:GetPlayers()) do
@@ -2985,13 +2595,10 @@ function _WiperUpdate()
                     bc.RightLegColor3 = WIPER_GRAY
                 end)
             end
-            if not S.ClothesWiper.Wiped[char] then
-                _WipeCharacter(char)
-            end
+            if not S.ClothesWiper.Wiped[char] then _WipeCharacter(char) end
         end
     end
 end
-
 function _FindBall()
     for _, obj in ipairs(workspace:GetChildren()) do
         if obj:IsA("Model") and obj.PrimaryPart then
@@ -3013,7 +2620,6 @@ function _FindBall()
     end
     return nil
 end
-
 function _GetFloorY(pos)
     local ok, Physics = pcall(function() return require(ReplicatedStorage.Common.Physics) end)
     if ok and Physics and Physics.calculateFloorHeight then
@@ -3027,7 +2633,6 @@ function _GetFloorY(pos)
     if hit then return hit.Position.Y end
     return nil
 end
-
 function _PredictLanding(origin, velocity)
     local g = 17
     local pos = origin
@@ -3037,9 +2642,7 @@ function _PredictLanding(origin, velocity)
     for i = 1, 80 do
         vel = Vector3.new(vel.X, vel.Y - g * dt, vel.Z)
         pos = pos + vel * dt
-        if pos.Y <= floorY + 1.2835 then
-            return Vector3.new(pos.X, floorY, pos.Z)
-        end
+        if pos.Y <= floorY + 1.2835 then return Vector3.new(pos.X, floorY, pos.Z) end
         if i % 10 == 0 then
             local nf = _GetFloorY(pos)
             if nf then floorY = nf end
@@ -3048,13 +2651,11 @@ function _PredictLanding(origin, velocity)
     end
     return Vector3.new(pos.X, floorY, pos.Z)
 end
-
 function _DestroyBallTrail()
     if S.BallESP.trail then pcall(function() S.BallESP.trail:Destroy() end) S.BallESP.trail = nil end
     if S.BallESP.trailAtt0 then pcall(function() S.BallESP.trailAtt0:Destroy() end) S.BallESP.trailAtt0 = nil end
     if S.BallESP.trailAtt1 then pcall(function() S.BallESP.trailAtt1:Destroy() end) S.BallESP.trailAtt1 = nil end
 end
-
 function _CreateBallTrail(ball)
     _DestroyBallTrail()
     if not ball or not ball.PrimaryPart then return end
@@ -3080,14 +2681,12 @@ function _CreateBallTrail(ball)
     trail.Parent = primary
     S.BallESP.trail = trail
 end
-
 function _DestroyBallESP()
     if S.BallESP.highlight then pcall(function() S.BallESP.highlight:Destroy() end) S.BallESP.highlight = nil end
     if S.BallESP.particles then pcall(function() S.BallESP.particles:Destroy() end) S.BallESP.particles = nil end
     if S.BallESP.light then pcall(function() S.BallESP.light:Destroy() end) S.BallESP.light = nil end
     _DestroyBallTrail()
 end
-
 function _CreateBallESP(ball)
     _DestroyBallESP()
     if not ball or not ball.PrimaryPart then return end
@@ -3107,7 +2706,6 @@ function _CreateBallESP(ball)
     S.BallESP.light.Parent = primary
     _CreateBallTrail(ball)
 end
-
 function _CreatePredictorVisuals()
     if S.Pred.ring then S.Pred.ring:Destroy() end
     S.Pred.ring = Instance.new("Part")
@@ -3122,16 +2720,12 @@ function _CreatePredictorVisuals()
     S.Pred.ring.Transparency = 1
     S.Pred.ring.Parent = workspace
 end
-
 _CreatePredictorVisuals()
 
--- ====================================================================
 -- HITBOX VISUAL
--- ====================================================================
 function _DestroyHitboxVisual()
     if S.HitboxVisual.Sphere then pcall(function() S.HitboxVisual.Sphere:Destroy() end) S.HitboxVisual.Sphere = nil end
 end
-
 function _CreateHitboxVisual()
     _DestroyHitboxVisual()
     local sphere = Instance.new("Part")
@@ -3149,7 +2743,6 @@ function _CreateHitboxVisual()
     S.HitboxVisual.Sphere = sphere
     S.HitboxVisual.Radius = S.MegaHitbox.SizeMultiplier * 1.2835
 end
-
 function _UpdateHitboxVisual(dt)
     if not (S.MegaHitbox.Enabled or S.RangeGuard.Enabled) then
         if S.HitboxVisual.Sphere then _DestroyHitboxVisual() end
@@ -3160,9 +2753,7 @@ function _UpdateHitboxVisual(dt)
         if S.HitboxVisual.Sphere then S.HitboxVisual.Sphere.Transparency = 1 end
         return
     end
-    if not S.HitboxVisual.Sphere or not S.HitboxVisual.Sphere.Parent then
-        _CreateHitboxVisual()
-    end
+    if not S.HitboxVisual.Sphere or not S.HitboxVisual.Sphere.Parent then _CreateHitboxVisual() end
     local ballPos = ball.PrimaryPart.Position
     local sizeMult = S.MegaHitbox.Enabled and S.MegaHitbox.SizeMultiplier or 3
     local desiredRadius = sizeMult * 1.2835
@@ -3188,7 +2779,6 @@ function _UpdateHitboxVisual(dt)
         sphere.Transparency = 0.75
     end
 end
-
 function ExpandAllHitboxTemplates()
     local Assets = ReplicatedStorage:FindFirstChild("Assets")
     if not Assets then return 0 end
@@ -3217,7 +2807,6 @@ function ExpandAllHitboxTemplates()
     end
     return count
 end
-
 function RestoreAllHitboxes()
     local Assets = ReplicatedStorage:FindFirstChild("Assets")
     if not Assets then return end
@@ -3231,9 +2820,7 @@ function RestoreAllHitboxes()
     end
 end
 
--- ====================================================================
 -- TRACERS
--- ====================================================================
 function _TracerGetHead(player)
     local char = player.Character
     if not char then return nil end
@@ -3243,21 +2830,18 @@ function _TracerGetHead(player)
     if hrp and hrp:IsA("BasePart") then return hrp end
     return nil
 end
-
 function _TracerIsEnemy(player)
     if player == LocalPlayer then return false end
     if not LocalPlayer.Team then return true end
     if not player.Team then return true end
     return player.Team ~= LocalPlayer.Team
 end
-
 function _TracerEnsureFolder()
     if S.Tracers.Folder and S.Tracers.Folder.Parent then return end
     S.Tracers.Folder = Instance.new("Folder")
     S.Tracers.Folder.Name = "VL_BeamTracers"
     S.Tracers.Folder.Parent = workspace
 end
-
 function _TracerDestroy(player)
     local t = S.Tracers.Active[player]
     if not t then return end
@@ -3265,7 +2849,6 @@ function _TracerDestroy(player)
     if t.endPart then pcall(function() t.endPart:Destroy() end) end
     S.Tracers.Active[player] = nil
 end
-
 function _TracerCreate(player)
     local head = _TracerGetHead(player)
     if not head then return nil end
@@ -3297,12 +2880,9 @@ function _TracerCreate(player)
     beam.Parent = endPart
     return { att0 = att0, endPart = endPart, head = head, beam = beam }
 end
-
 function _TracerUpdate()
     if not S.Tracers.Enabled then
-        for player, _ in pairs(S.Tracers.Active) do
-            _TracerDestroy(player)
-        end
+        for player, _ in pairs(S.Tracers.Active) do _TracerDestroy(player) end
         if S.Tracers.Folder then
             pcall(function() S.Tracers.Folder:Destroy() end)
             S.Tracers.Folder = nil
@@ -3326,16 +2906,11 @@ function _TracerUpdate()
                         local endPos = head.Position + head.CFrame.LookVector * S.Tracers.Length
                         t.endPart.CFrame = CFrame.new(endPos)
                     end
-                else
-                    _TracerDestroy(player)
-                end
-            else
-                _TracerDestroy(player)
-            end
+                else _TracerDestroy(player) end
+            else _TracerDestroy(player) end
         end
     end
 end
-
 task.spawn(function()
     while ScreenGui.Parent do
         pcall(_TracerUpdate)
@@ -3343,9 +2918,7 @@ task.spawn(function()
     end
 end)
 
--- ====================================================================
 -- HIT BLOCKER
--- ====================================================================
 function _IsBallInGuardRange()
     if not S.RangeGuard.Enabled then return true end
     local ball = _FindBall()
@@ -3355,22 +2928,17 @@ function _IsBallInGuardRange()
     local dist = (ball.PrimaryPart.Position - char.HumanoidRootPart.Position).Magnitude
     return dist <= S.RangeGuard.Radius
 end
-
 pcall(function()
     local CAS = game:GetService("ContextActionService")
     CAS:BindActionAtPriority("VL_HitBlock", function(_, state)
         if state ~= Enum.UserInputState.Begin then return Enum.ContextActionResult.Pass end
         if not S.RangeGuard.Enabled then return Enum.ContextActionResult.Pass end
-        if not _IsBallInGuardRange() then
-            return Enum.ContextActionResult.Sink
-        end
+        if not _IsBallInGuardRange() then return Enum.ContextActionResult.Sink end
         return Enum.ContextActionResult.Pass
     end, false, 9999, Enum.UserInputType.MouseButton1, Enum.UserInputType.Touch)
 end)
 
--- ====================================================================
 -- SKY PRESETS
--- ====================================================================
 function _SkyCleanup()
     local Lighting = game:GetService("Lighting")
     for _, obj in ipairs(Lighting:GetChildren()) do
@@ -3385,7 +2953,6 @@ function _SkyCleanup()
     S.Sky.Objects = {}
     S.Sky.Current = nil
 end
-
 function _SkyPinkVibe()
     _SkyCleanup()
     local Lighting = game:GetService("Lighting")
@@ -3433,7 +3000,6 @@ function _SkyPinkVibe()
     end)
     S.Sky.Current = "PinkVibe"
 end
-
 function _SkyAtmosh()
     _SkyCleanup()
     local Lighting = game:GetService("Lighting")
@@ -3453,7 +3019,6 @@ function _SkyAtmosh()
     Lighting.Brightness = 2.2
     S.Sky.Current = "Atmosh"
 end
-
 function _SkyTwilight()
     _SkyCleanup()
     local Lighting = game:GetService("Lighting")
@@ -3475,24 +3040,18 @@ function _SkyTwilight()
     Lighting.Brightness = 2.5
     S.Sky.Current = "Twilight"
 end
-
 S.Sky.Presets = {
     { name = "Pink Vibe", func = _SkyPinkVibe },
     { name = "Atmosh Sky", func = _SkyAtmosh },
     { name = "Twilight Bloom", func = _SkyTwilight },
 }
 
--- ====================================================================
 -- SKY PAGE
--- ====================================================================
 local skyPage = TabPages["Sky"]
 skyPage.CanvasSize = UDim2.new(0, 0, 0, 700)
-
 CreateSection(skyPage, "// SKY SELECTOR", 10, Color3.fromRGB(255, 150, 200))
-
 local skyY = 50
 local skyButtons = {}
-
 function CreateSkyButton(preset, yPos, index)
     local frame = Instance.new("TextButton")
     frame.Size = UDim2.new(1, -16, 0, 40)
@@ -3504,22 +3063,11 @@ function CreateSkyButton(preset, yPos, index)
     frame.AutoButtonColor = false
     frame.Parent = skyPage
     Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 6)
-
     local stroke = Instance.new("UIStroke", frame)
     stroke.Thickness = 1
     stroke.Color = THEME.ACCENT_DARK
     stroke.Transparency = 0.55
     stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-
-    local accent = Instance.new("Frame")
-    accent.Size = UDim2.new(0, 2, 1, -12)
-    accent.Position = UDim2.new(0, 0, 0, 6)
-    accent.BackgroundColor3 = THEME.ACCENT_HOT
-    accent.BorderSizePixel = 0
-    accent.ZIndex = 6
-    accent.Parent = frame
-    Instance.new("UICorner", accent).CornerRadius = UDim.new(1, 0)
-
     local idxLabel = Instance.new("TextLabel")
     idxLabel.Size = UDim2.new(0, 22, 1, 0)
     idxLabel.Position = UDim2.new(0, 12, 0, 0)
@@ -3531,7 +3079,6 @@ function CreateSkyButton(preset, yPos, index)
     idxLabel.TextXAlignment = Enum.TextXAlignment.Left
     idxLabel.ZIndex = 7
     idxLabel.Parent = frame
-
     local nameLabel = Instance.new("TextLabel")
     nameLabel.Size = UDim2.new(0.6, 0, 1, 0)
     nameLabel.Position = UDim2.new(0, 38, 0, 0)
@@ -3543,29 +3090,6 @@ function CreateSkyButton(preset, yPos, index)
     nameLabel.TextXAlignment = Enum.TextXAlignment.Left
     nameLabel.ZIndex = 7
     nameLabel.Parent = frame
-
-    local nameGradient = Instance.new("UIGradient", nameLabel)
-    nameGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, THEME.ACCENT_GLOW),
-        ColorSequenceKeypoint.new(0.5, THEME.TEXT_HI),
-        ColorSequenceKeypoint.new(1, THEME.ACCENT_HOT),
-    })
-
-    task.spawn(function()
-        while nameGradient.Parent do
-            for i = -1, 1, 0.03 do
-                if not nameGradient.Parent then break end
-                nameGradient.Offset = Vector2.new(i, 0)
-                task.wait(0.05)
-            end
-            for i = 1, -1, -0.03 do
-                if not nameGradient.Parent then break end
-                nameGradient.Offset = Vector2.new(i, 0)
-                task.wait(0.05)
-            end
-        end
-    end)
-
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(0, 60, 0, 24)
     btn.Position = UDim2.new(1, -68, 0.5, -12)
@@ -3579,21 +3103,16 @@ function CreateSkyButton(preset, yPos, index)
     btn.ZIndex = 7
     btn.Parent = frame
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
-
     local btnStroke = Instance.new("UIStroke", btn)
     btnStroke.Thickness = 1
     btnStroke.Color = THEME.ACCENT_DARK
     btnStroke.Transparency = 0.35
-
     frame.MouseEnter:Connect(function()
         TweenService:Create(frame, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(28, 19, 42)}):Play()
-        TweenService:Create(stroke, TweenInfo.new(0.15), {Transparency = 0.3}):Play()
     end)
     frame.MouseLeave:Connect(function()
         TweenService:Create(frame, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(22, 15, 34)}):Play()
-        TweenService:Create(stroke, TweenInfo.new(0.15), {Transparency = 0.55}):Play()
     end)
-
     btn.MouseButton1Click:Connect(function()
         PlayTab()
         preset.func()
@@ -3602,16 +3121,12 @@ function CreateSkyButton(preset, yPos, index)
         end
         TweenService:Create(stroke, TweenInfo.new(0.2), {Color = THEME.ACCENT_HOT, Transparency = 0.2}):Play()
     end)
-
     table.insert(skyButtons, { frame = frame, stroke = stroke })
 end
-
 for i, preset in ipairs(S.Sky.Presets) do
     CreateSkyButton(preset, skyY + (i - 1) * 48, i)
 end
-
 skyY = skyY + #S.Sky.Presets * 48 + 20
-
 local disableBtn = Instance.new("TextButton")
 disableBtn.Size = UDim2.new(1, -16, 0, 30)
 disableBtn.Position = UDim2.new(0, 8, 0, skyY)
@@ -3622,7 +3137,6 @@ disableBtn.TextSize = 12
 disableBtn.Font = Enum.Font.Gotham
 disableBtn.AutoButtonColor = false
 disableBtn.Parent = skyPage
-
 disableBtn.MouseButton1Click:Connect(function()
     PlayTab()
     _SkyCleanup()
@@ -3641,54 +3155,37 @@ disableBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- ====================================================================
 -- SETTINGS PAGE
--- ====================================================================
 local settingsPage = TabPages["Settings"]
 settingsPage.CanvasSize = UDim2.new(0, 0, 0, 1180)
-
 CreateSection(settingsPage, "// INTERFACE", 10, THEME.ACCENT)
-
 CreateToggle(settingsPage, "Sports HUD", "Streak + match tracker", 40, Config.SportsHUDEnabled, function(v)
     Config.SportsHUDEnabled = v
 end)
-
 CreateToggle(settingsPage, "Flying Dots", "Floating particles in left panel", 95, Config.FlyingDotsEnabled, function(v)
     Config.FlyingDotsEnabled = v
     RebuildDots()
 end)
-
 CreateToggle(settingsPage, "Sounds", "UI click and tab sounds", 150, Config.SoundEnabled, function(v)
     Config.SoundEnabled = v
 end)
-
 CreateToggle(settingsPage, "Scan Line", "Moving light animation", 205, Config.ScanLineEnabled, function(v)
     Config.ScanLineEnabled = v
     if ScanLine then ScanLine.Visible = v end
 end)
-
 CreateToggle(settingsPage, "Wipe Clothes", "Strips clothes of all players (client only)", 260, S.ClothesWiper.Enabled, function(v)
     S.ClothesWiper.Enabled = v
-    if v then
-        S.ClothesWiper.Wiped = {}
-        _WiperUpdate()
-    else
-        S.ClothesWiper.Wiped = {}
-    end
+    if v then S.ClothesWiper.Wiped = {} _WiperUpdate() else S.ClothesWiper.Wiped = {} end
 end)
-
 CreateToggle(settingsPage, "FPS Counter", "Show FPS in left panel", 315, Config.FpsCounterEnabled, function(v)
     Config.FpsCounterEnabled = v
     FpsFrame.Visible = v
 end)
-
 CreateSection(settingsPage, "// LAYOUT", 385, THEME.ACCENT_HOT)
-
 CreateSlider(settingsPage, "Menu Scale", "Resize the whole menu", 415, 70, 130, 100, "%", function(v)
     Config.MenuScale = v
     TweenService:Create(MainScale, TweenInfo.new(0.15), {Scale = v / 100}):Play()
 end)
-
 CreateSlider(settingsPage, "Corner Radius", "Round corners", 475, 0, 16, 8, "px", function(v)
     Config.CornerRadius = v
     for _, el in ipairs(S.Corner) do
@@ -3698,11 +3195,8 @@ CreateSlider(settingsPage, "Corner Radius", "Round corners", 475, 0, 16, 8, "px"
     end
 end)
 
--- ====================================================================
 -- COLOR PICKER
--- ====================================================================
 local colorSectionLine = CreateSection(settingsPage, "// COLOR", 560, Color3.fromRGB(120, 220, 255))
-
 local paletteSize = 140
 local paletteFrame = Instance.new("Frame")
 paletteFrame.Size = UDim2.new(0, paletteSize, 0, paletteSize)
@@ -3710,12 +3204,10 @@ paletteFrame.Position = UDim2.new(0, 0, 0, 590)
 paletteFrame.BackgroundColor3 = Color3.fromRGB(30, 25, 45)
 paletteFrame.Parent = settingsPage
 Instance.new("UICorner", paletteFrame).CornerRadius = UDim.new(1, 0)
-
 local paletteStroke = Instance.new("UIStroke", paletteFrame)
 paletteStroke.Thickness = 1
 paletteStroke.Color = THEME.ACCENT_DARK
 paletteStroke.Transparency = 0.4
-
 local paletteImage = Instance.new("ImageLabel")
 paletteImage.Size = UDim2.new(1, -4, 1, -4)
 paletteImage.Position = UDim2.new(0, 2, 0, 2)
@@ -3724,7 +3216,6 @@ paletteImage.Image = "rbxassetid://7393858625"
 paletteImage.ScaleType = Enum.ScaleType.Stretch
 paletteImage.Parent = paletteFrame
 Instance.new("UICorner", paletteImage).CornerRadius = UDim.new(1, 0)
-
 local pickerDot = Instance.new("Frame")
 pickerDot.Size = UDim2.new(0, 12, 0, 12)
 pickerDot.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -3733,14 +3224,12 @@ pickerDot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 pickerDot.ZIndex = 5
 pickerDot.Parent = paletteFrame
 Instance.new("UICorner", pickerDot).CornerRadius = UDim.new(1, 0)
-
 local previewBox = Instance.new("Frame")
 previewBox.Size = UDim2.new(0, 60, 0, 60)
 previewBox.Position = UDim2.new(0, paletteSize + 20, 0, 590 + (paletteSize - 60) / 2 - 30)
 previewBox.BackgroundColor3 = THEME.ACCENT
 previewBox.Parent = settingsPage
 Instance.new("UICorner", previewBox).CornerRadius = UDim.new(0, 6)
-
 local resetColorBtn = Instance.new("TextButton")
 resetColorBtn.Size = UDim2.new(1, -50, 0, 32)
 resetColorBtn.Position = UDim2.new(0, 0, 0, 590 + paletteSize + 15)
@@ -3751,14 +3240,12 @@ resetColorBtn.TextSize = 13
 resetColorBtn.Font = Enum.Font.Gotham
 resetColorBtn.AutoButtonColor = false
 resetColorBtn.Parent = settingsPage
-
 local colorDragArea = Instance.new("TextButton")
 colorDragArea.Size = UDim2.new(1, 0, 1, 0)
 colorDragArea.BackgroundTransparency = 1
 colorDragArea.Text = ""
 colorDragArea.ZIndex = 10
 colorDragArea.Parent = paletteFrame
-
 function ApplyAccent_Core(newAccent, newHot, newDark, newGlow)
     THEME.ACCENT = newAccent
     THEME.ACCENT_HOT = newHot
@@ -3780,7 +3267,6 @@ function ApplyAccent_Core(newAccent, newHot, newDark, newGlow)
     AvatarGlow.Color = newGlow
     PlayerTag.TextColor3 = newHot
 end
-
 function ApplyAccent_Header(newAccent, newHot, newDark, newGlow)
     Divider.BackgroundColor3 = newAccent
     DividerGradient.Color = ColorSequence.new({
@@ -3812,7 +3298,6 @@ function ApplyAccent_Header(newAccent, newHot, newDark, newGlow)
         ColorSequenceKeypoint.new(1, newDark),
     })
 end
-
 function ApplyAccent_UI(newAccent, newHot, newDark, newGlow)
     paletteStroke.Color = newDark
     previewBox.BackgroundColor3 = newAccent
@@ -3843,7 +3328,6 @@ function ApplyAccent_UI(newAccent, newHot, newDark, newGlow)
         if d.Frame then d.Frame.BackgroundColor3 = newHot end
     end
 end
-
 function ApplyAccent_Elements(newAccent, newHot, newDark, newGlow)
     for _, tData in pairs(Tabs) do
         tData.Accent.BackgroundColor3 = newHot
@@ -3888,45 +3372,8 @@ function ApplyAccent_Elements(newAccent, newHot, newDark, newGlow)
             ColorSequenceKeypoint.new(1, newHot),
         })
     end
-    greetTitleGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, newGlow),
-        ColorSequenceKeypoint.new(0.5, THEME.TEXT_HI),
-        ColorSequenceKeypoint.new(1, newHot),
-    })
-    greetBodyGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, newGlow),
-        ColorSequenceKeypoint.new(0.4, THEME.TEXT_HI),
-        ColorSequenceKeypoint.new(0.7, newHot),
-        ColorSequenceKeypoint.new(1, newDark),
-    })
-    splitLine.BackgroundColor3 = newAccent
-    splitGrad.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, newDark),
-        ColorSequenceKeypoint.new(0.5, newHot),
-        ColorSequenceKeypoint.new(1, newDark),
-    })
     statusSectionLine.BackgroundColor3 = newHot
     statusSectionLabel.TextColor3 = newHot
-    bannerStroke.Color = newAccent
-    bannerGlow.Color = newGlow
-    if S.BallESP.highlight then
-        S.BallESP.highlight.FillColor = newAccent
-        S.BallESP.highlight.OutlineColor = newHot
-    end
-    if S.BallESP.light then S.BallESP.light.Color = newAccent end
-    if S.BallESP.trail then
-        S.BallESP.trail.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, newHot),
-            ColorSequenceKeypoint.new(0.5, newAccent),
-            ColorSequenceKeypoint.new(1, newGlow),
-        })
-    end
-    if S.Pred.ring then S.Pred.ring.Color = newHot end
-    if S.HitboxVisual.Sphere and not S.RangeGuard.Enabled then S.HitboxVisual.Sphere.Color = newAccent end
-    for _, t in pairs(S.Tracers.Active) do
-        if t.beam then t.beam.Color = ColorSequence.new(newHot) end
-        if t.endPart then t.endPart.Color = newHot end
-    end
     for _, el in ipairs(S.ColorSynced) do
         if el.Kind == "Toggle" then
             local on = el.GetState and el.GetState() or false
@@ -3946,27 +3393,10 @@ function ApplyAccent_Elements(newAccent, newHot, newDark, newGlow)
             })
             el.ValueLabel.TextColor3 = newHot
             el.HandleGlow.Color = newHot
-        elseif el.Kind == "StatTile" then
-            el.Stroke.Color = newAccent
-            el.InnerGlow.Color = newGlow
-            el.Dot.BackgroundColor3 = newHot
-            el.TopBar.BackgroundColor3 = newHot
-            el.TopGradient.Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, newDark),
-                ColorSequenceKeypoint.new(0.5, newHot),
-                ColorSequenceKeypoint.new(1, newDark),
-            })
-            el.Value.TextColor3 = newHot
-            el.ValueGradient.Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, newDark),
-                ColorSequenceKeypoint.new(0.5, newGlow),
-                ColorSequenceKeypoint.new(1, newDark),
-            })
         end
     end
     if colorSectionLine then colorSectionLine.BackgroundColor3 = newHot end
 end
-
 function ApplyAccentColor(color)
     local h, s, v = Color3.toHSV(color)
     local newAccent = Color3.fromHSV(h, math.clamp(s * 1.4, 0, 1), 1)
@@ -3980,9 +3410,7 @@ function ApplyAccentColor(color)
     S.Purge.EyeColor = newHot
     S.Purge.SparkleColor = newGlow
 end
-
 local isDraggingColor = false
-
 function UpdateColorFromPosition(inputPos)
     local center = paletteFrame.AbsolutePosition + paletteFrame.AbsoluteSize / 2
     local rel = Vector2.new(inputPos.X - center.X, inputPos.Y - center.Y)
@@ -3998,7 +3426,6 @@ function UpdateColorFromPosition(inputPos)
     pickerDot.Position = UDim2.new(0.5, nx, 0.5, ny)
     ApplyAccentColor(pickedColor)
 end
-
 colorDragArea.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         isDraggingColor = true
@@ -4006,13 +3433,11 @@ colorDragArea.InputBegan:Connect(function(input)
         UpdateColorFromPosition(input.Position)
     end
 end)
-
 UserInputService.InputChanged:Connect(function(input)
     if isDraggingColor and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
         UpdateColorFromPosition(input.Position)
     end
 end)
-
 UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         if isDraggingColor then
@@ -4021,18 +3446,14 @@ UserInputService.InputEnded:Connect(function(input)
         end
     end
 end)
-
 resetColorBtn.MouseButton1Click:Connect(function()
     PlayTab()
     ApplyAccentColor(Color3.fromRGB(180, 80, 255))
     pickerDot.Position = UDim2.new(0.5, 0, 0.5, 0)
 end)
 
--- ====================================================================
 -- ACTIONS
--- ====================================================================
 CreateSection(settingsPage, "// ACTIONS", 810, Color3.fromRGB(255, 100, 120))
-
 function MakeActionButton(text, yPos, color, onClick)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, -50, 0, 36)
@@ -4044,81 +3465,21 @@ function MakeActionButton(text, yPos, color, onClick)
     btn.Font = Enum.Font.Gotham
     btn.AutoButtonColor = false
     btn.Parent = settingsPage
-    btn.MouseButton1Click:Connect(function()
-        PlayTab()
-        onClick()
-    end)
+    btn.MouseButton1Click:Connect(function() PlayTab() onClick() end)
     return btn
 end
-
-MakeActionButton("Reset Settings", 845, Color3.fromRGB(255, 180, 100), function()
-    if S.Toggles["Auto Powerful Serve"] then S.Toggles["Auto Powerful Serve"](false, true) end
-    if S.Toggles["Ball Info"] then S.Toggles["Ball Info"](true, true) end
-    if S.Toggles["Sports HUD"] then S.Toggles["Sports HUD"](true, true) end
-    if S.Toggles["Flying Dots"] then S.Toggles["Flying Dots"](true, true) end
-    if S.Toggles["Sounds"] then S.Toggles["Sounds"](true, true) end
-    if S.Toggles["Scan Line"] then S.Toggles["Scan Line"](true, true) end
-    if S.Toggles["FPS Counter"] then S.Toggles["FPS Counter"](false, true) end
-    if S.Toggles["Hitbox Expander"] then S.Toggles["Hitbox Expander"](false, true) end
-    if S.Toggles["Ball ESP"] then S.Toggles["Ball ESP"](false, true) end
-    if S.Toggles["Ball Predictor"] then S.Toggles["Ball Predictor"](false, true) end
-    if S.Toggles["Player Tracers"] then S.Toggles["Player Tracers"](false, true) end
-    if S.Toggles["Enemies Only"] then S.Toggles["Enemies Only"](false, true) end
-    if S.Toggles["Range Guard"] then S.Toggles["Range Guard"](false, true) end
-    if S.Toggles["Wipe Clothes"] then S.Toggles["Wipe Clothes"](false, true) end
-    if S.Toggles["Purge Character"] then S.Toggles["Purge Character"](false, true) end
-    if S.Toggles["Glow Eyes"] then S.Toggles["Glow Eyes"](true, true) end
-    if S.Toggles["Sparkles"] then S.Toggles["Sparkles"](true, true) end
-    if S.Toggles["Corpse Gray"] then S.Toggles["Corpse Gray"](true, true) end
-    if S.Toggles["Remove Leg"] then S.Toggles["Remove Leg"](true, true) end
-    if S.Sliders["Menu Scale"] then S.Sliders["Menu Scale"](100, true) end
-    if S.Sliders["Corner Radius"] then S.Sliders["Corner Radius"](8, true) end
-    if S.Sliders["Hitbox Size"] then S.Sliders["Hitbox Size"](30, true) end
-    if S.Sliders["Guard Radius"] then S.Sliders["Guard Radius"](8, true) end
-    if S.Sliders["Tracer Length"] then S.Sliders["Tracer Length"](25, true) end
-    if S.Sliders["Field of View"] then S.Sliders["Field of View"](70, true) end
-    if S.Sliders["Peak Threshold"] then S.Sliders["Peak Threshold"](90, true) end
-    if S.Sliders["Click Cooldown"] then S.Sliders["Click Cooldown"](3, true) end
-    if S.Sliders["Ball Info Font"] then S.Sliders["Ball Info Font"](15, true) end
-    if workspace.CurrentCamera then
-        workspace.CurrentCamera.FieldOfView = 70
-    end
-    S.ClothesWiper.Enabled = false
-    S.ClothesWiper.Wiped = {}
-    RestoreAllHitboxes()
-    _DestroyHitboxVisual()
-    _DestroyBallESP()
-    UpdateHitboxHook()
-    for player, _ in pairs(S.Tracers.Active) do
-        _TracerDestroy(player)
-    end
-    if S.Tracers.Folder then pcall(function() S.Tracers.Folder:Destroy() end) S.Tracers.Folder = nil end
-    FpsFrame.Visible = false
-    TweenService:Create(MainScale, TweenInfo.new(0.2), {Scale = 1}):Play()
-    RebuildDots()
-    if ScanLine then ScanLine.Visible = true end
-    ApplyAccentColor(Color3.fromRGB(180, 80, 255))
-    pickerDot.Position = UDim2.new(0.5, 0, 0.5, 0)
-end)
-
-MakeActionButton("Unload Script", 890, Color3.fromRGB(255, 80, 100), function()
+MakeActionButton("Unload Script", 850, Color3.fromRGB(255, 80, 100), function()
     _DestroyBallESP()
     _DestroyHitboxVisual()
     if S.Pred.ring then S.Pred.ring:Destroy() end
-    for player, _ in pairs(S.Tracers.Active) do
-        _TracerDestroy(player)
-    end
+    for player, _ in pairs(S.Tracers.Active) do _TracerDestroy(player) end
     if S.Tracers.Folder then pcall(function() S.Tracers.Folder:Destroy() end) end
     for player, data in pairs(S.Purge.Tracked) do
-        if data.conns then
-            for _, c in ipairs(data.conns) do pcall(function() c:Disconnect() end) end
-        end
+        if data.conns then for _, c in ipairs(data.conns) do pcall(function() c:Disconnect() end) end end
         if data.pulseConn then pcall(function() data.pulseConn:Disconnect() end) end
         S.Purge.Tracked[player] = nil
     end
-    for _, c in ipairs(S.Connections) do
-        pcall(function() c:Disconnect() end)
-    end
+    for _, c in ipairs(S.Connections) do pcall(function() c:Disconnect() end) end
     S.Connections = {}
     _SkyCleanup()
     S.ClothesWiper.Enabled = false
@@ -4133,56 +3494,24 @@ MakeActionButton("Unload Script", 890, Color3.fromRGB(255, 80, 100), function()
     pcall(function() TabSound:Destroy() end)
     pcall(function() Sound:Destroy() end)
 end)
-
-MakeActionButton("Rejoin Server", 935, THEME.ACCENT_HOT, function()
+MakeActionButton("Rejoin Server", 895, THEME.ACCENT_HOT, function()
     local TeleportService = game:GetService("TeleportService")
-    pcall(function()
-        TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
-    end)
+    pcall(function() TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer) end)
 end)
 
--- ====================================================================
 -- PLAYERS CLEANUP
--- ====================================================================
 Players.PlayerRemoving:Connect(function(player)
     if S.Tracers.Active[player] then _TracerDestroy(player) end
-    if S.ClothesWiper.Wiped and player.Character then
-        S.ClothesWiper.Wiped[player.Character] = nil
-    end
+    if S.ClothesWiper.Wiped and player.Character then S.ClothesWiper.Wiped[player.Character] = nil end
     if S.Purge.Tracked[player] then
         local data = S.Purge.Tracked[player]
-        if data.conns then
-            for _, c in ipairs(data.conns) do pcall(function() c:Disconnect() end) end
-        end
+        if data.conns then for _, c in ipairs(data.conns) do pcall(function() c:Disconnect() end) end end
         if data.pulseConn then pcall(function() data.pulseConn:Disconnect() end) end
         S.Purge.Tracked[player] = nil
     end
 end)
 
-task.spawn(function()
-    while ScreenGui.Parent do
-        task.wait(30)
-        for player, _ in pairs(S.Tracers.Active) do
-            if not player or not player.Parent then _TracerDestroy(player) end
-        end
-        for char, _ in pairs(S.ClothesWiper.Wiped) do
-            if not char or not char.Parent then S.ClothesWiper.Wiped[char] = nil end
-        end
-        for player, data in pairs(S.Purge.Tracked) do
-            if not player or not player.Parent then
-                if data.conns then
-                    for _, c in ipairs(data.conns) do pcall(function() c:Disconnect() end) end
-                end
-                if data.pulseConn then pcall(function() data.pulseConn:Disconnect() end) end
-                S.Purge.Tracked[player] = nil
-            end
-        end
-    end
-end)
-
--- ====================================================================
 -- MAIN UPDATE LOOP
--- ====================================================================
 task.spawn(function()
     while true do
         if not ScreenGui.Parent then
@@ -4190,9 +3519,7 @@ task.spawn(function()
         else
             if not S.BallESP.model or not S.BallESP.model.Parent or not S.BallESP.model.PrimaryPart then
                 S.BallESP.model = _FindBall()
-                if S.BallESP.model and Config.BallESPEnabled then
-                    _CreateBallESP(S.BallESP.model)
-                end
+                if S.BallESP.model and Config.BallESPEnabled then _CreateBallESP(S.BallESP.model) end
             end
             local ball = S.BallESP.model
             if ball and ball.PrimaryPart then
@@ -4247,19 +3574,14 @@ task.spawn(function()
         end
     end
 end)
-
 task.spawn(function()
     while ScreenGui.Parent do
-        if S.MegaHitbox.Enabled then
-            pcall(ExpandAllHitboxTemplates)
-        end
+        if S.MegaHitbox.Enabled then pcall(ExpandAllHitboxTemplates) end
         task.wait(1)
     end
 end)
 
--- ====================================================================
 -- DROP-IN
--- ====================================================================
 task.spawn(function()
     task.wait(1.6)
     local dropTween = TweenService:Create(MainFrame,
@@ -4267,14 +3589,12 @@ task.spawn(function()
         {Position = UDim2.new(0.5, -340, 0.5, -245)})
     dropTween:Play()
 end)
-
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     if input.KeyCode == Enum.KeyCode.Insert then
         MainFrame.Visible = not MainFrame.Visible
     end
 end)
-
 task.wait(1.8)
 Tabs["Main"].IsActive = true
 ActiveTab = "Main"
@@ -4287,7 +3607,6 @@ Tabs["Main"].Arrow.TextTransparency = 0
 Tabs["Main"].Button.Size = UDim2.new(1, -6, 0, TabHeight + 2)
 Tabs["Main"].Button.Position = UDim2.new(0, 3, 0, TabBaseY - 1)
 Tabs["Main"].Accent.Size = UDim2.new(0, 4, 0, TabHeight - 8)
-
 PageHeader.Visible = true
 PageTitle.Text = "MAIN"
 PageTitle.TextTransparency = 0
@@ -4297,7 +3616,6 @@ AccentBar.BackgroundTransparency = 0
 HeaderBaseLine.BackgroundTransparency = 0.7
 HeaderRunner.BackgroundTransparency = 0
 HeaderPulse.BackgroundTransparency = 0.6
-
 print("[VL v3.1] Loaded")
 print("[VL] Combat → Auto Serve")
 print("[VL] Visuals → Ball Info + Purge")
