@@ -1,6 +1,6 @@
 -- ====================================================================
--- VOLLEYBALL LEGENDS - AGGRESSIVE SPORT EDITION (PREMIUM v2.0)
--- FIXED: Out of local registers (ApplyAccentColor разбита)
+-- VOLLEYBALL LEGENDS - AGGRESSIVE SPORT EDITION (PREMIUM v2.1)
+-- FIXED: сфера хитбокса привязана к мячу (единый цикл)
 -- ====================================================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -73,7 +73,6 @@ local Config = {
     FOV = 70,
 }
 
--- Объединённая таблица состояния (экономия ~12 локалов)
 local S = {
     Corner = {}, ColorSynced = {}, Sliders = {}, Toggles = {}, Br = {},
     BallESP = { model = nil, highlight = nil, particles = nil, light = nil, trail = nil, trailAtt0 = nil, trailAtt1 = nil },
@@ -91,9 +90,6 @@ local logoPath = nil
 local brandPath = nil
 local bannerPath = nil
 
--- ====================================================================
--- ГЛОБАЛЬНЫЕ ФУНКЦИИ (без local — экономия регистров)
--- ====================================================================
 function RegisterCorner(uiCorner, baseRadius)
     table.insert(S.Corner, { Corner = uiCorner, BaseRadius = baseRadius or Config.CornerRadius })
 end
@@ -130,8 +126,6 @@ pcall(function()
     if isfile and isfile("vl_brand.png") then brandPath = getAssetPath("vl_brand.png") end
     if isfile and isfile("vl_banner.png") then bannerPath = getAssetPath("vl_banner.png") end
 end)
-
-warn("[VL] Logo: " .. (logoPath and "OK" or "NIL"))
 
 -- ====================================================================
 -- ХУК HITBOX
@@ -184,7 +178,6 @@ function UpdateHitboxHook()
             Hitbox.__VL_OrigGet = nil
             Hitbox.All = nil
             Hitbox.Hitboxes = {}
-            print("[VL] Hitbox.get возвращён")
         end
     end
     return true
@@ -767,7 +760,7 @@ local LogoVersion = Instance.new("TextLabel")
 LogoVersion.Size = UDim2.new(1, -65, 0, 14)
 LogoVersion.Position = UDim2.new(0, 65, 0, 48)
 LogoVersion.BackgroundTransparency = 1
-LogoVersion.Text = "// FREE 2.0.0"
+LogoVersion.Text = "// FREE 2.1.0"
 LogoVersion.TextColor3 = THEME.TEXT_LOW
 LogoVersion.TextSize = 10
 LogoVersion.Font = Enum.Font.Code
@@ -950,7 +943,7 @@ task.spawn(function()
 end)
 
 -- ====================================================================
--- BRACKETS (с анимацией)
+-- BRACKETS
 -- ====================================================================
 function CreateBracket(pos, size, anchor, flipX, flipY)
     local bracket = Instance.new("Frame")
@@ -1221,7 +1214,7 @@ for i, name in ipairs(TabNames) do
 end
 
 -- ====================================================================
--- DRAG HANDLE
+-- DRAG HANDLE (только тянет, не закрывает)
 -- ====================================================================
 local DragHandle = Instance.new("Frame")
 DragHandle.Size = UDim2.new(0, 50, 0, 50)
@@ -1251,12 +1244,10 @@ DragButton.Parent = DragHandle
 local isDraggingMenu = false
 local dragStartMouse = Vector2.new(0, 0)
 local dragStartFrame = UDim2.new(0, 0, 0, 0)
-local dragMoved = false
 
 DragButton.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         isDraggingMenu = true
-        dragMoved = false
         dragStartMouse = Vector2.new(input.Position.X, input.Position.Y)
         dragStartFrame = MainFrame.Position
         TweenService:Create(CloseIcon, TweenInfo.new(0.15), {ImageColor3 = THEME.ACCENT_HOT}):Play()
@@ -1268,9 +1259,6 @@ UserInputService.InputChanged:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
         local deltaX = input.Position.X - dragStartMouse.X
         local deltaY = input.Position.Y - dragStartMouse.Y
-        if math.abs(deltaX) > 3 or math.abs(deltaY) > 3 then
-            dragMoved = true
-        end
         MainFrame.Position = UDim2.new(
             dragStartFrame.X.Scale, dragStartFrame.X.Offset + deltaX,
             dragStartFrame.Y.Scale, dragStartFrame.Y.Offset + deltaY
@@ -1282,12 +1270,9 @@ UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         if isDraggingMenu then
             TweenService:Create(CloseIcon, TweenInfo.new(0.15), {ImageColor3 = Color3.fromRGB(255, 255, 255)}):Play()
-            if not dragMoved then
-                MainFrame.Visible = false
-            end
+            -- Только тянет, не закрывает
         end
         isDraggingMenu = false
-        dragMoved = false
     end
 end)
 
@@ -2996,7 +2981,7 @@ CreateSlider(settingsPage, "Corner Radius", "Round corners", 420, 0, 16, 8, "px"
 end)
 
 -- ====================================================================
--- COLOR PICKER (разбит на 4 функции)
+-- COLOR PICKER
 -- ====================================================================
 local colorSectionLine = CreateSection(settingsPage, "// COLOR", 500, Color3.fromRGB(120, 220, 255))
 
@@ -3510,6 +3495,17 @@ task.spawn(function()
     end
 end)
 
+-- ⚡ ГЛАВНЫЙ ЦИКЛ ОБНОВЛЕНИЯ СФЕРЫ ХИТБОКСА
+task.spawn(function()
+    while ScreenGui.Parent do
+        if S.MegaHitbox.Enabled or S.RangeGuard.Enabled then
+            local ok, err = pcall(_UpdateHitboxVisual, 0.03)
+            if not ok then warn("[VL Hitbox] " .. tostring(err)) end
+        end
+        task.wait(0.03)
+    end
+end)
+
 -- ====================================================================
 -- DROP-IN
 -- ====================================================================
@@ -3551,4 +3547,4 @@ HeaderBaseLine.BackgroundTransparency = 0.7
 HeaderRunner.BackgroundTransparency = 0
 HeaderPulse.BackgroundTransparency = 0.6
 
-print("[VL] Loaded v2.0: ApplyAccentColor разбита + глобальные функции")
+print("[VL] Loaded v2.1: сфера хитбокса привязана к мячу + крестик только тянет")
