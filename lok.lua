@@ -950,7 +950,6 @@ task.spawn(function()
         task.wait(0.6)
     end
 end)
-
 -- ====================================================================
 -- BRACKETS
 -- ====================================================================
@@ -2150,7 +2149,6 @@ bannerImage.ZIndex = 7
 bannerImage.Parent = bannerFrame
 Instance.new("UICorner", bannerImage).CornerRadius = UDim.new(0, Config.CornerRadius)
 
--- Pulse on banner glow
 task.spawn(function()
     while bannerGlow.Parent do
         TweenService:Create(bannerGlow, TweenInfo.new(0.8), {Transparency = 0.7}):Play()
@@ -2365,7 +2363,6 @@ for _, cfg in ipairs(statConfigs) do
     })
 end
 
--- Update loop для тилей
 task.spawn(function()
     local sessionStart = tick()
     local frameCount = 0
@@ -2398,7 +2395,7 @@ task.spawn(function()
 end)
 
 -- ====================================================================
--- [NEW] SPORTS HUD (Streak tracker, Match intensity)
+-- SPORTS HUD
 -- ====================================================================
 local sportsFrame = Instance.new("Frame")
 sportsFrame.Size = UDim2.new(1, -10, 0, 40)
@@ -2475,7 +2472,6 @@ task.spawn(function()
     end
 end)
 
--- Update loop для Sports HUD
 task.spawn(function()
     while sportsFrame.Parent do
         task.wait(0.5)
@@ -2483,7 +2479,6 @@ task.spawn(function()
             sportsValue.Text = "OFF"
             continue
         end
-        -- Ищем стрик через Statistics игрока
         local streak = 0
         pcall(function()
             local stats = LocalPlayer:FindFirstChild("leaderstats")
@@ -2680,7 +2675,6 @@ CreateToggle(visualsPage, "Remove Leg", "Korblox - hide right leg", 850, S.Purge
         if p.Character then _TogglePurgeLeg(p.Character, v) end
     end
 end)
-
 -- ====================================================================
 -- PURGE FUNCTIONS
 -- ====================================================================
@@ -2811,17 +2805,24 @@ local function _ApplyPurgeGray(bc)
 end
 
 function _TogglePurgeEyes(char, on)
-    if on then _BuildPurgeEyes(char)
+    if on then
+        _BuildPurgeEyes(char)
     else
-        local e1 = char:FindFirstChild("VLEyeL") if e1 then e1:Destroy() end
-        local e2 = char:FindFirstChild("VLEyeR") if e2 then e2:Destroy() end
+        local e1 = char:FindFirstChild("VLEyeL")
+        if e1 then e1:Destroy() end
+        local e2 = char:FindFirstChild("VLEyeR")
+        if e2 then e2:Destroy() end
         local head = char:FindFirstChild("Head")
         if head then
-            local l = head:FindFirstChild("VLEyeLight") if l then l:Destroy() end
+            local l = head:FindFirstChild("VLEyeLight")
+            if l then l:Destroy() end
         end
     end
-endfunction _TogglePurgeSparkles(char, on)
-    if on then _AddPurgeSparkles(char)
+end
+
+function _TogglePurgeSparkles(char, on)
+    if on then
+        _AddPurgeSparkles(char)
     else
         local hrp = char:FindFirstChild("HumanoidRootPart")
         if hrp then
@@ -2831,10 +2832,17 @@ endfunction _TogglePurgeSparkles(char, on)
     end
 end
 
-function _TogglePurgeGray(char, on) end
+function _TogglePurgeGray(char, on)
+    local bc = char:FindFirstChildOfClass("BodyColors")
+    if not bc then return end
+    if on then
+        _ApplyPurgeGray(bc)
+    end
+end
 
 function _TogglePurgeLeg(char, on)
-    if on then _HideOneLeg(char)
+    if on then
+        _HideOneLeg(char)
     else
         for _, name in ipairs({"Right Leg", "RightUpperLeg", "RightLowerLeg", "RightFoot"}) do
             local p = char:FindFirstChild(name)
@@ -3287,7 +3295,7 @@ function _TracerCreate(player)
     beam.LightInfluence = 0
     beam.Color = ColorSequence.new(THEME.ACCENT_HOT)
     beam.Parent = endPart
-    return { att0 = att0, endPart = endPart, head = head }
+    return { att0 = att0, endPart = endPart, head = head, beam = beam }
 end
 
 function _TracerUpdate()
