@@ -1,6 +1,6 @@
 -- ====================================================================
--- VOLLEYBALL LEGENDS - AGGRESSIVE SPORT EDITION (PREMIUM v3.0)
--- Combat: Auto Serve | Visuals: Ball Info + Purge
+-- VOLLEYBALL LEGENDS - AGGRESSIVE SPORT EDITION (PREMIUM v3.1)
+-- Combat: Auto Serve | Visuals: Ball Info + Purge | Sports HUD
 -- ====================================================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -71,13 +71,12 @@ local Config = {
     HitboxEnabled = false, HitboxSize = 30,
     BallESPEnabled = false, BallPredictorEnabled = false,
     FOV = 70,
-    -- [NEW] Auto Serve
     AutoServeEnabled = false,
     AutoServeThreshold = 0.90,
     AutoServeCooldown = 0.3,
-    -- [NEW] Ball Info
     BallInfoEnabled = true,
     BallInfoFontSize = 15,
+    SportsHUDEnabled = true,
 }
 
 local S = {
@@ -100,10 +99,9 @@ local S = {
         GrayBase = Color3.fromRGB(185, 185, 192),
         BrightnessMin = 0.35, BrightnessMax = 1.0, PulseSpeed = 0.9,
     },
-    -- [NEW] Auto Serve
     AutoServe = { PowerBar = nil, Props = nil, LastClick = 0, WasServing = false },
-    -- [NEW] Ball Info
     BallInfo = { Smoothed = { speed = 0, dist = 0, height = 0 }, LastPos = nil, LastTime = tick() },
+    SportsHUD = { Streak = 0, LastPointTime = 0, LastTeamScore = 0, DisplayStreak = 0 },
 }
 
 local logoPath, brandPath, bannerPath = nil, nil, nil
@@ -140,7 +138,7 @@ pcall(function()
 end)
 
 -- ====================================================================
--- ХУК HITBOX
+-- HITBOX HOOK
 -- ====================================================================
 local HitboxModuleRef = nil
 local HitboxOrigGet = nil
@@ -181,7 +179,7 @@ function UpdateHitboxHook()
                 return result
             end
             Hitbox.__VL_Hooked = true
-            print("[VL] Hitbox.get захукан")
+            print("[VL] Hitbox.get hooked")
         end
     else
         if Hitbox.__VL_Hooked and Hitbox.__VL_OrigGet then
@@ -771,7 +769,7 @@ local LogoVersion = Instance.new("TextLabel")
 LogoVersion.Size = UDim2.new(1, -65, 0, 14)
 LogoVersion.Position = UDim2.new(0, 65, 0, 48)
 LogoVersion.BackgroundTransparency = 1
-LogoVersion.Text = "// FREE 3.0.0"
+LogoVersion.Text = "// FREE 3.1.0"
 LogoVersion.TextColor3 = THEME.TEXT_LOW
 LogoVersion.TextSize = 10
 LogoVersion.Font = Enum.Font.Code
@@ -1809,7 +1807,7 @@ function CreateSlider(parent, name, descText, yPos, minVal, maxVal, default, suf
 end
 
 -- ====================================================================
--- [NEW] AUTO SERVE LOGIC
+-- AUTO SERVE LOGIC
 -- ====================================================================
 local function FindPowerBar()
     if not getgc then return nil, nil end
@@ -1878,7 +1876,7 @@ task.spawn(function()
 end)
 
 -- ====================================================================
--- [NEW] BALL INFO LOGIC (Drawing)
+-- BALL INFO LOGIC (Drawing)
 -- ====================================================================
 local DrawingLib = Drawing
 local MC_FONT = (DrawingLib and DrawingLib.Fonts and DrawingLib.Fonts.Code) or 1
@@ -2133,6 +2131,16 @@ bannerFrame.ZIndex = 6
 bannerFrame.Parent = mainPage
 Instance.new("UICorner", bannerFrame).CornerRadius = UDim.new(0, Config.CornerRadius)
 
+local bannerStroke = Instance.new("UIStroke", bannerFrame)
+bannerStroke.Thickness = 1.5
+bannerStroke.Color = THEME.ACCENT
+bannerStroke.Transparency = 0.3
+
+local bannerGlow = Instance.new("UIStroke", bannerFrame)
+bannerGlow.Thickness = 3
+bannerGlow.Color = THEME.ACCENT_GLOW
+bannerGlow.Transparency = 0.92
+
 local bannerImage = Instance.new("ImageLabel")
 bannerImage.Size = UDim2.new(1, 0, 1, 0)
 bannerImage.BackgroundTransparency = 1
@@ -2141,6 +2149,16 @@ bannerImage.ScaleType = Enum.ScaleType.Crop
 bannerImage.ZIndex = 7
 bannerImage.Parent = bannerFrame
 Instance.new("UICorner", bannerImage).CornerRadius = UDim.new(0, Config.CornerRadius)
+
+-- Pulse on banner glow
+task.spawn(function()
+    while bannerGlow.Parent do
+        TweenService:Create(bannerGlow, TweenInfo.new(0.8), {Transparency = 0.7}):Play()
+        task.wait(0.8)
+        TweenService:Create(bannerGlow, TweenInfo.new(0.8), {Transparency = 0.92}):Play()
+        task.wait(0.8)
+    end
+end)
 
 local greetFrame = Instance.new("Frame")
 greetFrame.Size = UDim2.new(1, 0, 0, 58)
@@ -2151,24 +2169,334 @@ greetFrame.Parent = mainPage
 local greetTitle = Instance.new("TextLabel")
 greetTitle.Size = UDim2.new(1, 0, 0, 16)
 greetTitle.BackgroundTransparency = 1
-greetTitle.Text = "// VOLLEYBALL LEGENDS v3.0"
+greetTitle.Text = "// HEY, I'M A BEGINNER CODER"
 greetTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
 greetTitle.TextSize = 11
 greetTitle.Font = Enum.Font.Code
 greetTitle.TextXAlignment = Enum.TextXAlignment.Left
 greetTitle.Parent = greetFrame
 
+local greetTitleGradient = Instance.new("UIGradient", greetTitle)
+greetTitleGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, THEME.ACCENT_GLOW),
+    ColorSequenceKeypoint.new(0.5, THEME.TEXT_HI),
+    ColorSequenceKeypoint.new(1, THEME.ACCENT_HOT),
+})
+
 local greetBody = Instance.new("TextLabel")
 greetBody.Size = UDim2.new(1, 0, 0, 40)
 greetBody.Position = UDim2.new(0, 0, 0, 18)
 greetBody.BackgroundTransparency = 1
-greetBody.Text = "Combat: Auto Serve + Hitbox\nVisuals: Ball Info + Ball ESP + Purge + Tracers"
-greetBody.TextColor3 = Color3.fromRGB(200, 200, 220)
+greetBody.Text = "still learning every day - building my own dream piece by piece.\ncode is the canvas, and the game is the art."
+greetBody.TextColor3 = Color3.fromRGB(255, 255, 255)
 greetBody.TextSize = 10
 greetBody.Font = Enum.Font.Gotham
 greetBody.TextWrapped = true
 greetBody.TextXAlignment = Enum.TextXAlignment.Left
+greetBody.LineHeight = 1.15
 greetBody.Parent = greetFrame
+
+local greetBodyGradient = Instance.new("UIGradient", greetBody)
+greetBodyGradient.Rotation = 25
+greetBodyGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, THEME.ACCENT_GLOW),
+    ColorSequenceKeypoint.new(0.4, THEME.TEXT_HI),
+    ColorSequenceKeypoint.new(0.7, THEME.ACCENT_HOT),
+    ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
+})
+
+task.spawn(function()
+    while greetTitleGradient.Parent do
+        for i = -1, 1, 0.03 do greetTitleGradient.Offset = Vector2.new(i, 0); task.wait(0.04) end
+        for i = 1, -1, -0.03 do greetTitleGradient.Offset = Vector2.new(i, 0); task.wait(0.04) end
+    end
+end)
+
+task.spawn(function()
+    while greetBodyGradient.Parent do
+        for i = -1.2, 1.2, 0.02 do greetBodyGradient.Offset = Vector2.new(i, 0); task.wait(0.035) end
+        for i = 1.2, -1.2, -0.02 do greetBodyGradient.Offset = Vector2.new(i, 0); task.wait(0.035) end
+    end
+end)
+
+local splitLine = Instance.new("Frame")
+splitLine.Size = UDim2.new(1, 0, 0, 1)
+splitLine.Position = UDim2.new(0, 0, 0, 162)
+splitLine.BackgroundColor3 = THEME.ACCENT
+splitLine.BorderSizePixel = 0
+splitLine.BackgroundTransparency = 0.7
+splitLine.ZIndex = 6
+splitLine.Parent = mainPage
+
+local splitGrad = Instance.new("UIGradient", splitLine)
+splitGrad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, THEME.ACCENT_DARK),
+    ColorSequenceKeypoint.new(0.5, THEME.ACCENT_HOT),
+    ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
+})
+splitGrad.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 1),
+    NumberSequenceKeypoint.new(0.5, 0),
+    NumberSequenceKeypoint.new(1, 1),
+})
+
+local statusSection = Instance.new("Frame")
+statusSection.Size = UDim2.new(1, 0, 0, 18)
+statusSection.Position = UDim2.new(0, 0, 0, 172)
+statusSection.BackgroundTransparency = 1
+statusSection.Parent = mainPage
+
+local statusSectionLine = Instance.new("Frame")
+statusSectionLine.Size = UDim2.new(0, 3, 0, 12)
+statusSectionLine.Position = UDim2.new(0, 0, 0.5, -6)
+statusSectionLine.BackgroundColor3 = THEME.ACCENT_HOT
+statusSectionLine.BorderSizePixel = 0
+statusSectionLine.Parent = statusSection
+Instance.new("UICorner", statusSectionLine).CornerRadius = UDim.new(1, 0)
+
+local statusSectionLabel = Instance.new("TextLabel")
+statusSectionLabel.Size = UDim2.new(1, -15, 1, 0)
+statusSectionLabel.Position = UDim2.new(0, 15, 0, 0)
+statusSectionLabel.BackgroundTransparency = 1
+statusSectionLabel.Text = "// LIVE STATUS"
+statusSectionLabel.TextColor3 = THEME.ACCENT_HOT
+statusSectionLabel.TextSize = 11
+statusSectionLabel.Font = Enum.Font.Code
+statusSectionLabel.TextXAlignment = Enum.TextXAlignment.Left
+statusSectionLabel.Parent = statusSection
+
+local gridFrame = Instance.new("Frame")
+gridFrame.Size = UDim2.new(1, -10, 0, 116)
+gridFrame.Position = UDim2.new(0, 5, 0, 194)
+gridFrame.BackgroundTransparency = 1
+gridFrame.Parent = mainPage
+
+local gridLayout = Instance.new("UIGridLayout", gridFrame)
+gridLayout.CellSize = UDim2.new(0.5, -4, 0, 55)
+gridLayout.CellPadding = UDim2.new(0, 8, 0, 5)
+gridLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+local statTiles = {}
+local statConfigs = {
+    {key = "FPS", label = "FPS", order = 1},
+    {key = "PING", label = "PING", order = 2},
+    {key = "MEMORY", label = "MEMORY", order = 3},
+    {key = "SESSION", label = "SESSION", order = 4},
+}
+
+for _, cfg in ipairs(statConfigs) do
+    local tile = Instance.new("Frame")
+    tile.Size = UDim2.new(0.5, -4, 0, 55)
+    tile.BackgroundColor3 = Color3.fromRGB(14, 11, 22)
+    tile.BackgroundTransparency = 0.15
+    tile.BorderSizePixel = 0
+    tile.LayoutOrder = cfg.order
+    tile.Parent = gridFrame
+    Instance.new("UICorner", tile).CornerRadius = UDim.new(0, Config.CornerRadius)
+
+    local tileStroke = Instance.new("UIStroke", tile)
+    tileStroke.Thickness = 1
+    tileStroke.Color = THEME.ACCENT
+    tileStroke.Transparency = 0.5
+
+    local tileInnerGlow = Instance.new("UIStroke", tile)
+    tileInnerGlow.Thickness = 2
+    tileInnerGlow.Color = THEME.ACCENT_GLOW
+    tileInnerGlow.Transparency = 0.94
+
+    local tileTopBar = Instance.new("Frame")
+    tileTopBar.Size = UDim2.new(1, -20, 0, 2)
+    tileTopBar.Position = UDim2.new(0, 10, 0, 6)
+    tileTopBar.BackgroundColor3 = THEME.ACCENT_HOT
+    tileTopBar.BorderSizePixel = 0
+    tileTopBar.Parent = tile
+    Instance.new("UICorner", tileTopBar).CornerRadius = UDim.new(1, 0)
+
+    local tileTopGradient = Instance.new("UIGradient", tileTopBar)
+    tileTopGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, THEME.ACCENT_DARK),
+        ColorSequenceKeypoint.new(0.5, THEME.ACCENT_HOT),
+        ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
+    })
+
+    local tileDot = Instance.new("Frame")
+    tileDot.Size = UDim2.new(0, 4, 0, 4)
+    tileDot.Position = UDim2.new(1, -14, 0, 11)
+    tileDot.BackgroundColor3 = THEME.ACCENT_HOT
+    tileDot.BorderSizePixel = 0
+    tileDot.Parent = tile
+    Instance.new("UICorner", tileDot).CornerRadius = UDim.new(1, 0)
+
+    local tileLabel = Instance.new("TextLabel")
+    tileLabel.Size = UDim2.new(1, -20, 0, 12)
+    tileLabel.Position = UDim2.new(0, 10, 0, 11)
+    tileLabel.BackgroundTransparency = 1
+    tileLabel.Text = cfg.label
+    tileLabel.TextColor3 = THEME.TEXT_LOW
+    tileLabel.TextSize = 9
+    tileLabel.Font = Enum.Font.Code
+    tileLabel.TextXAlignment = Enum.TextXAlignment.Left
+    tileLabel.Parent = tile
+
+    local tileValue = Instance.new("TextLabel")
+    tileValue.Size = UDim2.new(1, -20, 0, 24)
+    tileValue.Position = UDim2.new(0, 10, 0, 23)
+    tileValue.BackgroundTransparency = 1
+    tileValue.Text = "--"
+    tileValue.TextColor3 = THEME.ACCENT_HOT
+    tileValue.TextSize = 16
+    tileValue.Font = Enum.Font.GothamBold
+    tileValue.TextXAlignment = Enum.TextXAlignment.Left
+    tileValue.Parent = tile
+
+    local tileValueGradient = Instance.new("UIGradient", tileValue)
+    tileValueGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, THEME.ACCENT_HOT),
+        ColorSequenceKeypoint.new(0.5, THEME.ACCENT_GLOW),
+        ColorSequenceKeypoint.new(1, THEME.ACCENT_HOT),
+    })
+
+    statTiles[cfg.key] = { Value = tileValue }
+
+    table.insert(S.ColorSynced, {
+        Kind = "StatTile", Stroke = tileStroke, TopBar = tileTopBar,
+        TopGradient = tileTopGradient, Value = tileValue,
+        ValueGradient = tileValueGradient, InnerGlow = tileInnerGlow, Dot = tileDot,
+    })
+end
+
+-- Update loop для тилей
+task.spawn(function()
+    local sessionStart = tick()
+    local frameCount = 0
+    local lastFpsTime = tick()
+    local conn = RunService.RenderStepped:Connect(function() frameCount = frameCount + 1 end)
+    table.insert(S.Connections, conn)
+    while mainPage.Parent do
+        local now = tick()
+        if now - lastFpsTime >= 1 then
+            if statTiles["FPS"] then statTiles["FPS"].Value.Text = tostring(math.floor(frameCount / (now - lastFpsTime))) end
+            frameCount = 0
+            lastFpsTime = now
+        end
+        if statTiles["PING"] then
+            local ping = 0
+            pcall(function() ping = math.floor(LocalPlayer:GetNetworkPing() * 1000) end)
+            statTiles["PING"].Value.Text = tostring(ping) .. "ms"
+        end
+        if statTiles["MEMORY"] then
+            local mem = 0
+            pcall(function() mem = math.floor(game:GetService("Stats"):GetTotalMemoryUsageMb()) end)
+            statTiles["MEMORY"].Value.Text = tostring(mem) .. "MB"
+        end
+        if statTiles["SESSION"] then
+            local secs = math.floor(tick() - sessionStart)
+            statTiles["SESSION"].Value.Text = string.format("%02d:%02d", math.floor(secs/60), secs % 60)
+        end
+        task.wait(1)
+    end
+end)
+
+-- ====================================================================
+-- [NEW] SPORTS HUD (Streak tracker, Match intensity)
+-- ====================================================================
+local sportsFrame = Instance.new("Frame")
+sportsFrame.Size = UDim2.new(1, -10, 0, 40)
+sportsFrame.Position = UDim2.new(0, 5, 0, 320)
+sportsFrame.BackgroundColor3 = Color3.fromRGB(14, 11, 22)
+sportsFrame.BackgroundTransparency = 0.15
+sportsFrame.BorderSizePixel = 0
+sportsFrame.Parent = mainPage
+Instance.new("UICorner", sportsFrame).CornerRadius = UDim.new(0, Config.CornerRadius)
+
+local sportsStroke = Instance.new("UIStroke", sportsFrame)
+sportsStroke.Thickness = 1
+sportsStroke.Color = Color3.fromRGB(255, 200, 60)
+sportsStroke.Transparency = 0.5
+
+local sportsTopBar = Instance.new("Frame")
+sportsTopBar.Size = UDim2.new(1, -20, 0, 2)
+sportsTopBar.Position = UDim2.new(0, 10, 0, 4)
+sportsTopBar.BackgroundColor3 = Color3.fromRGB(255, 200, 60)
+sportsTopBar.BorderSizePixel = 0
+sportsTopBar.Parent = sportsFrame
+Instance.new("UICorner", sportsTopBar).CornerRadius = UDim.new(1, 0)
+
+local sportsGrad = Instance.new("UIGradient", sportsTopBar)
+sportsGrad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, THEME.ACCENT_DARK),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 200, 60)),
+    ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
+})
+
+local sportsIcon = Instance.new("TextLabel")
+sportsIcon.Size = UDim2.new(0, 30, 1, 0)
+sportsIcon.Position = UDim2.new(0, 8, 0, 0)
+sportsIcon.BackgroundTransparency = 1
+sportsIcon.Text = "⚡"
+sportsIcon.TextColor3 = Color3.fromRGB(255, 200, 60)
+sportsIcon.TextSize = 22
+sportsIcon.Font = Enum.Font.GothamBold
+sportsIcon.Parent = sportsFrame
+
+local sportsLabel = Instance.new("TextLabel")
+sportsLabel.Size = UDim2.new(0, 100, 1, 0)
+sportsLabel.Position = UDim2.new(0, 40, 0, 0)
+sportsLabel.BackgroundTransparency = 1
+sportsLabel.Text = "STREAK"
+sportsLabel.TextColor3 = THEME.TEXT_LOW
+sportsLabel.TextSize = 10
+sportsLabel.Font = Enum.Font.Code
+sportsLabel.TextXAlignment = Enum.TextXAlignment.Left
+sportsLabel.Parent = sportsFrame
+
+local sportsValue = Instance.new("TextLabel")
+sportsValue.Size = UDim2.new(1, -150, 1, 0)
+sportsValue.Position = UDim2.new(1, -150, 0, 0)
+sportsValue.BackgroundTransparency = 1
+sportsValue.Text = "0"
+sportsValue.TextColor3 = Color3.fromRGB(255, 200, 60)
+sportsValue.TextSize = 20
+sportsValue.Font = Enum.Font.GothamBold
+sportsValue.TextXAlignment = Enum.TextXAlignment.Right
+sportsValue.Parent = sportsFrame
+
+local sportsValueGradient = Instance.new("UIGradient", sportsValue)
+sportsValueGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 240, 100)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 180, 40)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 240, 100)),
+})
+
+task.spawn(function()
+    while sportsValueGradient.Parent do
+        for i = -1, 1, 0.05 do sportsValueGradient.Offset = Vector2.new(i, 0); task.wait(0.05) end
+        for i = 1, -1, -0.05 do sportsValueGradient.Offset = Vector2.new(i, 0); task.wait(0.05) end
+    end
+end)
+
+-- Update loop для Sports HUD
+task.spawn(function()
+    while sportsFrame.Parent do
+        task.wait(0.5)
+        if not Config.SportsHUDEnabled then
+            sportsValue.Text = "OFF"
+            continue
+        end
+        -- Ищем стрик через Statistics игрока
+        local streak = 0
+        pcall(function()
+            local stats = LocalPlayer:FindFirstChild("leaderstats")
+            if stats then
+                local s = stats:FindFirstChild("Streak")
+                if s then streak = s.Value end
+            end
+        end)
+        sportsValue.Text = tostring(streak)
+    end
+end)
+
+mainPage.CanvasSize = UDim2.new(0, 0, 0, 380)
 
 -- ====================================================================
 -- COMBAT PAGE
@@ -2176,30 +2504,28 @@ greetBody.Parent = greetFrame
 local combatPage = TabPages["Combat"]
 combatPage.CanvasSize = UDim2.new(0, 0, 0, 800)
 
--- [NEW] AUTO SERVE section вверху
 CreateSection(combatPage, "// AUTO SERVE", 10, Color3.fromRGB(80, 255, 130))
 
-CreateToggle(combatPage, "Auto Powerful Serve", "Кликает в пик шкалы подачи автоматически", 40, Config.AutoServeEnabled, function(v)
+CreateToggle(combatPage, "Auto Powerful Serve", "Clicks at the peak of the serve bar automatically", 40, Config.AutoServeEnabled, function(v)
     Config.AutoServeEnabled = v
     if v then
         S.AutoServe.PowerBar, S.AutoServe.Props = FindPowerBar()
         if S.AutoServe.PowerBar then
-            print("[AutoServe] PowerBar найден")
+            print("[AutoServe] PowerBar found")
         else
-            print("[AutoServe] PowerBar НЕ найден — попробует при подаче")
+            print("[AutoServe] PowerBar not found — will retry on serve")
         end
     end
 end)
 
-CreateSlider(combatPage, "Peak Threshold", "Порог пика (85-99%)", 95, 85, 99, 90, "%", function(v)
+CreateSlider(combatPage, "Peak Threshold", "Peak threshold (85-99%)", 95, 85, 99, 90, "%", function(v)
     Config.AutoServeThreshold = v / 100
 end)
 
-CreateSlider(combatPage, "Click Cooldown", "Пауза между кликами", 160, 1, 10, 3, " x0.1s", function(v)
+CreateSlider(combatPage, "Click Cooldown", "Pause between clicks", 160, 1, 10, 3, " x0.1s", function(v)
     Config.AutoServeCooldown = v / 10
 end)
 
--- HITBOX section сдвинута вниз
 CreateSection(combatPage, "// HITBOX EXPANDER", 250, THEME.ACCENT_HOT)
 
 CreateToggle(combatPage, "Hitbox Expander", "Expands impact area + shows sphere around ball", 280, S.MegaHitbox.Enabled, function(v)
@@ -2253,14 +2579,13 @@ end)
 local visualsPage = TabPages["Visuals"]
 visualsPage.CanvasSize = UDim2.new(0, 0, 0, 1100)
 
--- [NEW] BALL INFO section вверху
 CreateSection(visualsPage, "// BALL INFO", 10, Color3.fromRGB(255, 60, 180))
 
-CreateToggle(visualsPage, "Ball Info", "Инфо о мяче над ним (SPD / DST / HGT)", 40, Config.BallInfoEnabled, function(v)
+CreateToggle(visualsPage, "Ball Info", "Shows ball info above it (SPD / DST / HGT)", 40, Config.BallInfoEnabled, function(v)
     Config.BallInfoEnabled = v
 end)
 
-CreateSlider(visualsPage, "Ball Info Font", "Размер текста", 95, 10, 20, Config.BallInfoFontSize, "px", function(v)
+CreateSlider(visualsPage, "Ball Info Font", "Font size", 95, 10, 20, Config.BallInfoFontSize, "px", function(v)
     Config.BallInfoFontSize = v
     if S.BallInfo.TitleText then
         S.BallInfo.TitleText.Size = v + 1
@@ -2270,7 +2595,6 @@ CreateSlider(visualsPage, "Ball Info Font", "Размер текста", 95, 10,
     end
 end)
 
--- BALL VISUALS сдвинута вниз (+170)
 CreateSection(visualsPage, "// BALL VISUALS", 170, Color3.fromRGB(120, 220, 255))
 
 CreateToggle(visualsPage, "Ball ESP", "Highlights the ball with aura, sparks and light glow", 200, Config.BallESPEnabled, function(v)
@@ -2291,7 +2615,6 @@ CreateToggle(visualsPage, "Ball Predictor", "Shows landing point of the ball on 
     end
 end)
 
--- PLAYER TRACERS сдвинута вниз (+170)
 CreateSection(visualsPage, "// PLAYER TRACERS", 325, Color3.fromRGB(255, 100, 180))
 
 CreateToggle(visualsPage, "Player Tracers", "3D beam from each player head showing look direction", 355, S.Tracers.Enabled, function(v)
@@ -2306,7 +2629,6 @@ CreateSlider(visualsPage, "Tracer Length", "Beam length in studs", 455, 5, 80, 2
     S.Tracers.Length = v
 end)
 
--- CAMERA сдвинута вниз (+170)
 CreateSection(visualsPage, "// CAMERA", 520, Color3.fromRGB(120, 220, 255))
 
 CreateSlider(visualsPage, "Field of View", "Camera zoom out angle (70 - 200)", 550, 70, 200, Config.FOV, "deg", function(v)
@@ -2316,7 +2638,6 @@ CreateSlider(visualsPage, "Field of View", "Camera zoom out angle (70 - 200)", 5
     end
 end)
 
--- PURGE сдвинута вниз (+170)
 CreateSection(visualsPage, "// PURGE CHARACTER", 620, Color3.fromRGB(180, 80, 255))
 
 CreateToggle(visualsPage, "Purge Character", "Headless + Korblox + accessories + gray shift", 650, S.Purge.Enabled, function(v)
@@ -2499,9 +2820,7 @@ function _TogglePurgeEyes(char, on)
             local l = head:FindFirstChild("VLEyeLight") if l then l:Destroy() end
         end
     end
-end
-
-function _TogglePurgeSparkles(char, on)
+endfunction _TogglePurgeSparkles(char, on)
     if on then _AddPurgeSparkles(char)
     else
         local hrp = char:FindFirstChild("HumanoidRootPart")
@@ -3322,21 +3641,25 @@ settingsPage.CanvasSize = UDim2.new(0, 0, 0, 1180)
 
 CreateSection(settingsPage, "// INTERFACE", 10, THEME.ACCENT)
 
-CreateToggle(settingsPage, "Flying Dots", "Floating particles in left panel", 40, Config.FlyingDotsEnabled, function(v)
+CreateToggle(settingsPage, "Sports HUD", "Streak + match tracker", 40, Config.SportsHUDEnabled, function(v)
+    Config.SportsHUDEnabled = v
+end)
+
+CreateToggle(settingsPage, "Flying Dots", "Floating particles in left panel", 95, Config.FlyingDotsEnabled, function(v)
     Config.FlyingDotsEnabled = v
     RebuildDots()
 end)
 
-CreateToggle(settingsPage, "Sounds", "UI click and tab sounds", 95, Config.SoundEnabled, function(v)
+CreateToggle(settingsPage, "Sounds", "UI click and tab sounds", 150, Config.SoundEnabled, function(v)
     Config.SoundEnabled = v
 end)
 
-CreateToggle(settingsPage, "Scan Line", "Moving light animation", 150, Config.ScanLineEnabled, function(v)
+CreateToggle(settingsPage, "Scan Line", "Moving light animation", 205, Config.ScanLineEnabled, function(v)
     Config.ScanLineEnabled = v
     if ScanLine then ScanLine.Visible = v end
 end)
 
-CreateToggle(settingsPage, "Wipe Clothes", "Strips clothes of all players (client only)", 205, S.ClothesWiper.Enabled, function(v)
+CreateToggle(settingsPage, "Wipe Clothes", "Strips clothes of all players (client only)", 260, S.ClothesWiper.Enabled, function(v)
     S.ClothesWiper.Enabled = v
     if v then
         S.ClothesWiper.Wiped = {}
@@ -3346,19 +3669,19 @@ CreateToggle(settingsPage, "Wipe Clothes", "Strips clothes of all players (clien
     end
 end)
 
-CreateToggle(settingsPage, "FPS Counter", "Show FPS in left panel", 260, Config.FpsCounterEnabled, function(v)
+CreateToggle(settingsPage, "FPS Counter", "Show FPS in left panel", 315, Config.FpsCounterEnabled, function(v)
     Config.FpsCounterEnabled = v
     FpsFrame.Visible = v
 end)
 
-CreateSection(settingsPage, "// LAYOUT", 330, THEME.ACCENT_HOT)
+CreateSection(settingsPage, "// LAYOUT", 385, THEME.ACCENT_HOT)
 
-CreateSlider(settingsPage, "Menu Scale", "Resize the whole menu", 360, 70, 130, 100, "%", function(v)
+CreateSlider(settingsPage, "Menu Scale", "Resize the whole menu", 415, 70, 130, 100, "%", function(v)
     Config.MenuScale = v
     TweenService:Create(MainScale, TweenInfo.new(0.15), {Scale = v / 100}):Play()
 end)
 
-CreateSlider(settingsPage, "Corner Radius", "Round corners", 420, 0, 16, 8, "px", function(v)
+CreateSlider(settingsPage, "Corner Radius", "Round corners", 475, 0, 16, 8, "px", function(v)
     Config.CornerRadius = v
     for _, el in ipairs(S.Corner) do
         local parent = el.Corner.Parent
@@ -3370,12 +3693,12 @@ end)
 -- ====================================================================
 -- COLOR PICKER
 -- ====================================================================
-local colorSectionLine = CreateSection(settingsPage, "// COLOR", 500, Color3.fromRGB(120, 220, 255))
+local colorSectionLine = CreateSection(settingsPage, "// COLOR", 560, Color3.fromRGB(120, 220, 255))
 
 local paletteSize = 140
 local paletteFrame = Instance.new("Frame")
 paletteFrame.Size = UDim2.new(0, paletteSize, 0, paletteSize)
-paletteFrame.Position = UDim2.new(0, 0, 0, 530)
+paletteFrame.Position = UDim2.new(0, 0, 0, 590)
 paletteFrame.BackgroundColor3 = Color3.fromRGB(30, 25, 45)
 paletteFrame.Parent = settingsPage
 Instance.new("UICorner", paletteFrame).CornerRadius = UDim.new(1, 0)
@@ -3405,14 +3728,14 @@ Instance.new("UICorner", pickerDot).CornerRadius = UDim.new(1, 0)
 
 local previewBox = Instance.new("Frame")
 previewBox.Size = UDim2.new(0, 60, 0, 60)
-previewBox.Position = UDim2.new(0, paletteSize + 20, 0, 530 + (paletteSize - 60) / 2 - 30)
+previewBox.Position = UDim2.new(0, paletteSize + 20, 0, 590 + (paletteSize - 60) / 2 - 30)
 previewBox.BackgroundColor3 = THEME.ACCENT
 previewBox.Parent = settingsPage
 Instance.new("UICorner", previewBox).CornerRadius = UDim.new(0, 6)
 
 local resetColorBtn = Instance.new("TextButton")
 resetColorBtn.Size = UDim2.new(1, -50, 0, 32)
-resetColorBtn.Position = UDim2.new(0, 0, 0, 530 + paletteSize + 15)
+resetColorBtn.Position = UDim2.new(0, 0, 0, 590 + paletteSize + 15)
 resetColorBtn.BackgroundTransparency = 1
 resetColorBtn.Text = "Reset Color"
 resetColorBtn.TextColor3 = Color3.fromRGB(120, 220, 255)
@@ -3557,12 +3880,45 @@ function ApplyAccent_Elements(newAccent, newHot, newDark, newGlow)
             ColorSequenceKeypoint.new(1, newHot),
         })
     end
+    greetTitleGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, newGlow),
+        ColorSequenceKeypoint.new(0.5, THEME.TEXT_HI),
+        ColorSequenceKeypoint.new(1, newHot),
+    })
+    greetBodyGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, newGlow),
+        ColorSequenceKeypoint.new(0.4, THEME.TEXT_HI),
+        ColorSequenceKeypoint.new(0.7, newHot),
+        ColorSequenceKeypoint.new(1, newDark),
+    })
     splitLine.BackgroundColor3 = newAccent
     splitGrad.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, newDark),
         ColorSequenceKeypoint.new(0.5, newHot),
         ColorSequenceKeypoint.new(1, newDark),
     })
+    statusSectionLine.BackgroundColor3 = newHot
+    statusSectionLabel.TextColor3 = newHot
+    bannerStroke.Color = newAccent
+    bannerGlow.Color = newGlow
+    if S.BallESP.highlight then
+        S.BallESP.highlight.FillColor = newAccent
+        S.BallESP.highlight.OutlineColor = newHot
+    end
+    if S.BallESP.light then S.BallESP.light.Color = newAccent end
+    if S.BallESP.trail then
+        S.BallESP.trail.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, newHot),
+            ColorSequenceKeypoint.new(0.5, newAccent),
+            ColorSequenceKeypoint.new(1, newGlow),
+        })
+    end
+    if S.Pred.ring then S.Pred.ring.Color = newHot end
+    if S.HitboxVisual.Sphere and not S.RangeGuard.Enabled then S.HitboxVisual.Sphere.Color = newAccent end
+    for _, t in pairs(S.Tracers.Active) do
+        if t.beam then t.beam.Color = ColorSequence.new(newHot) end
+        if t.endPart then t.endPart.Color = newHot end
+    end
     for _, el in ipairs(S.ColorSynced) do
         if el.Kind == "Toggle" then
             local on = el.GetState and el.GetState() or false
@@ -3582,6 +3938,22 @@ function ApplyAccent_Elements(newAccent, newHot, newDark, newGlow)
             })
             el.ValueLabel.TextColor3 = newHot
             el.HandleGlow.Color = newHot
+        elseif el.Kind == "StatTile" then
+            el.Stroke.Color = newAccent
+            el.InnerGlow.Color = newGlow
+            el.Dot.BackgroundColor3 = newHot
+            el.TopBar.BackgroundColor3 = newHot
+            el.TopGradient.Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, newDark),
+                ColorSequenceKeypoint.new(0.5, newHot),
+                ColorSequenceKeypoint.new(1, newDark),
+            })
+            el.Value.TextColor3 = newHot
+            el.ValueGradient.Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, newDark),
+                ColorSequenceKeypoint.new(0.5, newGlow),
+                ColorSequenceKeypoint.new(1, newDark),
+            })
         end
     end
     if colorSectionLine then colorSectionLine.BackgroundColor3 = newHot end
@@ -3651,7 +4023,7 @@ end)
 -- ====================================================================
 -- ACTIONS
 -- ====================================================================
-CreateSection(settingsPage, "// ACTIONS", 750, Color3.fromRGB(255, 100, 120))
+CreateSection(settingsPage, "// ACTIONS", 810, Color3.fromRGB(255, 100, 120))
 
 function MakeActionButton(text, yPos, color, onClick)
     local btn = Instance.new("TextButton")
@@ -3671,9 +4043,10 @@ function MakeActionButton(text, yPos, color, onClick)
     return btn
 end
 
-MakeActionButton("Reset Settings", 785, Color3.fromRGB(255, 180, 100), function()
+MakeActionButton("Reset Settings", 845, Color3.fromRGB(255, 180, 100), function()
     if S.Toggles["Auto Powerful Serve"] then S.Toggles["Auto Powerful Serve"](false, true) end
     if S.Toggles["Ball Info"] then S.Toggles["Ball Info"](true, true) end
+    if S.Toggles["Sports HUD"] then S.Toggles["Sports HUD"](true, true) end
     if S.Toggles["Flying Dots"] then S.Toggles["Flying Dots"](true, true) end
     if S.Toggles["Sounds"] then S.Toggles["Sounds"](true, true) end
     if S.Toggles["Scan Line"] then S.Toggles["Scan Line"](true, true) end
@@ -3720,7 +4093,7 @@ MakeActionButton("Reset Settings", 785, Color3.fromRGB(255, 180, 100), function(
     pickerDot.Position = UDim2.new(0.5, 0, 0.5, 0)
 end)
 
-MakeActionButton("Unload Script", 830, Color3.fromRGB(255, 80, 100), function()
+MakeActionButton("Unload Script", 890, Color3.fromRGB(255, 80, 100), function()
     _DestroyBallESP()
     _DestroyHitboxVisual()
     if S.Pred.ring then S.Pred.ring:Destroy() end
@@ -3753,7 +4126,7 @@ MakeActionButton("Unload Script", 830, Color3.fromRGB(255, 80, 100), function()
     pcall(function() Sound:Destroy() end)
 end)
 
-MakeActionButton("Rejoin Server", 875, THEME.ACCENT_HOT, function()
+MakeActionButton("Rejoin Server", 935, THEME.ACCENT_HOT, function()
     local TeleportService = game:GetService("TeleportService")
     pcall(function()
         TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
@@ -3917,6 +4290,7 @@ HeaderBaseLine.BackgroundTransparency = 0.7
 HeaderRunner.BackgroundTransparency = 0
 HeaderPulse.BackgroundTransparency = 0.6
 
-print("[VL v3.0] Loaded")
-print("[VL] Combat → Auto Serve + Hitbox")
-print("[VL] Visuals → Ball Info + ESP + Purge")
+print("[VL v3.1] Loaded")
+print("[VL] Combat → Auto Serve")
+print("[VL] Visuals → Ball Info + Purge")
+print("[VL] Main → Live Status + Sports HUD")
