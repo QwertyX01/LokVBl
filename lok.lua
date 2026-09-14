@@ -1033,8 +1033,8 @@ S.Br.TR_h, S.Br.TR_v, S.Br.TR_hg, S.Br.TR_vg = CreateBracket(UDim2.new(1, 6, 0, 
 S.Br.BL_h, S.Br.BL_v, S.Br.BL_hg, S.Br.BL_vg = CreateBracket(UDim2.new(0, -6, 1, 6), UDim2.new(0, 22, 0, 22), Vector2.new(0, 1), false, true)
 S.Br.BR_h, S.Br.BR_v, S.Br.BR_hg, S.Br.BR_vg = CreateBracket(UDim2.new(1, 6, 1, 6), UDim2.new(0, 22, 0, 22), Vector2.new(1, 1), true, true)
 
-local TabNames = {"Main", "Visuals", "Combat", "Sky", "Settings"}
-local TabIndexes = { "01", "02", "03", "04", "05" }
+local TabNames = {"Main", "Visuals", "Combat", "Sky","Jersey" "Settings"}
+local TabIndexes = { "01", "02", "03", "04", "05" , "06"
 local Tabs = {}
 local TabPages = {}
 local ActiveTab = nil
