@@ -73,13 +73,32 @@ local Config = {
     BallInfoEnabled = true,
     BallInfoFontSize = 15,
     SportsHUDEnabled = true,
+    AimSilentEnabled = false,
+    AimLineEnabled = false,
+    AimSource = "Joystick",
+    AimLineLength = 60,
+    AimLineThickness = 0.25,
+    AimLineColor = Color3.fromRGB(255, 80, 140),
+    AimLineGlowColor = Color3.fromRGB(255, 120, 180),
+    AimSmooth = 0.5,
 }
 
 local S = {
     Corner = {}, ColorSynced = {}, Sliders = {}, Toggles = {}, Br = {},
     Connections = {},
     BallESP = { model = nil, highlight = nil, particles = nil, light = nil, trail = nil, trailAtt0 = nil, trailAtt1 = nil },
-    Pred = { ring = nil, lastPos = nil, lastTime = nil, smoothVel = nil, smoothLand = nil },
+    Pred = {
+        Physics = nil, Dots = {}, DotsFolder = nil, Circle = nil,
+        LastPos = nil, LastTime = nil, SmoothVel = nil, SmoothLanding = nil,
+        MaxSteps = 120, TimeStep = 0.03, DotSpacing = 3,
+        DotSize = 0.3, DotColor = Color3.fromRGB(80, 220, 130),
+        CircleSize = 4, CircleColor = Color3.fromRGB(80, 220, 130),
+        Smoothing = 0.2,
+    },
+    Aim = {
+        LineFolder = nil, Main = nil, Glow = nil, Sparkles = nil,
+        SmoothDir = nil, Hooked = false, OrigInteract = nil, BallService = nil,
+    },
     HitboxVisual = { Sphere = nil, Radius = 0 },
     MegaHitbox = { Enabled = false, SizeMultiplier = 3, UpdateInterval = 0.05, ExpandedCount = 0 },
     RangeGuard = { Enabled = false, Radius = 8 },
@@ -1012,6 +1031,7 @@ S.Br.TL_h, S.Br.TL_v, S.Br.TL_hg, S.Br.TL_vg = CreateBracket(UDim2.new(0, -6, 0,
 S.Br.TR_h, S.Br.TR_v, S.Br.TR_hg, S.Br.TR_vg = CreateBracket(UDim2.new(1, 6, 0, -6), UDim2.new(0, 22, 0, 22), Vector2.new(1, 0), true, false)
 S.Br.BL_h, S.Br.BL_v, S.Br.BL_hg, S.Br.BL_vg = CreateBracket(UDim2.new(0, -6, 1, 6), UDim2.new(0, 22, 0, 22), Vector2.new(0, 1), false, true)
 S.Br.BR_h, S.Br.BR_v, S.Br.BR_hg, S.Br.BR_vg = CreateBracket(UDim2.new(1, 6, 1, 6), UDim2.new(0, 22, 0, 22), Vector2.new(1, 1), true, true)
+
 local TabNames = {"Main", "Visuals", "Combat", "Sky", "Settings"}
 local TabIndexes = { "01", "02", "03", "04", "05" }
 local Tabs = {}
@@ -1984,6 +2004,31 @@ bannerFrame.ClipsDescendants = true
 bannerFrame.ZIndex = 6
 bannerFrame.Parent = mainPage
 Instance.new("UICorner", bannerFrame).CornerRadius = UDim.new(0, Config.CornerRadius)
+local bannerStroke = Instance.new("UIStroke", bannerFrame)
+bannerStroke.Thickness = 2
+bannerStroke.Color = THEME.ACCENT_HOT
+bannerStroke.Transparency = 0.35
+bannerStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+local bannerStrokeGrad = Instance.new("UIGradient", bannerStroke)
+bannerStrokeGrad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, THEME.ACCENT_DARK),
+    ColorSequenceKeypoint.new(0.5, THEME.ACCENT_HOT),
+    ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
+})
+task.spawn(function()
+    while bannerStrokeGrad.Parent do
+        for i = -1, 1, 0.03 do
+            if not bannerStrokeGrad.Parent then break end
+            bannerStrokeGrad.Offset = Vector2.new(i, 0)
+            task.wait(0.04)
+        end
+        for i = 1, -1, -0.03 do
+            if not bannerStrokeGrad.Parent then break end
+            bannerStrokeGrad.Offset = Vector2.new(i, 0)
+            task.wait(0.04)
+        end
+    end
+end)
 local bannerImage = Instance.new("ImageLabel")
 bannerImage.Size = UDim2.new(1, 0, 1, 0)
 bannerImage.BackgroundTransparency = 1
@@ -2006,6 +2051,28 @@ greetTitle.TextSize = 11
 greetTitle.Font = Enum.Font.Code
 greetTitle.TextXAlignment = Enum.TextXAlignment.Left
 greetTitle.Parent = greetFrame
+local greetTitleGrad = Instance.new("UIGradient", greetTitle)
+greetTitleGrad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, THEME.ACCENT_DARK),
+    ColorSequenceKeypoint.new(0.25, THEME.ACCENT_HOT),
+    ColorSequenceKeypoint.new(0.5, THEME.ACCENT_GLOW),
+    ColorSequenceKeypoint.new(0.75, THEME.ACCENT_HOT),
+    ColorSequenceKeypoint.new(1, THEME.ACCENT_DARK),
+})
+task.spawn(function()
+    while greetTitleGrad.Parent do
+        for i = -1, 1, 0.02 do
+            if not greetTitleGrad.Parent then break end
+            greetTitleGrad.Offset = Vector2.new(i, 0)
+            task.wait(0.03)
+        end
+        for i = 1, -1, -0.02 do
+            if not greetTitleGrad.Parent then break end
+            greetTitleGrad.Offset = Vector2.new(i, 0)
+            task.wait(0.03)
+        end
+    end
+end)
 local greetBody = Instance.new("TextLabel")
 greetBody.Size = UDim2.new(1, 0, 0, 40)
 greetBody.Position = UDim2.new(0, 0, 0, 18)
@@ -2207,7 +2274,7 @@ end)
 
 -- COMBAT PAGE
 local combatPage = TabPages["Combat"]
-combatPage.CanvasSize = UDim2.new(0, 0, 0, 800)
+combatPage.CanvasSize = UDim2.new(0, 0, 0, 920)
 CreateSection(combatPage, "// AUTO SERVE", 10, Color3.fromRGB(80, 255, 130))
 CreateToggle(combatPage, "Auto Powerful Serve", "Clicks at the peak of the serve bar automatically", 40, Config.AutoServeEnabled, function(v)
     Config.AutoServeEnabled = v
@@ -2249,10 +2316,31 @@ end)
 CreateSlider(combatPage, "Guard Radius", "Distance limit in studs", 455, 3, 30, 8, " studs", function(v)
     S.RangeGuard.Radius = v
 end)
+CreateSection(combatPage, "// AIM LINE", 530, Color3.fromRGB(255, 80, 140))
+CreateToggle(combatPage, "Silent Aim", "Redirects ball hit direction silently", 560, Config.AimSilentEnabled, function(v)
+    Config.AimSilentEnabled = v
+end)
+CreateToggle(combatPage, "Aim Line", "Shows glowing direction line from player", 610, Config.AimLineEnabled, function(v)
+    Config.AimLineEnabled = v
+    if S.Aim.Main then S.Aim.Main.Transparency = v and 0.5 or 1 end
+    if S.Aim.Glow then S.Aim.Glow.Transparency = v and 0.85 or 1 end
+end)
+CreateToggle(combatPage, "Use Camera", "Direction source: Camera (ON) / Joystick (OFF)", 660, false, function(v)
+    Config.AimSource = v and "Camera" or "Joystick"
+end)
+CreateSlider(combatPage, "Line Length", "Direction line length in studs", 710, 5, 120, Config.AimLineLength, " studs", function(v)
+    Config.AimLineLength = v
+end)
+CreateSlider(combatPage, "Line Thickness", "Beam thickness (x0.01)", 770, 5, 100, 25, "", function(v)
+    Config.AimLineThickness = v / 100
+end)
+CreateSlider(combatPage, "Aim Smooth", "Jump direction smoothing (0-90)", 830, 0, 90, 50, "%", function(v)
+    Config.AimSmooth = v / 100
+end)
 
 -- VISUALS PAGE
 local visualsPage = TabPages["Visuals"]
-visualsPage.CanvasSize = UDim2.new(0, 0, 0, 1100)
+visualsPage.CanvasSize = UDim2.new(0, 0, 0, 1160)
 CreateSection(visualsPage, "// BALL INFO", 10, Color3.fromRGB(255, 60, 180))
 CreateToggle(visualsPage, "Ball Info", "Shows ball info above it (SPD / DST / HGT)", 40, Config.BallInfoEnabled, function(v)
     Config.BallInfoEnabled = v
@@ -2275,28 +2363,35 @@ end)
 CreateToggle(visualsPage, "Ball Predictor", "Shows landing point of the ball on the ground", 255, Config.BallPredictorEnabled, function(v)
     Config.BallPredictorEnabled = v
     if not v then
-        S.Pred.smoothVel = nil
-        S.Pred.smoothLand = nil
-        if S.Pred.ring then S.Pred.ring.Transparency = 1 end
+        S.Pred.LastPos = nil
+        S.Pred.LastTime = nil
+        S.Pred.SmoothVel = nil
+        S.Pred.SmoothLanding = nil
+        _PredHideAll()
+    else
+        _PredBuildPool()
     end
 end)
-CreateSection(visualsPage, "// PLAYER TRACERS", 325, Color3.fromRGB(255, 100, 180))
-CreateToggle(visualsPage, "Player Tracers", "3D beam from each player head showing look direction", 355, S.Tracers.Enabled, function(v)
+CreateSlider(visualsPage, "Predictor Spacing", "Distance between trajectory dots", 310, 1, 10, 3, "", function(v)
+    S.Pred.DotSpacing = v
+end)
+CreateSection(visualsPage, "// PLAYER TRACERS", 380, Color3.fromRGB(255, 100, 180))
+CreateToggle(visualsPage, "Player Tracers", "3D beam from each player head showing look direction", 410, S.Tracers.Enabled, function(v)
     S.Tracers.Enabled = v
 end)
-CreateToggle(visualsPage, "Enemies Only", "Show tracers only for enemy team", 405, S.Tracers.OnlyEnemies, function(v)
+CreateToggle(visualsPage, "Enemies Only", "Show tracers only for enemy team", 460, S.Tracers.OnlyEnemies, function(v)
     S.Tracers.OnlyEnemies = v
 end)
-CreateSlider(visualsPage, "Tracer Length", "Beam length in studs", 455, 5, 80, 25, " studs", function(v)
+CreateSlider(visualsPage, "Tracer Length", "Beam length in studs", 510, 5, 80, 25, " studs", function(v)
     S.Tracers.Length = v
 end)
-CreateSection(visualsPage, "// CAMERA", 520, Color3.fromRGB(120, 220, 255))
-CreateSlider(visualsPage, "Field of View", "Camera zoom out angle (70 - 200)", 550, 70, 200, Config.FOV, "deg", function(v)
+CreateSection(visualsPage, "// CAMERA", 575, Color3.fromRGB(120, 220, 255))
+CreateSlider(visualsPage, "Field of View", "Camera zoom out angle (70 - 200)", 605, 70, 200, Config.FOV, "deg", function(v)
     Config.FOV = v
     if workspace.CurrentCamera then workspace.CurrentCamera.FieldOfView = v end
 end)
-CreateSection(visualsPage, "// PURGE CHARACTER", 620, Color3.fromRGB(180, 80, 255))
-CreateToggle(visualsPage, "Purge Character", "Headless + Korblox + accessories + gray shift", 650, S.Purge.Enabled, function(v)
+CreateSection(visualsPage, "// PURGE CHARACTER", 675, Color3.fromRGB(180, 80, 255))
+CreateToggle(visualsPage, "Purge Character", "Headless + Korblox + accessories + gray shift", 705, S.Purge.Enabled, function(v)
     S.Purge.Enabled = v
     if v then
         for _, p in ipairs(Players:GetPlayers()) do if p.Character then _ApplyPurge(p.Character, p) end end
@@ -2304,19 +2399,19 @@ CreateToggle(visualsPage, "Purge Character", "Headless + Korblox + accessories +
         for _, p in ipairs(Players:GetPlayers()) do if p.Character then _RestorePurge(p.Character, p) end end
     end
 end)
-CreateToggle(visualsPage, "Glow Eyes", "Neon eyes (work even when head is hidden)", 700, S.Purge.Eyes, function(v)
+CreateToggle(visualsPage, "Glow Eyes", "Neon eyes (work even when head is hidden)", 755, S.Purge.Eyes, function(v)
     S.Purge.Eyes = v
     for _, p in ipairs(Players:GetPlayers()) do if p.Character then _TogglePurgeEyes(p.Character, v) end end
 end)
-CreateToggle(visualsPage, "Sparkles", "Sparkle particles around body", 750, S.Purge.Sparkles, function(v)
+CreateToggle(visualsPage, "Sparkles", "Sparkle particles around body", 805, S.Purge.Sparkles, function(v)
     S.Purge.Sparkles = v
     for _, p in ipairs(Players:GetPlayers()) do if p.Character then _TogglePurgeSparkles(p.Character, v) end end
 end)
-CreateToggle(visualsPage, "Corpse Gray", "Pulsing gray body color", 800, S.Purge.Gray, function(v)
+CreateToggle(visualsPage, "Corpse Gray", "Pulsing gray body color", 855, S.Purge.Gray, function(v)
     S.Purge.Gray = v
     for _, p in ipairs(Players:GetPlayers()) do if p.Character then _TogglePurgeGray(p.Character, v) end end
 end)
-CreateToggle(visualsPage, "Remove Leg", "Korblox - hide right leg", 850, S.Purge.Leg, function(v)
+CreateToggle(visualsPage, "Remove Leg", "Korblox - hide right leg", 905, S.Purge.Leg, function(v)
     S.Purge.Leg = v
     for _, p in ipairs(Players:GetPlayers()) do if p.Character then _TogglePurgeLeg(p.Character, v) end end
 end)
@@ -2620,37 +2715,6 @@ function _FindBall()
     end
     return nil
 end
-function _GetFloorY(pos)
-    local ok, Physics = pcall(function() return require(ReplicatedStorage.Common.Physics) end)
-    if ok and Physics and Physics.calculateFloorHeight then
-        local ok2, y = pcall(function() return Physics.calculateFloorHeight(pos) end)
-        if ok2 and y and type(y) == "number" then return y end
-    end
-    local rp = RaycastParams.new()
-    rp.FilterType = Enum.RaycastFilterType.Exclude
-    rp.FilterDescendantsInstances = {LocalPlayer.Character or Instance.new("Model")}
-    local hit = workspace:Raycast(Vector3.new(pos.X, pos.Y + 50, pos.Z), Vector3.new(0, -300, 0), rp)
-    if hit then return hit.Position.Y end
-    return nil
-end
-function _PredictLanding(origin, velocity)
-    local g = 17
-    local pos = origin
-    local vel = velocity
-    local dt = 0.05
-    local floorY = _GetFloorY(origin) or -0.2
-    for i = 1, 80 do
-        vel = Vector3.new(vel.X, vel.Y - g * dt, vel.Z)
-        pos = pos + vel * dt
-        if pos.Y <= floorY + 1.2835 then return Vector3.new(pos.X, floorY, pos.Z) end
-        if i % 10 == 0 then
-            local nf = _GetFloorY(pos)
-            if nf then floorY = nf end
-        end
-        if pos.Y < -500 then break end
-    end
-    return Vector3.new(pos.X, floorY, pos.Z)
-end
 function _DestroyBallTrail()
     if S.BallESP.trail then pcall(function() S.BallESP.trail:Destroy() end) S.BallESP.trail = nil end
     if S.BallESP.trailAtt0 then pcall(function() S.BallESP.trailAtt0:Destroy() end) S.BallESP.trailAtt0 = nil end
@@ -2706,21 +2770,422 @@ function _CreateBallESP(ball)
     S.BallESP.light.Parent = primary
     _CreateBallTrail(ball)
 end
-function _CreatePredictorVisuals()
-    if S.Pred.ring then S.Pred.ring:Destroy() end
-    S.Pred.ring = Instance.new("Part")
-    S.Pred.ring.Shape = Enum.PartType.Cylinder
-    S.Pred.ring.Size = Vector3.new(0.1, 4, 4)
-    S.Pred.ring.Anchored = true
-    S.Pred.ring.CanCollide = false
-    S.Pred.ring.CanQuery = false
-    S.Pred.ring.CanTouch = false
-    S.Pred.ring.Material = Enum.Material.Neon
-    S.Pred.ring.Color = THEME.ACCENT_HOT
-    S.Pred.ring.Transparency = 1
-    S.Pred.ring.Parent = workspace
+
+-- ============================================================
+--  BALL PREDICTOR v3 — Common.Physics
+-- ============================================================
+do
+    local ok, Physics = pcall(function()
+        return require(ReplicatedStorage.Common.Physics)
+    end)
+    if ok and Physics and Physics.calculateProjectilePosition then
+        S.Pred.Physics = Physics
+    else
+        warn("[VL] Common.Physics.calculateProjectilePosition недоступен")
+    end
 end
-_CreatePredictorVisuals()
+
+function _PredBuildPool()
+    if S.Pred.DotsFolder and S.Pred.DotsFolder.Parent then return end
+    local folder = Instance.new("Folder")
+    folder.Name = "VL_PredictorDots"
+    folder.Parent = workspace
+    S.Pred.DotsFolder = folder
+
+    S.Pred.Dots = {}
+    for i = 1, S.Pred.MaxSteps do
+        local dot = Instance.new("Part")
+        dot.Shape = Enum.PartType.Ball
+        dot.Size = Vector3.new(S.Pred.DotSize, S.Pred.DotSize, S.Pred.DotSize)
+        dot.Anchored = true
+        dot.CanCollide = false
+        dot.CanQuery = false
+        dot.CanTouch = false
+        dot.CastShadow = false
+        dot.Material = Enum.Material.Neon
+        dot.Color = S.Pred.DotColor
+        dot.Transparency = 1
+        dot.Parent = folder
+        S.Pred.Dots[i] = dot
+    end
+
+    local circle = Instance.new("Part")
+    circle.Name = "VL_PredictorCircle"
+    circle.Shape = Enum.PartType.Cylinder
+    circle.Size = Vector3.new(0.1, S.Pred.CircleSize * 2, S.Pred.CircleSize * 2)
+    circle.Anchored = true
+    circle.CanCollide = false
+    circle.CanQuery = false
+    circle.CanTouch = false
+    circle.CastShadow = false
+    circle.Material = Enum.Material.Neon
+    circle.Color = S.Pred.CircleColor
+    circle.Transparency = 1
+    circle.Parent = workspace
+    S.Pred.Circle = circle
+end
+
+function _PredHideAll()
+    if S.Pred.Dots then
+        for _, d in ipairs(S.Pred.Dots) do
+            if d.Parent then d.Transparency = 1 end
+        end
+    end
+    if S.Pred.Circle and S.Pred.Circle.Parent then
+        S.Pred.Circle.Transparency = 1
+    end
+end
+
+function _PredDestroy()
+    if S.Pred.DotsFolder then
+        pcall(function() S.Pred.DotsFolder:Destroy() end)
+        S.Pred.DotsFolder = nil
+    end
+    if S.Pred.Circle then
+        pcall(function() S.Pred.Circle:Destroy() end)
+        S.Pred.Circle = nil
+    end
+    S.Pred.Dots = {}
+    S.Pred.LastPos = nil
+    S.Pred.LastTime = nil
+    S.Pred.SmoothVel = nil
+    S.Pred.SmoothLanding = nil
+end
+
+function _PredUpdate()
+    if not Config.BallPredictorEnabled or not S.Pred.Physics then
+        _PredHideAll()
+        return
+    end
+
+    if not S.Pred.DotsFolder or not S.Pred.DotsFolder.Parent then
+        _PredBuildPool()
+    end
+
+    local ball = _FindBall()
+    if not ball or not ball.PrimaryPart then
+        _PredHideAll()
+        S.Pred.LastPos = nil
+        return
+    end
+
+    local pos = ball.PrimaryPart.Position
+    local now = tick()
+
+    if S.Pred.LastPos and S.Pred.LastTime then
+        local dtReal = now - S.Pred.LastTime
+        if dtReal > 0.001 then
+            local rawVel = (pos - S.Pred.LastPos) / dtReal
+            if S.Pred.SmoothVel then
+                S.Pred.SmoothVel = S.Pred.SmoothVel:Lerp(rawVel, 0.25)
+            else
+                S.Pred.SmoothVel = rawVel
+            end
+        end
+    end
+    S.Pred.LastPos = pos
+    S.Pred.LastTime = now
+
+    if not S.Pred.SmoothVel or S.Pred.SmoothVel.Magnitude < 3 then
+        _PredHideAll()
+        return
+    end
+
+    local stepDt = S.Pred.TimeStep
+    local simPos = pos
+    local simVel = S.Pred.SmoothVel
+    local gravity = Vector3.new(0, -196.2, 0)
+
+    local okFloor, floorY = pcall(function()
+        return S.Pred.Physics.calculateFloorHeight(pos)
+    end)
+    if not okFloor or not floorY then floorY = -0.5 end
+
+    local dotIdx = 1
+    local landing = nil
+
+    for i = 1, S.Pred.MaxSteps do
+        local okProj, newPos = pcall(function()
+            return S.Pred.Physics.calculateProjectilePosition(simPos, simVel, gravity, stepDt, Vector3.new())
+        end)
+        if not okProj or not newPos then break end
+
+        simPos = newPos
+        simVel = simVel + gravity * stepDt
+
+        if i % S.Pred.DotSpacing == 0 and dotIdx <= #S.Pred.Dots then
+            local d = S.Pred.Dots[dotIdx]
+            if d.Parent then
+                d.Position = simPos
+                d.Transparency = 0.2
+                d.Size = Vector3.new(S.Pred.DotSize, S.Pred.DotSize, S.Pred.DotSize)
+                d.Color = S.Pred.DotColor
+            end
+            dotIdx = dotIdx + 1
+        end
+
+        if simPos.Y <= floorY + 1.5 then
+            landing = Vector3.new(simPos.X, floorY, simPos.Z)
+            break
+        end
+        if simPos.Y < -500 then break end
+    end
+
+    for i = dotIdx, #S.Pred.Dots do
+        if S.Pred.Dots[i].Parent then S.Pred.Dots[i].Transparency = 1 end
+    end
+
+    if landing and S.Pred.Circle and S.Pred.Circle.Parent then
+        if not S.Pred.SmoothLanding then
+            S.Pred.SmoothLanding = landing
+        else
+            S.Pred.SmoothLanding = S.Pred.SmoothLanding:Lerp(landing, 1 - S.Pred.Smoothing)
+        end
+        local fp = S.Pred.SmoothLanding
+        S.Pred.Circle.Size = Vector3.new(0.1, S.Pred.CircleSize * 2, S.Pred.CircleSize * 2)
+        S.Pred.Circle.Color = S.Pred.CircleColor
+        S.Pred.Circle.CFrame = CFrame.new(fp.X, fp.Y + 0.05, fp.Z) * CFrame.Angles(0, 0, math.rad(90))
+        S.Pred.Circle.Transparency = 0.4
+    else
+        if S.Pred.Circle and S.Pred.Circle.Parent then S.Pred.Circle.Transparency = 1 end
+        S.Pred.SmoothLanding = nil
+    end
+end
+
+-- ============================================================
+--  SILENT AIM + AIM LINE v6
+-- ============================================================
+function _AimBuildVisuals()
+    for _, obj in ipairs(workspace:GetChildren()) do
+        if obj.Name == "VL_AimLine" then obj:Destroy() end
+    end
+    local folder = Instance.new("Folder")
+    folder.Name = "VL_AimLine"
+    folder.Parent = workspace
+    S.Aim.LineFolder = folder
+
+    local main = Instance.new("Part")
+    main.Name = "AimLineMain"
+    main.Anchored = true
+    main.CanCollide = false
+    main.CanQuery = false
+    main.CanTouch = false
+    main.CastShadow = false
+    main.Material = Enum.Material.Neon
+    main.Color = Config.AimLineColor
+    main.Transparency = 0.5
+    main.Size = Vector3.new(Config.AimLineThickness, Config.AimLineThickness, Config.AimLineLength)
+    main.Parent = folder
+    S.Aim.Main = main
+
+    local glow = Instance.new("Part")
+    glow.Name = "AimLineGlow"
+    glow.Anchored = true
+    glow.CanCollide = false
+    glow.CanQuery = false
+    glow.CanTouch = false
+    glow.CastShadow = false
+    glow.Material = Enum.Material.Neon
+    glow.Color = Config.AimLineGlowColor
+    glow.Transparency = 0.85
+    glow.Size = Vector3.new(Config.AimLineThickness * 2.5, Config.AimLineThickness * 2.5, Config.AimLineLength)
+    glow.Parent = folder
+    S.Aim.Glow = glow
+
+    local sparkles = Instance.new("ParticleEmitter")
+    sparkles.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+    sparkles.LightEmission = 1
+    sparkles.LightInfluence = 0
+    sparkles.Size = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0),
+        NumberSequenceKeypoint.new(0.5, 0.3),
+        NumberSequenceKeypoint.new(1, 0),
+    })
+    sparkles.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 1),
+        NumberSequenceKeypoint.new(0.3, 0.2),
+        NumberSequenceKeypoint.new(1, 1),
+    })
+    sparkles.Lifetime = NumberRange.new(0.5, 1.2)
+    sparkles.Rate = 20
+    sparkles.Speed = NumberRange.new(0.5, 1.5)
+    sparkles.SpreadAngle = Vector2.new(180, 180)
+    sparkles.Rotation = NumberRange.new(0, 360)
+    sparkles.RotSpeed = NumberRange.new(-60, 60)
+    sparkles.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Config.AimLineColor),
+        ColorSequenceKeypoint.new(1, Config.AimLineGlowColor),
+    })
+    sparkles.Parent = main
+    S.Aim.Sparkles = sparkles
+end
+
+function _AimDestroyVisuals()
+    if S.Aim.LineFolder then
+        pcall(function() S.Aim.LineFolder:Destroy() end)
+    end
+    S.Aim.LineFolder = nil
+    S.Aim.Main = nil
+    S.Aim.Glow = nil
+    S.Aim.Sparkles = nil
+end
+
+_AimBuildVisuals()
+
+task.spawn(function()
+    while ScreenGui.Parent do
+        if S.Aim.Main and S.Aim.Main.Parent and S.Aim.Glow and S.Aim.Glow.Parent then
+            TweenService:Create(S.Aim.Main, TweenInfo.new(1, Enum.EasingStyle.Sine), {Transparency = 0.35}):Play()
+            TweenService:Create(S.Aim.Glow, TweenInfo.new(1, Enum.EasingStyle.Sine), {Transparency = 0.75}):Play()
+            task.wait(1)
+            TweenService:Create(S.Aim.Main, TweenInfo.new(1, Enum.EasingStyle.Sine), {Transparency = 0.6}):Play()
+            TweenService:Create(S.Aim.Glow, TweenInfo.new(1, Enum.EasingStyle.Sine), {Transparency = 0.9}):Play()
+            task.wait(1)
+        else
+            task.wait(0.5)
+        end
+    end
+end)
+
+function _AimComputeForward()
+    local char = LocalPlayer.Character
+    if char then
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local look = hrp.CFrame.LookVector
+            look = Vector3.new(look.X, 0, look.Z)
+            if look.Magnitude > 0.1 then return look.Unit end
+        end
+    end
+    return Vector3.new(0, 0, -1)
+end
+
+function _AimIsJumping()
+    local char = LocalPlayer.Character
+    if not char then return false end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if not hum then return false end
+    return hum.FloorMaterial == Enum.Material.Air
+end
+
+function _AimJoystickDir()
+    local char = LocalPlayer.Character
+    if not char then return nil end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if not hum then return nil end
+    local md = hum.MoveDirection
+    if md.Magnitude < 0.1 then return nil end
+    return Vector3.new(md.X, 0, md.Z).Unit
+end
+
+function _AimCameraDir()
+    local camLook = workspace.CurrentCamera.CFrame.LookVector
+    camLook = Vector3.new(camLook.X, 0, camLook.Z)
+    if camLook.Magnitude < 0.1 then return Vector3.new(0, 0, -1) end
+    return camLook.Unit
+end
+
+function _AimInstallHook()
+    if S.Aim.Hooked then return true end
+    local ok, Knit = pcall(function()
+        return require(ReplicatedStorage:WaitForChild("Packages").Knit)
+    end)
+    if not ok or not Knit then return false end
+    local okSvc, BallService = pcall(function() return Knit.GetService("BallService") end)
+    if not okSvc or not BallService then return false end
+
+    S.Aim.BallService = BallService
+    S.Aim.OrigInteract = BallService.Interact
+
+    BallService.Interact = newcclosure(function(...)
+        if Config.AimSilentEnabled then
+            local args = {...}
+            local forward = _AimComputeForward()
+            local aimDir = S.Aim.SmoothDir or forward
+
+            if #args >= 2 and typeof(args[2]) == "table" then
+                local data = args[2]
+                data.LookVector = aimDir
+                if data.MoveDirection and data.MoveDirection.Magnitude < 0.1 then
+                    data.MoveDirection = aimDir
+                end
+            end
+            return S.Aim.OrigInteract(table.unpack(args))
+        end
+        return S.Aim.OrigInteract(...)
+    end)
+    S.Aim.Hooked = true
+    return true
+end
+
+function _AimRemoveHook()
+    if S.Aim.Hooked and S.Aim.BallService and S.Aim.OrigInteract then
+        S.Aim.BallService.Interact = S.Aim.OrigInteract
+    end
+    S.Aim.Hooked = false
+    S.Aim.BallService = nil
+    S.Aim.OrigInteract = nil
+end
+
+task.spawn(function()
+    while ScreenGui.Parent do
+        if Config.AimSilentEnabled and not S.Aim.Hooked then
+            _AimInstallHook()
+        elseif not Config.AimSilentEnabled and S.Aim.Hooked then
+            _AimRemoveHook()
+        end
+        task.wait(1)
+    end
+end)
+
+RunService.Heartbeat:Connect(function()
+    local forward = _AimComputeForward()
+    local jumping = _AimIsJumping()
+
+    if jumping then
+        local newDir
+        if Config.AimSource == "Camera" then
+            newDir = _AimCameraDir()
+        else
+            newDir = _AimJoystickDir()
+        end
+
+        if newDir then
+            if S.Aim.SmoothDir then
+                S.Aim.SmoothDir = S.Aim.SmoothDir:Lerp(newDir, 1 - Config.AimSmooth)
+                if S.Aim.SmoothDir.Magnitude > 0.01 then
+                    S.Aim.SmoothDir = S.Aim.SmoothDir.Unit
+                else
+                    S.Aim.SmoothDir = newDir
+                end
+            else
+                S.Aim.SmoothDir = newDir
+            end
+        end
+    else
+        S.Aim.SmoothDir = forward
+    end
+
+    if not S.Aim.SmoothDir then S.Aim.SmoothDir = forward end
+
+    if Config.AimLineEnabled and S.Aim.Main and S.Aim.Main.Parent and S.Aim.Glow and S.Aim.Glow.Parent then
+        local char = LocalPlayer.Character
+        if char then
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                local origin = hrp.Position + Vector3.new(0, 2, 0)
+                local endPos = origin + S.Aim.SmoothDir * Config.AimLineLength
+                local midPos = (origin + endPos) / 2
+                local cf = CFrame.lookAt(midPos, endPos)
+
+                S.Aim.Main.CFrame = cf
+                S.Aim.Main.Size = Vector3.new(Config.AimLineThickness, Config.AimLineThickness, Config.AimLineLength)
+                S.Aim.Glow.CFrame = cf
+                S.Aim.Glow.Size = Vector3.new(Config.AimLineThickness * 2.5, Config.AimLineThickness * 2.5, Config.AimLineLength)
+            end
+        end
+    end
+end)
 
 -- HITBOX VISUAL
 function _DestroyHitboxVisual()
@@ -3301,6 +3766,25 @@ end
 function ApplyAccent_UI(newAccent, newHot, newDark, newGlow)
     paletteStroke.Color = newDark
     previewBox.BackgroundColor3 = newAccent
+    if bannerStroke then
+        bannerStroke.Color = newHot
+        if bannerStrokeGrad then
+            bannerStrokeGrad.Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, newDark),
+                ColorSequenceKeypoint.new(0.5, newHot),
+                ColorSequenceKeypoint.new(1, newDark),
+            })
+        end
+    end
+    if greetTitleGrad then
+        greetTitleGrad.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, newDark),
+            ColorSequenceKeypoint.new(0.25, newHot),
+            ColorSequenceKeypoint.new(0.5, newGlow),
+            ColorSequenceKeypoint.new(0.75, newHot),
+            ColorSequenceKeypoint.new(1, newDark),
+        })
+    end
     if S.Br.TL_hg then
         local gradSeq = ColorSequence.new({
             ColorSequenceKeypoint.new(0, newDark),
@@ -3409,6 +3893,14 @@ function ApplyAccentColor(color)
     ApplyAccent_Elements(newAccent, newHot, newDark, newGlow)
     S.Purge.EyeColor = newHot
     S.Purge.SparkleColor = newGlow
+    if S.Aim.Main then S.Aim.Main.Color = newHot end
+    if S.Aim.Glow then S.Aim.Glow.Color = newGlow end
+    if S.Aim.Sparkles then
+        S.Aim.Sparkles.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, newHot),
+            ColorSequenceKeypoint.new(1, newGlow),
+        })
+    end
 end
 local isDraggingColor = false
 function UpdateColorFromPosition(inputPos)
@@ -3471,7 +3963,9 @@ end
 MakeActionButton("Unload Script", 850, Color3.fromRGB(255, 80, 100), function()
     _DestroyBallESP()
     _DestroyHitboxVisual()
-    if S.Pred.ring then S.Pred.ring:Destroy() end
+    _PredDestroy()
+    _AimRemoveHook()
+    _AimDestroyVisuals()
     for player, _ in pairs(S.Tracers.Active) do _TracerDestroy(player) end
     if S.Tracers.Folder then pcall(function() S.Tracers.Folder:Destroy() end) end
     for player, data in pairs(S.Purge.Tracked) do
@@ -3533,41 +4027,10 @@ task.spawn(function()
                 else
                     if S.BallESP.highlight then _DestroyBallESP() end
                 end
-                if Config.BallPredictorEnabled then
-                    local now = tick()
-                    if S.Pred.lastPos and S.Pred.lastTime then
-                        local dt = now - S.Pred.lastTime
-                        if dt > 0.001 then
-                            local rawVel = (ballPos - S.Pred.lastPos) / dt
-                            if S.Pred.smoothVel then
-                                S.Pred.smoothVel = S.Pred.smoothVel:Lerp(rawVel, 0.12)
-                            else
-                                S.Pred.smoothVel = rawVel
-                            end
-                        end
-                    end
-                    S.Pred.lastPos = ballPos
-                    S.Pred.lastTime = now
-                    if S.Pred.smoothVel and S.Pred.smoothVel.Magnitude >= 0.5 then
-                        local landing = _PredictLanding(ballPos, S.Pred.smoothVel)
-                        if S.Pred.smoothLand then
-                            S.Pred.smoothLand = S.Pred.smoothLand:Lerp(landing, 0.15)
-                        else
-                            S.Pred.smoothLand = landing
-                        end
-                        local fp = S.Pred.smoothLand
-                        S.Pred.ring.CFrame = CFrame.new(fp.X, fp.Y + 0.05, fp.Z) * CFrame.Angles(0, 0, math.rad(90))
-                        S.Pred.ring.Transparency = 0.3
-                    else
-                        S.Pred.ring.Transparency = 1
-                    end
-                else
-                    if S.Pred.ring then S.Pred.ring.Transparency = 1 end
-                end
             else
                 if S.BallESP.highlight then _DestroyBallESP() end
-                if S.Pred.ring then S.Pred.ring.Transparency = 1 end
             end
+            pcall(_PredUpdate)
             pcall(_UpdateHitboxVisual, 0.03)
             pcall(_WiperUpdate)
             task.wait(0.03)
@@ -3617,6 +4080,6 @@ HeaderBaseLine.BackgroundTransparency = 0.7
 HeaderRunner.BackgroundTransparency = 0
 HeaderPulse.BackgroundTransparency = 0.6
 print("[VL v3.1] Loaded")
-print("[VL] Combat → Auto Serve")
-print("[VL] Visuals → Ball Info + Purge")
+print("[VL] Combat → Auto Serve + Aim Line")
+print("[VL] Visuals → Ball Info + Predictor + Purge")
 print("[VL] Main → Live Status + Sports HUD")
