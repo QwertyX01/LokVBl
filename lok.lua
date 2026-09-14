@@ -174,7 +174,10 @@ function UpdateHitboxHook()
     if not Hitbox then return false end
     local shouldHook = S.MegaHitbox.Enabled or S.RangeGuard.Enabled
     if shouldHook then
-        if not Hitbox.__VL_Hooked then
+        if not Hitbox.__VL_Hooked or (Hitbox.get ~= Hitbox.__VL_OrigGet and Hitbox.__VL_Hooked) then
+            if Hitbox.__VL_Hooked and Hitbox.__VL_OrigGet and Hitbox.get ~= Hitbox.__VL_OrigGet then
+                pcall(function() Hitbox.get = Hitbox.__VL_OrigGet end)
+            end
             Hitbox.All = nil
             Hitbox.Hitboxes = {}
             HitboxOrigGet = Hitbox.get
@@ -2322,8 +2325,19 @@ CreateToggle(combatPage, "Silent Aim", "Redirects ball hit direction silently", 
 end)
 CreateToggle(combatPage, "Aim Line", "Shows glowing direction line from player", 610, Config.AimLineEnabled, function(v)
     Config.AimLineEnabled = v
-    if S.Aim.Main then S.Aim.Main.Transparency = v and 0.5 or 1 end
-    if S.Aim.Glow then S.Aim.Glow.Transparency = v and 0.85 or 1 end
+    if not v then
+        if S.Aim.Main then S.Aim.Main.Transparency = 1 end
+        if S.Aim.Glow then S.Aim.Glow.Transparency = 1 end
+        if S.Aim.Sparkles then S.Aim.Sparkles.Enabled = false end
+        if S.Aim.LineFolder then
+            pcall(function() S.Aim.LineFolder.Transparency = 1 end)
+        end
+    else
+        if S.Aim.Sparkles then S.Aim.Sparkles.Enabled = true end
+        if S.Aim.LineFolder then
+            pcall(function() S.Aim.LineFolder.Transparency = 0 end)
+        end
+    end
 end)
 CreateToggle(combatPage, "Use Camera", "Direction source: Camera (ON) / Joystick (OFF)", 660, false, function(v)
     Config.AimSource = v and "Camera" or "Joystick"
@@ -3034,7 +3048,9 @@ _AimBuildVisuals()
 
 task.spawn(function()
     while ScreenGui.Parent do
-        if S.Aim.Main and S.Aim.Main.Parent and S.Aim.Glow and S.Aim.Glow.Parent then
+        if S.Aim.Main and S.Aim.Main.Parent and S.Aim.Glow and S.Aim.Glow.Parent
+           and S.Aim.LineFolder and S.Aim.LineFolder.Parent
+           and S.Aim.LineFolder.Transparency ~= 1 then
             TweenService:Create(S.Aim.Main, TweenInfo.new(1, Enum.EasingStyle.Sine), {Transparency = 0.35}):Play()
             TweenService:Create(S.Aim.Glow, TweenInfo.new(1, Enum.EasingStyle.Sine), {Transparency = 0.75}):Play()
             task.wait(1)
@@ -3042,7 +3058,7 @@ task.spawn(function()
             TweenService:Create(S.Aim.Glow, TweenInfo.new(1, Enum.EasingStyle.Sine), {Transparency = 0.9}):Play()
             task.wait(1)
         else
-            task.wait(0.5)
+            task.wait(0.3)
         end
     end
 end)
@@ -3184,6 +3200,9 @@ RunService.Heartbeat:Connect(function()
                 S.Aim.Glow.Size = Vector3.new(Config.AimLineThickness * 2.5, Config.AimLineThickness * 2.5, Config.AimLineLength)
             end
         end
+    elseif S.Aim.Main and S.Aim.Glow then
+        S.Aim.Main.Transparency = 1
+        S.Aim.Glow.Transparency = 1
     end
 end)
 
@@ -4037,9 +4056,60 @@ task.spawn(function()
         end
     end
 end)
+
+-- HITBOX WATCHDOG (фикс отвала)
 task.spawn(function()
     while ScreenGui.Parent do
-        if S.MegaHitbox.Enabled then pcall(ExpandAllHitboxTemplates) end
+        if S.MegaHitbox.Enabled or S.RangeGuard.Enabled then
+            local Hitbox = GetHitboxModule()
+            if Hitbox then
+                local shouldHook = S.MegaHitbox.Enabled or S.RangeGuard.Enabled
+                local hookAlive = Hitbox.__VL_Hooked and Hitbox.get ~= Hitbox.__VL_OrigGet
+                if shouldHook and not hookAlive then
+                    pcall(UpdateHitboxHook)
+                    print("[VL] Hitbox hook lost — reinstalling")
+                end
+            end
+
+            if S.MegaHitbox.Enabled then
+                local Assets = ReplicatedStorage:FindFirstChild("Assets")
+                local HitboxesNew = Assets and Assets:FindFirstChild("HitboxesNew")
+                if HitboxesNew then
+                    local needExpand = false
+                    local function checkAssemblies(assemblies)
+                        if not assemblies then return end
+                        for _, assembly in ipairs(assemblies:GetChildren()) do
+                            local part = assembly:FindFirstChild("Part")
+                            if part then
+                                local orig = part:GetAttribute("VL_OrigSize")
+                                if not orig then
+                                    needExpand = true
+                                    return
+                                end
+                                local expected = orig * S.MegaHitbox.SizeMultiplier
+                                if (part.Size - expected).Magnitude > 0.5 then
+                                    needExpand = true
+                                    return
+                                end
+                            end
+                        end
+                    end
+                    local defaultFolder = HitboxesNew:FindFirstChild("Default")
+                    if defaultFolder then checkAssemblies(defaultFolder:FindFirstChild("Assemblies")) end
+                    local bySpecial = HitboxesNew:FindFirstChild("BySpecial")
+                    if bySpecial and not needExpand then
+                        for _, special in ipairs(bySpecial:GetChildren()) do
+                            checkAssemblies(special:FindFirstChild("Assemblies"))
+                            if needExpand then break end
+                        end
+                    end
+                    if needExpand then
+                        pcall(ExpandAllHitboxTemplates)
+                        print("[VL] Hitbox templates regenerated — re-expanded")
+                    end
+                end
+            end
+        end
         task.wait(1)
     end
 end)
