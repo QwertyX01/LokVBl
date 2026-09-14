@@ -64,7 +64,8 @@ local THEME = {
 local Config = {
     FlyingDotsEnabled = true, SoundEnabled = true, ScanLineEnabled = true,
     FpsCounterEnabled = false, MenuScale = 100, CornerRadius = 8, Dots = {},
-    HitboxEnabled = false, HitboxSize = 30,
+    HitboxEnabled = false, HitboxSize = 40,
+    SmartBlockEnabled = false,
     BallESPEnabled = false, BallPredictorEnabled = false,
     FOV = 70,
     AutoServeEnabled = false,
@@ -100,8 +101,7 @@ local S = {
         SmoothDir = nil, Hooked = false, OrigInteract = nil, BallService = nil,
     },
     HitboxVisual = { Sphere = nil, Radius = 0 },
-    MegaHitbox = { Enabled = false, SizeMultiplier = 3, UpdateInterval = 0.05, ExpandedCount = 0 },
-    RangeGuard = { Enabled = false, Radius = 8 },
+    MegaHitbox = { Enabled = false, SizeMultiplier = 4, UpdateInterval = 0.05, ExpandedCount = 0 },
     HitBlocker = { LastBlockTime = 0 },
     Tracers = { Enabled = false, Length = 25, OnlyEnemies = false, Folder = nil, Active = {} },
     ClothesWiper = { Enabled = false, Wiped = {} },
@@ -172,8 +172,7 @@ end
 function UpdateHitboxHook()
     local Hitbox = GetHitboxModule()
     if not Hitbox then return false end
-    local shouldHook = S.MegaHitbox.Enabled or S.RangeGuard.Enabled
-    if shouldHook then
+    if S.MegaHitbox.Enabled then
         if not Hitbox.__VL_Hooked or (Hitbox.get ~= Hitbox.__VL_OrigGet and Hitbox.__VL_Hooked) then
             if Hitbox.__VL_Hooked and Hitbox.__VL_OrigGet and Hitbox.get ~= Hitbox.__VL_OrigGet then
                 pcall(function() Hitbox.get = Hitbox.__VL_OrigGet end)
@@ -185,8 +184,7 @@ function UpdateHitboxHook()
             Hitbox.get = function(move)
                 local result = HitboxOrigGet(move)
                 if result and result.Size then
-                    local mult = 1
-                    if S.MegaHitbox.Enabled then mult = S.MegaHitbox.SizeMultiplier end
+                    local mult = S.MegaHitbox.SizeMultiplier
                     if mult > 1 then
                         result.Size = Vector3.new(result.Size.X * mult, result.Size.Y * mult, result.Size.Z * mult)
                     end
@@ -194,7 +192,7 @@ function UpdateHitboxHook()
                 return result
             end
             Hitbox.__VL_Hooked = true
-            print("[VL] Hitbox.get hooked")
+            print("[VL] Hitbox.get hooked | mult = " .. tostring(S.MegaHitbox.SizeMultiplier))
         end
     else
         if Hitbox.__VL_Hooked and Hitbox.__VL_OrigGet then
@@ -775,7 +773,7 @@ local LogoVersion = Instance.new("TextLabel")
 LogoVersion.Size = UDim2.new(1, -65, 0, 14)
 LogoVersion.Position = UDim2.new(0, 65, 0, 48)
 LogoVersion.BackgroundTransparency = 1
-LogoVersion.Text = "// FREE 3.1.0"
+LogoVersion.Text = "// FREE 3.2.0"
 LogoVersion.TextColor3 = THEME.TEXT_LOW
 LogoVersion.TextSize = 10
 LogoVersion.Font = Enum.Font.Code
@@ -2275,7 +2273,7 @@ task.spawn(function()
     end
 end)
 
--- COMBAT PAGE
+-- COMBAT PAGE (переработан — убран Range Guard, добавлен Smart Block)
 local combatPage = TabPages["Combat"]
 combatPage.CanvasSize = UDim2.new(0, 0, 0, 920)
 CreateSection(combatPage, "// AUTO SERVE", 10, Color3.fromRGB(80, 255, 130))
@@ -2293,8 +2291,9 @@ end)
 CreateSlider(combatPage, "Click Cooldown", "Pause between clicks", 160, 1, 10, 3, " x0.1s", function(v)
     Config.AutoServeCooldown = v / 10
 end)
+
 CreateSection(combatPage, "// HITBOX EXPANDER", 250, THEME.ACCENT_HOT)
-CreateToggle(combatPage, "Hitbox Expander", "Expands impact area + shows sphere around ball", 280, S.MegaHitbox.Enabled, function(v)
+CreateToggle(combatPage, "Hitbox Expander", "Expands impact zone + shows sphere around ball", 280, S.MegaHitbox.Enabled, function(v)
     S.MegaHitbox.Enabled = v
     Config.HitboxEnabled = v
     if v then
@@ -2303,52 +2302,55 @@ CreateToggle(combatPage, "Hitbox Expander", "Expands impact area + shows sphere 
         _CreateHitboxVisual()
     else
         UpdateHitboxHook()
-        if not S.RangeGuard.Enabled then RestoreAllHitboxes() _DestroyHitboxVisual() end
+        RestoreAllHitboxes()
+        _DestroyHitboxVisual()
     end
 end)
-CreateSlider(combatPage, "Hitbox Size", "Impact area multiplier (x1 - x20)", 335, 10, 200, Config.HitboxSize, "x", function(v)
+CreateSlider(combatPage, "Hitbox Size", "Impact area size (40 - 150)", 335, 40, 150, Config.HitboxSize, "", function(v)
     Config.HitboxSize = v
     S.MegaHitbox.SizeMultiplier = v / 10
-    if S.MegaHitbox.Enabled then ExpandAllHitboxTemplates() UpdateHitboxHook() end
+    if S.MegaHitbox.Enabled then
+        ExpandAllHitboxTemplates()
+        local Hitbox = GetHitboxModule()
+        if Hitbox then
+            pcall(function() Hitbox.All = nil end)
+            pcall(function() Hitbox.Hitboxes = {} end)
+        end
+        UpdateHitboxHook()
+    end
 end)
-CreateToggle(combatPage, "Range Guard", "Blocks hit when ball is outside guard radius", 400, S.RangeGuard.Enabled, function(v)
-    S.RangeGuard.Enabled = v
-    if v then UpdateHitboxHook() if not S.HitboxVisual.Sphere then _CreateHitboxVisual() end
-    else UpdateHitboxHook() if not S.MegaHitbox.Enabled then RestoreAllHitboxes() _DestroyHitboxVisual() end end
+CreateToggle(combatPage, "Smart Block", "Block hit if ball is outside expanded hitbox radius (fixes random misses)", 400, Config.SmartBlockEnabled, function(v)
+    Config.SmartBlockEnabled = v
 end)
-CreateSlider(combatPage, "Guard Radius", "Distance limit in studs", 455, 3, 30, 8, " studs", function(v)
-    S.RangeGuard.Radius = v
-end)
-CreateSection(combatPage, "// AIM LINE", 530, Color3.fromRGB(255, 80, 140))
-CreateToggle(combatPage, "Silent Aim", "Redirects ball hit direction silently", 560, Config.AimSilentEnabled, function(v)
+
+CreateSection(combatPage, "// AIM LINE", 470, Color3.fromRGB(255, 80, 140))
+CreateToggle(combatPage, "Silent Aim", "Redirects ball hit direction silently", 500, Config.AimSilentEnabled, function(v)
     Config.AimSilentEnabled = v
 end)
-CreateToggle(combatPage, "Aim Line", "Shows glowing direction line from player", 610, Config.AimLineEnabled, function(v)
+CreateToggle(combatPage, "Aim Line", "Shows glowing direction line from player", 550, Config.AimLineEnabled, function(v)
     Config.AimLineEnabled = v
     if not v then
         if S.Aim.Main then S.Aim.Main.Transparency = 1 end
         if S.Aim.Glow then S.Aim.Glow.Transparency = 1 end
         if S.Aim.Sparkles then S.Aim.Sparkles.Enabled = false end
-        if S.Aim.LineFolder then
-            pcall(function() S.Aim.LineFolder.Transparency = 1 end)
-        end
+        if S.Aim.LineFolder then pcall(function() S.Aim.LineFolder.Transparency = 1 end) end
     else
+        if S.Aim.Main then S.Aim.Main.Transparency = 0.5 end
+        if S.Aim.Glow then S.Aim.Glow.Transparency = 0.85 end
         if S.Aim.Sparkles then S.Aim.Sparkles.Enabled = true end
-        if S.Aim.LineFolder then
-            pcall(function() S.Aim.LineFolder.Transparency = 0 end)
-        end
+        if S.Aim.LineFolder then pcall(function() S.Aim.LineFolder.Transparency = 0 end) end
     end
 end)
-CreateToggle(combatPage, "Use Camera", "Direction source: Camera (ON) / Joystick (OFF)", 660, false, function(v)
+CreateToggle(combatPage, "Use Camera", "Direction source: Camera (ON) / Joystick (OFF)", 600, false, function(v)
     Config.AimSource = v and "Camera" or "Joystick"
 end)
-CreateSlider(combatPage, "Line Length", "Direction line length in studs", 710, 5, 120, Config.AimLineLength, " studs", function(v)
+CreateSlider(combatPage, "Line Length", "Direction line length in studs", 650, 5, 120, Config.AimLineLength, " studs", function(v)
     Config.AimLineLength = v
 end)
-CreateSlider(combatPage, "Line Thickness", "Beam thickness (x0.01)", 770, 5, 100, 25, "", function(v)
+CreateSlider(combatPage, "Line Thickness", "Beam thickness (x0.01)", 710, 5, 100, 25, "", function(v)
     Config.AimLineThickness = v / 100
 end)
-CreateSlider(combatPage, "Aim Smooth", "Jump direction smoothing (0-90)", 830, 0, 90, 50, "%", function(v)
+CreateSlider(combatPage, "Aim Smooth", "Jump direction smoothing (0-90)", 770, 0, 90, 50, "%", function(v)
     Config.AimSmooth = v / 100
 end)
 
@@ -2967,7 +2969,7 @@ function _PredUpdate()
 end
 
 -- ============================================================
---  SILENT AIM + AIM LINE v6
+--  SILENT AIM + SMART BLOCK + AIM LINE
 -- ============================================================
 function _AimBuildVisuals()
     for _, obj in ipairs(workspace:GetChildren()) do
@@ -2987,7 +2989,7 @@ function _AimBuildVisuals()
     main.CastShadow = false
     main.Material = Enum.Material.Neon
     main.Color = Config.AimLineColor
-    main.Transparency = 0.5
+    main.Transparency = 1
     main.Size = Vector3.new(Config.AimLineThickness, Config.AimLineThickness, Config.AimLineLength)
     main.Parent = folder
     S.Aim.Main = main
@@ -3001,7 +3003,7 @@ function _AimBuildVisuals()
     glow.CastShadow = false
     glow.Material = Enum.Material.Neon
     glow.Color = Config.AimLineGlowColor
-    glow.Transparency = 0.85
+    glow.Transparency = 1
     glow.Size = Vector3.new(Config.AimLineThickness * 2.5, Config.AimLineThickness * 2.5, Config.AimLineLength)
     glow.Parent = folder
     S.Aim.Glow = glow
@@ -3032,6 +3034,7 @@ function _AimBuildVisuals()
     })
     sparkles.Parent = main
     S.Aim.Sparkles = sparkles
+    sparkles.Enabled = false
 end
 
 function _AimDestroyVisuals()
@@ -3046,11 +3049,18 @@ end
 
 _AimBuildVisuals()
 
+-- Синхронизация при загрузке, если toggle включён в конфиге
+if Config.AimLineEnabled and S.Aim.Main then
+    S.Aim.Main.Transparency = 0.5
+    S.Aim.Glow.Transparency = 0.85
+    if S.Aim.Sparkles then S.Aim.Sparkles.Enabled = true end
+    if S.Aim.LineFolder then S.Aim.LineFolder.Transparency = 0 end
+end
+
 task.spawn(function()
     while ScreenGui.Parent do
         if S.Aim.Main and S.Aim.Main.Parent and S.Aim.Glow and S.Aim.Glow.Parent
-           and S.Aim.LineFolder and S.Aim.LineFolder.Parent
-           and S.Aim.LineFolder.Transparency ~= 1 then
+           and Config.AimLineEnabled then
             TweenService:Create(S.Aim.Main, TweenInfo.new(1, Enum.EasingStyle.Sine), {Transparency = 0.35}):Play()
             TweenService:Create(S.Aim.Glow, TweenInfo.new(1, Enum.EasingStyle.Sine), {Transparency = 0.75}):Play()
             task.wait(1)
@@ -3114,6 +3124,20 @@ function _AimInstallHook()
     S.Aim.OrigInteract = BallService.Interact
 
     BallService.Interact = newcclosure(function(...)
+        -- SMART BLOCK: если включён и хитбокс, и Smart Block — блокируем удар по далёкому мячу
+        if S.MegaHitbox.Enabled and Config.SmartBlockEnabled then
+            local ball = _FindBall()
+            local char = LocalPlayer.Character
+            if ball and ball.PrimaryPart and char and char:FindFirstChild("HumanoidRootPart") then
+                local dist = (ball.PrimaryPart.Position - char.HumanoidRootPart.Position).Magnitude
+                local maxRange = S.MegaHitbox.SizeMultiplier * 1.2835 + 2
+                if dist > maxRange then
+                    -- Мяч слишком далеко — не отправляем удар на сервер (иначе он всё равно отклонит)
+                    return S.Aim.OrigInteract(...)
+                end
+            end
+        end
+
         if Config.AimSilentEnabled then
             local args = {...}
             local forward = _AimComputeForward()
@@ -3131,12 +3155,13 @@ function _AimInstallHook()
         return S.Aim.OrigInteract(...)
     end)
     S.Aim.Hooked = true
+    print("[VL] BallService.Interact hooked")
     return true
 end
 
 function _AimRemoveHook()
     if S.Aim.Hooked and S.Aim.BallService and S.Aim.OrigInteract then
-        S.Aim.BallService.Interact = S.Aim.OrigInteract
+        pcall(function() S.Aim.BallService.Interact = S.Aim.OrigInteract end)
     end
     S.Aim.Hooked = false
     S.Aim.BallService = nil
@@ -3145,12 +3170,10 @@ end
 
 task.spawn(function()
     while ScreenGui.Parent do
-        if Config.AimSilentEnabled and not S.Aim.Hooked then
+        if not S.Aim.Hooked then
             _AimInstallHook()
-        elseif not Config.AimSilentEnabled and S.Aim.Hooked then
-            _AimRemoveHook()
         end
-        task.wait(1)
+        task.wait(2)
     end
 end)
 
@@ -3228,7 +3251,7 @@ function _CreateHitboxVisual()
     S.HitboxVisual.Radius = S.MegaHitbox.SizeMultiplier * 1.2835
 end
 function _UpdateHitboxVisual(dt)
-    if not (S.MegaHitbox.Enabled or S.RangeGuard.Enabled) then
+    if not S.MegaHitbox.Enabled then
         if S.HitboxVisual.Sphere then _DestroyHitboxVisual() end
         return
     end
@@ -3239,29 +3262,14 @@ function _UpdateHitboxVisual(dt)
     end
     if not S.HitboxVisual.Sphere or not S.HitboxVisual.Sphere.Parent then _CreateHitboxVisual() end
     local ballPos = ball.PrimaryPart.Position
-    local sizeMult = S.MegaHitbox.Enabled and S.MegaHitbox.SizeMultiplier or 3
-    local desiredRadius = sizeMult * 1.2835
+    local desiredRadius = S.MegaHitbox.SizeMultiplier * 1.2835
     S.HitboxVisual.Radius = S.HitboxVisual.Radius + (desiredRadius - S.HitboxVisual.Radius) * math.min(dt * 8, 1)
     local r = S.HitboxVisual.Radius
     local sphere = S.HitboxVisual.Sphere
     sphere.Size = Vector3.new(r * 2, r * 2, r * 2)
     sphere.CFrame = CFrame.new(ballPos)
-    if S.RangeGuard.Enabled then
-        local char = LocalPlayer.Character
-        if char and char:FindFirstChild("HumanoidRootPart") then
-            local dist = (ballPos - char.HumanoidRootPart.Position).Magnitude
-            if dist <= S.RangeGuard.Radius then
-                sphere.Color = Color3.fromRGB(80, 255, 130)
-                sphere.Transparency = 0.6
-            else
-                sphere.Color = Color3.fromRGB(255, 80, 80)
-                sphere.Transparency = 0.75
-            end
-        end
-    else
-        sphere.Color = THEME.ACCENT
-        sphere.Transparency = 0.75
-    end
+    sphere.Color = THEME.ACCENT
+    sphere.Transparency = 0.75
 end
 function ExpandAllHitboxTemplates()
     local Assets = ReplicatedStorage:FindFirstChild("Assets")
@@ -3400,26 +3408,6 @@ task.spawn(function()
         pcall(_TracerUpdate)
         task.wait(0.03)
     end
-end)
-
--- HIT BLOCKER
-function _IsBallInGuardRange()
-    if not S.RangeGuard.Enabled then return true end
-    local ball = _FindBall()
-    if not ball or not ball.PrimaryPart then return true end
-    local char = LocalPlayer.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return true end
-    local dist = (ball.PrimaryPart.Position - char.HumanoidRootPart.Position).Magnitude
-    return dist <= S.RangeGuard.Radius
-end
-pcall(function()
-    local CAS = game:GetService("ContextActionService")
-    CAS:BindActionAtPriority("VL_HitBlock", function(_, state)
-        if state ~= Enum.UserInputState.Begin then return Enum.ContextActionResult.Pass end
-        if not S.RangeGuard.Enabled then return Enum.ContextActionResult.Pass end
-        if not _IsBallInGuardRange() then return Enum.ContextActionResult.Sink end
-        return Enum.ContextActionResult.Pass
-    end, false, 9999, Enum.UserInputType.MouseButton1, Enum.UserInputType.Touch)
 end)
 
 -- SKY PRESETS
@@ -4036,7 +4024,6 @@ task.spawn(function()
             end
             local ball = S.BallESP.model
             if ball and ball.PrimaryPart then
-                local ballPos = ball.PrimaryPart.Position
                 if Config.BallESPEnabled then
                     if not S.BallESP.highlight or not S.BallESP.highlight.Parent then
                         _CreateBallESP(ball)
@@ -4057,60 +4044,56 @@ task.spawn(function()
     end
 end)
 
--- HITBOX WATCHDOG (фикс отвала)
+-- HITBOX WATCHDOG (мягкий, раз в 3 секунды)
 task.spawn(function()
     while ScreenGui.Parent do
-        if S.MegaHitbox.Enabled or S.RangeGuard.Enabled then
+        if S.MegaHitbox.Enabled then
             local Hitbox = GetHitboxModule()
             if Hitbox then
-                local shouldHook = S.MegaHitbox.Enabled or S.RangeGuard.Enabled
                 local hookAlive = Hitbox.__VL_Hooked and Hitbox.get ~= Hitbox.__VL_OrigGet
-                if shouldHook and not hookAlive then
+                if not hookAlive then
                     pcall(UpdateHitboxHook)
                     print("[VL] Hitbox hook lost — reinstalling")
                 end
             end
-
-            if S.MegaHitbox.Enabled then
-                local Assets = ReplicatedStorage:FindFirstChild("Assets")
-                local HitboxesNew = Assets and Assets:FindFirstChild("HitboxesNew")
-                if HitboxesNew then
-                    local needExpand = false
-                    local function checkAssemblies(assemblies)
-                        if not assemblies then return end
-                        for _, assembly in ipairs(assemblies:GetChildren()) do
-                            local part = assembly:FindFirstChild("Part")
-                            if part then
-                                local orig = part:GetAttribute("VL_OrigSize")
-                                if not orig then
-                                    needExpand = true
-                                    return
-                                end
-                                local expected = orig * S.MegaHitbox.SizeMultiplier
-                                if (part.Size - expected).Magnitude > 0.5 then
-                                    needExpand = true
-                                    return
-                                end
+            local Assets = ReplicatedStorage:FindFirstChild("Assets")
+            local HitboxesNew = Assets and Assets:FindFirstChild("HitboxesNew")
+            if HitboxesNew then
+                local needExpand = false
+                local function checkAssemblies(assemblies)
+                    if not assemblies then return end
+                    for _, assembly in ipairs(assemblies:GetChildren()) do
+                        local part = assembly:FindFirstChild("Part")
+                        if part then
+                            local orig = part:GetAttribute("VL_OrigSize")
+                            if not orig then
+                                needExpand = true
+                                return
+                            end
+                            local expected = orig * S.MegaHitbox.SizeMultiplier
+                            if (part.Size - expected).Magnitude > 0.5 then
+                                needExpand = true
+                                return
                             end
                         end
                     end
-                    local defaultFolder = HitboxesNew:FindFirstChild("Default")
-                    if defaultFolder then checkAssemblies(defaultFolder:FindFirstChild("Assemblies")) end
-                    local bySpecial = HitboxesNew:FindFirstChild("BySpecial")
-                    if bySpecial and not needExpand then
-                        for _, special in ipairs(bySpecial:GetChildren()) do
-                            checkAssemblies(special:FindFirstChild("Assemblies"))
-                            if needExpand then break end
-                        end
+                end
+                local defaultFolder = HitboxesNew:FindFirstChild("Default")
+                if defaultFolder then checkAssemblies(defaultFolder:FindFirstChild("Assemblies")) end
+                local bySpecial = HitboxesNew:FindFirstChild("BySpecial")
+                if bySpecial and not needExpand then
+                    for _, special in ipairs(bySpecial:GetChildren()) do
+                        checkAssemblies(special:FindFirstChild("Assemblies"))
+                        if needExpand then break end
                     end
-                    if needExpand then
-                        pcall(ExpandAllHitboxTemplates)
-                        print("[VL] Hitbox templates regenerated — re-expanded")
-                    end
+                end
+                if needExpand then
+                    pcall(ExpandAllHitboxTemplates)
+                    print("[VL] Hitbox templates regenerated — re-expanded")
                 end
             end
         end
-        task.wait(1)
+        task.wait(3)
     end
 end)
 
@@ -4149,7 +4132,7 @@ AccentBar.BackgroundTransparency = 0
 HeaderBaseLine.BackgroundTransparency = 0.7
 HeaderRunner.BackgroundTransparency = 0
 HeaderPulse.BackgroundTransparency = 0.6
-print("[VL v3.1] Loaded")
-print("[VL] Combat → Auto Serve + Aim Line")
+print("[VL v3.2] Loaded")
+print("[VL] Combat → Auto Serve + Hitbox + Smart Block + Aim Line")
 print("[VL] Visuals → Ball Info + Predictor + Purge")
 print("[VL] Main → Live Status + Sports HUD")
