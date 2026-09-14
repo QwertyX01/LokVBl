@@ -4136,3 +4136,317 @@ print("[VL v3.2] Loaded")
 print("[VL] Combat → Auto Serve + Hitbox + Smart Block + Aim Line")
 print("[VL] Visuals → Ball Info + Predictor + Purge")
 print("[VL] Main → Live Status + Sports HUD")
+-- ============================================================
+--  JERSEY TAB (v1.0)
+--  Автоскан + стильные кнопки в стиле основного меню
+-- ============================================================
+do
+    local ContentProvider = game:GetService("ContentProvider")
+    
+    -- ============================================================
+    --  АВТО-СКАН JERSEY
+    -- ============================================================
+    local JERSEY_DATA = {}
+    local VALID_JERSEYS = {}
+    
+    local function checkAsset(id, isShirt)
+        local temp
+        if isShirt then
+            temp = Instance.new("Shirt")
+            temp.ShirtTemplate = "rbxassetid://" .. id
+        else
+            temp = Instance.new("Pants")
+            temp.PantsTemplate = "rbxassetid://" .. id
+        end
+        local ok = pcall(function()
+            ContentProvider:PreloadAsync({temp})
+        end)
+        temp:Destroy()
+        return ok
+    end
+    
+    local function scanJerseys()
+        local Assets = ReplicatedStorage:FindFirstChild("Assets")
+        local Jersey = Assets and Assets:FindFirstChild("Jersey")
+        if not Jersey then
+            warn("[Jersey] Assets.Jersey NOT FOUND")
+            return
+        end
+        
+        print("[Jersey] Scanning...")
+        for _, jersey in ipairs(Jersey:GetChildren()) do
+            if jersey.Name == "_JerseyInstances" then continue end
+            if not (jersey:IsA("Folder") or jersey:IsA("Model")) then continue end
+            
+            local jData = {}
+            local hasValid = false
+            
+            for _, team in ipairs(jersey:GetChildren()) do
+                if not team.Name:find("Team") then continue end
+                local shirt = team:FindFirstChild("Shirt")
+                local pants = team:FindFirstChild("Pants")
+                if not shirt or not pants then continue end
+                
+                local sId = shirt.ShirtTemplate:gsub("rbxassetid://", "")
+                local pId = pants.PantsTemplate:gsub("rbxassetid://", "")
+                if sId == "" or pId == "" then continue end
+                
+                local sOK = checkAsset(sId, true)
+                local pOK = checkAsset(pId, false)
+                
+                if sOK and pOK then
+                    jData[team.Name] = { Shirt = sId, Pants = pId }
+                    hasValid = true
+                end
+            end
+            
+            if hasValid then
+                JERSEY_DATA[jersey.Name] = jData
+                table.insert(VALID_JERSEYS, jersey.Name)
+                print("  ✅ " .. jersey.Name .. " (" .. tostring(#jData) .. " teams)")
+            else
+                print("  ❌ " .. jersey.Name)
+            end
+        end
+        
+        print("[Jersey] Found " .. #VALID_JERSEYS .. " working jerseys")
+    end
+    
+    scanJerseys()
+    
+    -- ============================================================
+    --  ОРИГИНАЛЬНАЯ ОДЕЖДА (для REMOVE)
+    -- ============================================================
+    local ORIGINAL_SHIRT = "144076358"
+    local ORIGINAL_PANTS = "144076760"
+    
+    -- ============================================================
+    --  ПРИМЕНЕНИЕ
+    -- ============================================================
+    local function ApplyJersey(jerseyName, teamName)
+        local char = LocalPlayer.Character
+        if not char then return end
+        
+        local jersey = JERSEY_DATA[jerseyName]
+        if not jersey then return end
+        local team = jersey[teamName]
+        if not team then return end
+        
+        -- Чистим старую одежду
+        for _, item in ipairs(char:GetDescendants()) do
+            if item:IsA("Shirt") or item:IsA("Pants") or item:IsA("ShirtGraphic") then
+                item:Destroy()
+            end
+            if item.Name == "JerseyFront" or item.Name == "JerseyBack" then
+                item:Destroy()
+            end
+        end
+        
+        -- Применяем
+        local s = Instance.new("Shirt")
+        s.ShirtTemplate = "rbxassetid://" .. team.Shirt
+        s.Parent = char
+        
+        local p = Instance.new("Pants")
+        p.PantsTemplate = "rbxassetid://" .. team.Pants
+        p.Parent = char
+        
+        -- JerseyFront/Back
+        local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
+        if torso then
+            local Assets = ReplicatedStorage:FindFirstChild("Assets")
+            local JF = Assets and Assets:FindFirstChild("Jersey")
+            local JA = JF and JF:FindFirstChild(jerseyName)
+            local TA = JA and JA:FindFirstChild(teamName)
+            
+            if TA then
+                local frontSrc = TA:FindFirstChild("JerseyFront")
+                if frontSrc then
+                    local f = frontSrc:Clone()
+                    f.Name = "JerseyFront"
+                    f.Parent = torso
+                end
+                local backSrc = TA:FindFirstChild("JerseyBack")
+                if backSrc then
+                    local b = backSrc:Clone()
+                    b.Name = "JerseyBack"
+                    b.Parent = torso
+                end
+            end
+        end
+        
+        print("[Jersey] Applied: " .. jerseyName .. " / " .. teamName)
+    end
+    
+    local function RemoveJersey()
+        local char = LocalPlayer.Character
+        if not char then return end
+        
+        for _, item in ipairs(char:GetDescendants()) do
+            if item:IsA("Shirt") or item:IsA("Pants") or item:IsA("ShirtGraphic") then
+                item:Destroy()
+            end
+            if item.Name == "JerseyFront" or item.Name == "JerseyBack" then
+                item:Destroy()
+            end
+        end
+        
+        local s = Instance.new("Shirt")
+        s.ShirtTemplate = "rbxassetid://" .. ORIGINAL_SHIRT
+        s.Parent = char
+        
+        local p = Instance.new("Pants")
+        p.PantsTemplate = "rbxassetid://" .. ORIGINAL_PANTS
+        p.Parent = char
+        
+        print("[Jersey] Removed")
+    end
+    
+    -- ============================================================
+    --  СОЗДАНИЕ UI ВКЛАДКИ
+    -- ============================================================
+    local jerseyPage = TabPages["Jersey"]
+    if not jerseyPage then
+        warn("[Jersey] TabPages[Jersey] не создан — проверь TabNames")
+        return
+    end
+    jerseyPage.CanvasSize = UDim2.new(0, 0, 0, 2000)
+    
+    -- Стиль кнопки (как у табов)
+    local function CreateJerseyButton(parent, text, yPos, callback)
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(1, -10, 0, 34)
+        btn.Position = UDim2.new(0, 5, 0, yPos)
+        btn.BackgroundColor3 = THEME.BG_MID
+        btn.BackgroundTransparency = 0.3
+        btn.BorderSizePixel = 0
+        btn.Text = ""
+        btn.AutoButtonColor = false
+        btn.Parent = parent
+        
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 6)
+        corner.Parent = btn
+        
+        local stroke = Instance.new("UIStroke", btn)
+        stroke.Thickness = 1
+        stroke.Color = THEME.LINE
+        stroke.Transparency = 0.4
+        
+        -- Акцентная полоска слева
+        local accent = Instance.new("Frame")
+        accent.Size = UDim2.new(0, 3, 0.6, 0)
+        accent.Position = UDim2.new(0, 3, 0.5, 0)
+        accent.AnchorPoint = Vector2.new(0, 0.5)
+        accent.BackgroundColor3 = THEME.ACCENT_HOT
+        accent.BorderSizePixel = 0
+        accent.Parent = btn
+        local accentCorner = Instance.new("UICorner")
+        accentCorner.CornerRadius = UDim.new(1, 0)
+        accentCorner.Parent = accent
+        
+        -- Текст
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, -20, 1, 0)
+        label.Position = UDim2.new(0, 14, 0, 0)
+        label.BackgroundTransparency = 1
+        label.Text = text
+        label.TextColor3 = THEME.TEXT_HI
+        label.TextSize = 12
+        label.Font = Enum.Font.Gotham
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Parent = btn
+        
+        -- Анимация hover
+        btn.MouseEnter:Connect(function()
+            TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(35, 22, 60), BackgroundTransparency = 0}):Play()
+            TweenService:Create(stroke, TweenInfo.new(0.15), {Color = THEME.ACCENT_HOT, Transparency = 0.2}):Play()
+            TweenService:Create(label, TweenInfo.new(0.15), {TextColor3 = THEME.ACCENT_HOT}):Play()
+        end)
+        btn.MouseLeave:Connect(function()
+            TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = THEME.BG_MID, BackgroundTransparency = 0.3}):Play()
+            TweenService:Create(stroke, TweenInfo.new(0.15), {Color = THEME.LINE, Transparency = 0.4}):Play()
+            TweenService:Create(label, TweenInfo.new(0.15), {TextColor3 = THEME.TEXT_HI}):Play()
+        end)
+        
+        btn.MouseButton1Click:Connect(function()
+            if PlayTab then PlayTab() end
+            callback()
+        end)
+        
+        return btn
+    end
+    
+    -- ============================================================
+    --  ЗАГОЛОВОК "JERSEYS"
+    -- ============================================================
+    local currentY = 10
+    
+    CreateSection(jerseyPage, "// JERSEYS — " .. tostring(#VALID_JERSEYS) .. " FOUND", currentY, THEME.ACCENT)
+    currentY = currentY + 40
+    
+    -- ============================================================
+    --  КНОПКИ JERSEYS
+    -- ============================================================
+    for _, jerseyName in ipairs(VALID_JERSEYS) do
+        local jersey = JERSEY_DATA[jerseyName]
+        
+        for teamName, _ in pairs(jersey) do
+            local displayName = jerseyName:gsub("Jersey", "") .. " — " .. teamName:gsub(" Team", "")
+            local jn, tn = jerseyName, teamName
+            
+            CreateJerseyButton(jerseyPage, displayName, currentY, function()
+                ApplyJersey(jn, tn)
+            end)
+            currentY = currentY + 40
+        end
+    end
+    
+    -- ============================================================
+    --  REMOVE BUTTON
+    -- ============================================================
+    currentY = currentY + 15
+    CreateSection(jerseyPage, "// ACTIONS", currentY, Color3.fromRGB(255, 100, 120))
+    currentY = currentY + 40
+    
+    -- Кнопка REMOVE
+    local removeBtn = Instance.new("TextButton")
+    removeBtn.Size = UDim2.new(1, -10, 0, 38)
+    removeBtn.Position = UDim2.new(0, 5, 0, currentY)
+    removeBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 60)
+    removeBtn.BackgroundTransparency = 0.2
+    removeBtn.BorderSizePixel = 0
+    removeBtn.Text = "REMOVE JERSEY"
+    removeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    removeBtn.TextSize = 12
+    removeBtn.Font = Enum.Font.GothamBold
+    removeBtn.AutoButtonColor = false
+    removeBtn.Parent = jerseyPage
+    
+    local removeCorner = Instance.new("UICorner")
+    removeCorner.CornerRadius = UDim.new(0, 6)
+    removeCorner.Parent = removeBtn
+    
+    local removeStroke = Instance.new("UIStroke", removeBtn)
+    removeStroke.Thickness = 1
+    removeStroke.Color = Color3.fromRGB(255, 100, 120)
+    removeStroke.Transparency = 0.3
+    
+    removeBtn.MouseEnter:Connect(function()
+        TweenService:Create(removeBtn, TweenInfo.new(0.15), {BackgroundTransparency = 0}):Play()
+    end)
+    removeBtn.MouseLeave:Connect(function()
+        TweenService:Create(removeBtn, TweenInfo.new(0.15), {BackgroundTransparency = 0.2}):Play()
+    end)
+    removeBtn.MouseButton1Click:Connect(function()
+        if PlayTab then PlayTab() end
+        RemoveJersey()
+    end)
+    
+    currentY = currentY + 50
+    
+    -- Обновляем CanvasSize
+    jerseyPage.CanvasSize = UDim2.new(0, 0, 0, currentY + 50)
+    
+    print("[Jersey] Tab created with " .. tostring(#VALID_JERSEYS) .. " jerseys")
+end
