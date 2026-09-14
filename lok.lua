@@ -1033,8 +1033,9 @@ S.Br.TR_h, S.Br.TR_v, S.Br.TR_hg, S.Br.TR_vg = CreateBracket(UDim2.new(1, 6, 0, 
 S.Br.BL_h, S.Br.BL_v, S.Br.BL_hg, S.Br.BL_vg = CreateBracket(UDim2.new(0, -6, 1, 6), UDim2.new(0, 22, 0, 22), Vector2.new(0, 1), false, true)
 S.Br.BR_h, S.Br.BR_v, S.Br.BR_hg, S.Br.BR_vg = CreateBracket(UDim2.new(1, 6, 1, 6), UDim2.new(0, 22, 0, 22), Vector2.new(1, 1), true, true)
 
-local TabNames = {"Main", "Visuals", "Combat", "Sky","Jersey" "Settings"}
-local TabIndexes = { "01", "02", "03", "04", "05" , "06"
+-- <<< ИЗМЕНЕНО: добавлена вкладка Jersey >>>
+local TabNames = {"Main", "Visuals", "Combat", "Sky", "Jersey", "Settings"}
+local TabIndexes = { "01", "02", "03", "04", "05", "06" }
 local Tabs = {}
 local TabPages = {}
 local ActiveTab = nil
@@ -2353,7 +2354,6 @@ end)
 CreateSlider(combatPage, "Aim Smooth", "Jump direction smoothing (0-90)", 770, 0, 90, 50, "%", function(v)
     Config.AimSmooth = v / 100
 end)
-
 -- VISUALS PAGE
 local visualsPage = TabPages["Visuals"]
 visualsPage.CanvasSize = UDim2.new(0, 0, 0, 1160)
@@ -3626,7 +3626,6 @@ disableBtn.MouseButton1Click:Connect(function()
         TweenService:Create(b.stroke, TweenInfo.new(0.2), {Color = THEME.ACCENT_DARK, Transparency = 0.55}):Play()
     end
 end)
-
 -- SETTINGS PAGE
 local settingsPage = TabPages["Settings"]
 settingsPage.CanvasSize = UDim2.new(0, 0, 0, 1180)
@@ -4097,55 +4096,11 @@ task.spawn(function()
     end
 end)
 
--- DROP-IN
-task.spawn(function()
-    task.wait(1.6)
-    local dropTween = TweenService:Create(MainFrame,
-        TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-        {Position = UDim2.new(0.5, -340, 0.5, -245)})
-    dropTween:Play()
-end)
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.KeyCode == Enum.KeyCode.Insert then
-        MainFrame.Visible = not MainFrame.Visible
-    end
-end)
-task.wait(1.8)
-Tabs["Main"].IsActive = true
-ActiveTab = "Main"
-TabPages["Main"].Visible = true
-Tabs["Main"].Button.BackgroundColor3 = Color3.fromRGB(35, 22, 60)
-Tabs["Main"].Button.BackgroundTransparency = 0
-Tabs["Main"].Text.TextColor3 = THEME.TEXT_HI
-Tabs["Main"].Index.TextColor3 = THEME.ACCENT_HOT
-Tabs["Main"].Arrow.TextTransparency = 0
-Tabs["Main"].Button.Size = UDim2.new(1, -6, 0, TabHeight + 2)
-Tabs["Main"].Button.Position = UDim2.new(0, 3, 0, TabBaseY - 1)
-Tabs["Main"].Accent.Size = UDim2.new(0, 4, 0, TabHeight - 8)
-PageHeader.Visible = true
-PageTitle.Text = "MAIN"
-PageTitle.TextTransparency = 0
-PageIndex.Text = "01"
-PageIndex.TextTransparency = 0
-AccentBar.BackgroundTransparency = 0
-HeaderBaseLine.BackgroundTransparency = 0.7
-HeaderRunner.BackgroundTransparency = 0
-HeaderPulse.BackgroundTransparency = 0.6
-print("[VL v3.2] Loaded")
-print("[VL] Combat → Auto Serve + Hitbox + Smart Block + Aim Line")
-print("[VL] Visuals → Ball Info + Predictor + Purge")
-print("[VL] Main → Live Status + Sports HUD")
 -- ============================================================
---  JERSEY TAB (v1.0)
---  Автоскан + стильные кнопки в стиле основного меню
+--  JERSEY TAB (новая вкладка) — АВТО-СКАН + КНОПКИ
 -- ============================================================
 do
     local ContentProvider = game:GetService("ContentProvider")
-    
-    -- ============================================================
-    --  АВТО-СКАН JERSEY
-    -- ============================================================
     local JERSEY_DATA = {}
     local VALID_JERSEYS = {}
     
@@ -4158,9 +4113,7 @@ do
             temp = Instance.new("Pants")
             temp.PantsTemplate = "rbxassetid://" .. id
         end
-        local ok = pcall(function()
-            ContentProvider:PreloadAsync({temp})
-        end)
+        local ok = pcall(function() ContentProvider:PreloadAsync({temp}) end)
         temp:Destroy()
         return ok
     end
@@ -4203,36 +4156,27 @@ do
             if hasValid then
                 JERSEY_DATA[jersey.Name] = jData
                 table.insert(VALID_JERSEYS, jersey.Name)
-                print("  ✅ " .. jersey.Name .. " (" .. tostring(#jData) .. " teams)")
+                print("  [OK] " .. jersey.Name .. " (" .. tostring(#jData) .. " teams)")
             else
-                print("  ❌ " .. jersey.Name)
+                print("  [X] " .. jersey.Name)
             end
         end
-        
-        print("[Jersey] Found " .. #VALID_JERSEYS .. " working jerseys")
+        print("[Jersey] Found " .. #VALID_JERSEYS .. " jerseys")
     end
     
     scanJerseys()
     
-    -- ============================================================
-    --  ОРИГИНАЛЬНАЯ ОДЕЖДА (для REMOVE)
-    -- ============================================================
     local ORIGINAL_SHIRT = "144076358"
     local ORIGINAL_PANTS = "144076760"
     
-    -- ============================================================
-    --  ПРИМЕНЕНИЕ
-    -- ============================================================
     local function ApplyJersey(jerseyName, teamName)
         local char = LocalPlayer.Character
         if not char then return end
-        
         local jersey = JERSEY_DATA[jerseyName]
         if not jersey then return end
         local team = jersey[teamName]
         if not team then return end
         
-        -- Чистим старую одежду
         for _, item in ipairs(char:GetDescendants()) do
             if item:IsA("Shirt") or item:IsA("Pants") or item:IsA("ShirtGraphic") then
                 item:Destroy()
@@ -4242,7 +4186,6 @@ do
             end
         end
         
-        -- Применяем
         local s = Instance.new("Shirt")
         s.ShirtTemplate = "rbxassetid://" .. team.Shirt
         s.Parent = char
@@ -4251,14 +4194,12 @@ do
         p.PantsTemplate = "rbxassetid://" .. team.Pants
         p.Parent = char
         
-        -- JerseyFront/Back
         local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
         if torso then
             local Assets = ReplicatedStorage:FindFirstChild("Assets")
             local JF = Assets and Assets:FindFirstChild("Jersey")
             local JA = JF and JF:FindFirstChild(jerseyName)
             local TA = JA and JA:FindFirstChild(teamName)
-            
             if TA then
                 local frontSrc = TA:FindFirstChild("JerseyFront")
                 if frontSrc then
@@ -4281,7 +4222,6 @@ do
     local function RemoveJersey()
         local char = LocalPlayer.Character
         if not char then return end
-        
         for _, item in ipairs(char:GetDescendants()) do
             if item:IsA("Shirt") or item:IsA("Pants") or item:IsA("ShirtGraphic") then
                 item:Destroy()
@@ -4290,163 +4230,177 @@ do
                 item:Destroy()
             end
         end
-        
         local s = Instance.new("Shirt")
         s.ShirtTemplate = "rbxassetid://" .. ORIGINAL_SHIRT
         s.Parent = char
-        
         local p = Instance.new("Pants")
         p.PantsTemplate = "rbxassetid://" .. ORIGINAL_PANTS
         p.Parent = char
-        
         print("[Jersey] Removed")
     end
     
-    -- ============================================================
-    --  СОЗДАНИЕ UI ВКЛАДКИ
-    -- ============================================================
     local jerseyPage = TabPages["Jersey"]
     if not jerseyPage then
-        warn("[Jersey] TabPages[Jersey] не создан — проверь TabNames")
-        return
-    end
-    jerseyPage.CanvasSize = UDim2.new(0, 0, 0, 2000)
-    
-    -- Стиль кнопки (как у табов)
-    local function CreateJerseyButton(parent, text, yPos, callback)
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(1, -10, 0, 34)
-        btn.Position = UDim2.new(0, 5, 0, yPos)
-        btn.BackgroundColor3 = THEME.BG_MID
-        btn.BackgroundTransparency = 0.3
-        btn.BorderSizePixel = 0
-        btn.Text = ""
-        btn.AutoButtonColor = false
-        btn.Parent = parent
+        warn("[Jersey] TabPages[Jersey] not found")
+    else
+        jerseyPage.CanvasSize = UDim2.new(0, 0, 0, 2000)
         
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 6)
-        corner.Parent = btn
-        
-        local stroke = Instance.new("UIStroke", btn)
-        stroke.Thickness = 1
-        stroke.Color = THEME.LINE
-        stroke.Transparency = 0.4
-        
-        -- Акцентная полоска слева
-        local accent = Instance.new("Frame")
-        accent.Size = UDim2.new(0, 3, 0.6, 0)
-        accent.Position = UDim2.new(0, 3, 0.5, 0)
-        accent.AnchorPoint = Vector2.new(0, 0.5)
-        accent.BackgroundColor3 = THEME.ACCENT_HOT
-        accent.BorderSizePixel = 0
-        accent.Parent = btn
-        local accentCorner = Instance.new("UICorner")
-        accentCorner.CornerRadius = UDim.new(1, 0)
-        accentCorner.Parent = accent
-        
-        -- Текст
-        local label = Instance.new("TextLabel")
-        label.Size = UDim2.new(1, -20, 1, 0)
-        label.Position = UDim2.new(0, 14, 0, 0)
-        label.BackgroundTransparency = 1
-        label.Text = text
-        label.TextColor3 = THEME.TEXT_HI
-        label.TextSize = 12
-        label.Font = Enum.Font.Gotham
-        label.TextXAlignment = Enum.TextXAlignment.Left
-        label.Parent = btn
-        
-        -- Анимация hover
-        btn.MouseEnter:Connect(function()
-            TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(35, 22, 60), BackgroundTransparency = 0}):Play()
-            TweenService:Create(stroke, TweenInfo.new(0.15), {Color = THEME.ACCENT_HOT, Transparency = 0.2}):Play()
-            TweenService:Create(label, TweenInfo.new(0.15), {TextColor3 = THEME.ACCENT_HOT}):Play()
-        end)
-        btn.MouseLeave:Connect(function()
-            TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = THEME.BG_MID, BackgroundTransparency = 0.3}):Play()
-            TweenService:Create(stroke, TweenInfo.new(0.15), {Color = THEME.LINE, Transparency = 0.4}):Play()
-            TweenService:Create(label, TweenInfo.new(0.15), {TextColor3 = THEME.TEXT_HI}):Play()
-        end)
-        
-        btn.MouseButton1Click:Connect(function()
-            if PlayTab then PlayTab() end
-            callback()
-        end)
-        
-        return btn
-    end
-    
-    -- ============================================================
-    --  ЗАГОЛОВОК "JERSEYS"
-    -- ============================================================
-    local currentY = 10
-    
-    CreateSection(jerseyPage, "// JERSEYS — " .. tostring(#VALID_JERSEYS) .. " FOUND", currentY, THEME.ACCENT)
-    currentY = currentY + 40
-    
-    -- ============================================================
-    --  КНОПКИ JERSEYS
-    -- ============================================================
-    for _, jerseyName in ipairs(VALID_JERSEYS) do
-        local jersey = JERSEY_DATA[jerseyName]
-        
-        for teamName, _ in pairs(jersey) do
-            local displayName = jerseyName:gsub("Jersey", "") .. " — " .. teamName:gsub(" Team", "")
-            local jn, tn = jerseyName, teamName
+        local function CreateJerseyButton(parent, text, yPos, callback)
+            local btn = Instance.new("TextButton")
+            btn.Size = UDim2.new(1, -10, 0, 34)
+            btn.Position = UDim2.new(0, 5, 0, yPos)
+            btn.BackgroundColor3 = THEME.BG_MID
+            btn.BackgroundTransparency = 0.3
+            btn.BorderSizePixel = 0
+            btn.Text = ""
+            btn.AutoButtonColor = false
+            btn.Parent = parent
             
-            CreateJerseyButton(jerseyPage, displayName, currentY, function()
-                ApplyJersey(jn, tn)
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0, 6)
+            corner.Parent = btn
+            
+            local stroke = Instance.new("UIStroke", btn)
+            stroke.Thickness = 1
+            stroke.Color = THEME.LINE
+            stroke.Transparency = 0.4
+            
+            local accent = Instance.new("Frame")
+            accent.Size = UDim2.new(0, 3, 0.6, 0)
+            accent.Position = UDim2.new(0, 3, 0.5, 0)
+            accent.AnchorPoint = Vector2.new(0, 0.5)
+            accent.BackgroundColor3 = THEME.ACCENT_HOT
+            accent.BorderSizePixel = 0
+            accent.Parent = btn
+            local accentCorner = Instance.new("UICorner")
+            accentCorner.CornerRadius = UDim.new(1, 0)
+            accentCorner.Parent = accent
+            
+            local label = Instance.new("TextLabel")
+            label.Size = UDim2.new(1, -20, 1, 0)
+            label.Position = UDim2.new(0, 14, 0, 0)
+            label.BackgroundTransparency = 1
+            label.Text = text
+            label.TextColor3 = THEME.TEXT_HI
+            label.TextSize = 12
+            label.Font = Enum.Font.Gotham
+            label.TextXAlignment = Enum.TextXAlignment.Left
+            label.Parent = btn
+            
+            btn.MouseEnter:Connect(function()
+                TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(35, 22, 60), BackgroundTransparency = 0}):Play()
+                TweenService:Create(stroke, TweenInfo.new(0.15), {Color = THEME.ACCENT_HOT, Transparency = 0.2}):Play()
+                TweenService:Create(label, TweenInfo.new(0.15), {TextColor3 = THEME.ACCENT_HOT}):Play()
             end)
-            currentY = currentY + 40
+            btn.MouseLeave:Connect(function()
+                TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = THEME.BG_MID, BackgroundTransparency = 0.3}):Play()
+                TweenService:Create(stroke, TweenInfo.new(0.15), {Color = THEME.LINE, Transparency = 0.4}):Play()
+                TweenService:Create(label, TweenInfo.new(0.15), {TextColor3 = THEME.TEXT_HI}):Play()
+            end)
+            
+            btn.MouseButton1Click:Connect(function()
+                if PlayTab then PlayTab() end
+                callback()
+            end)
+            
+            return btn
         end
+        
+        local currentY = 10
+        CreateSection(jerseyPage, "// JERSEYS — " .. tostring(#VALID_JERSEYS) .. " FOUND", currentY, THEME.ACCENT)
+        currentY = currentY + 40
+        
+        for _, jerseyName in ipairs(VALID_JERSEYS) do
+            local jersey = JERSEY_DATA[jerseyName]
+            for teamName, _ in pairs(jersey) do
+                local displayName = jerseyName:gsub("Jersey", "") .. " — " .. teamName:gsub(" Team", "")
+                local jn, tn = jerseyName, teamName
+                CreateJerseyButton(jerseyPage, displayName, currentY, function()
+                    ApplyJersey(jn, tn)
+                end)
+                currentY = currentY + 40
+            end
+        end
+        
+        currentY = currentY + 15
+        CreateSection(jerseyPage, "// ACTIONS", currentY, Color3.fromRGB(255, 100, 120))
+        currentY = currentY + 40
+        
+        local removeBtn = Instance.new("TextButton")
+        removeBtn.Size = UDim2.new(1, -10, 0, 38)
+        removeBtn.Position = UDim2.new(0, 5, 0, currentY)
+        removeBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 60)
+        removeBtn.BackgroundTransparency = 0.2
+        removeBtn.BorderSizePixel = 0
+        removeBtn.Text = "REMOVE JERSEY"
+        removeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        removeBtn.TextSize = 12
+        removeBtn.Font = Enum.Font.GothamBold
+        removeBtn.AutoButtonColor = false
+        removeBtn.Parent = jerseyPage
+        
+        local removeCorner = Instance.new("UICorner")
+        removeCorner.CornerRadius = UDim.new(0, 6)
+        removeCorner.Parent = removeBtn
+        
+        local removeStroke = Instance.new("UIStroke", removeBtn)
+        removeStroke.Thickness = 1
+        removeStroke.Color = Color3.fromRGB(255, 100, 120)
+        removeStroke.Transparency = 0.3
+        
+        removeBtn.MouseEnter:Connect(function()
+            TweenService:Create(removeBtn, TweenInfo.new(0.15), {BackgroundTransparency = 0}):Play()
+        end)
+        removeBtn.MouseLeave:Connect(function()
+            TweenService:Create(removeBtn, TweenInfo.new(0.15), {BackgroundTransparency = 0.2}):Play()
+        end)
+        removeBtn.MouseButton1Click:Connect(function()
+            if PlayTab then PlayTab() end
+            RemoveJersey()
+        end)
+        
+        currentY = currentY + 50
+        jerseyPage.CanvasSize = UDim2.new(0, 0, 0, currentY + 50)
+        
+        print("[Jersey] Tab created with " .. tostring(#VALID_JERSEYS) .. " jerseys")
     end
-    
-    -- ============================================================
-    --  REMOVE BUTTON
-    -- ============================================================
-    currentY = currentY + 15
-    CreateSection(jerseyPage, "// ACTIONS", currentY, Color3.fromRGB(255, 100, 120))
-    currentY = currentY + 40
-    
-    -- Кнопка REMOVE
-    local removeBtn = Instance.new("TextButton")
-    removeBtn.Size = UDim2.new(1, -10, 0, 38)
-    removeBtn.Position = UDim2.new(0, 5, 0, currentY)
-    removeBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 60)
-    removeBtn.BackgroundTransparency = 0.2
-    removeBtn.BorderSizePixel = 0
-    removeBtn.Text = "REMOVE JERSEY"
-    removeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    removeBtn.TextSize = 12
-    removeBtn.Font = Enum.Font.GothamBold
-    removeBtn.AutoButtonColor = false
-    removeBtn.Parent = jerseyPage
-    
-    local removeCorner = Instance.new("UICorner")
-    removeCorner.CornerRadius = UDim.new(0, 6)
-    removeCorner.Parent = removeBtn
-    
-    local removeStroke = Instance.new("UIStroke", removeBtn)
-    removeStroke.Thickness = 1
-    removeStroke.Color = Color3.fromRGB(255, 100, 120)
-    removeStroke.Transparency = 0.3
-    
-    removeBtn.MouseEnter:Connect(function()
-        TweenService:Create(removeBtn, TweenInfo.new(0.15), {BackgroundTransparency = 0}):Play()
-    end)
-    removeBtn.MouseLeave:Connect(function()
-        TweenService:Create(removeBtn, TweenInfo.new(0.15), {BackgroundTransparency = 0.2}):Play()
-    end)
-    removeBtn.MouseButton1Click:Connect(function()
-        if PlayTab then PlayTab() end
-        RemoveJersey()
-    end)
-    
-    currentY = currentY + 50
-    
-    -- Обновляем CanvasSize
-    jerseyPage.CanvasSize = UDim2.new(0, 0, 0, currentY + 50)
-    
-    print("[Jersey] Tab created with " .. tostring(#VALID_JERSEYS) .. " jerseys")
 end
+
+-- DROP-IN
+task.spawn(function()
+    task.wait(1.6)
+    local dropTween = TweenService:Create(MainFrame,
+        TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+        {Position = UDim2.new(0.5, -340, 0.5, -245)})
+    dropTween:Play()
+end)
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.Insert then
+        MainFrame.Visible = not MainFrame.Visible
+    end
+end)
+task.wait(1.8)
+Tabs["Main"].IsActive = true
+ActiveTab = "Main"
+TabPages["Main"].Visible = true
+Tabs["Main"].Button.BackgroundColor3 = Color3.fromRGB(35, 22, 60)
+Tabs["Main"].Button.BackgroundTransparency = 0
+Tabs["Main"].Text.TextColor3 = THEME.TEXT_HI
+Tabs["Main"].Index.TextColor3 = THEME.ACCENT_HOT
+Tabs["Main"].Arrow.TextTransparency = 0
+Tabs["Main"].Button.Size = UDim2.new(1, -6, 0, TabHeight + 2)
+Tabs["Main"].Button.Position = UDim2.new(0, 3, 0, TabBaseY - 1)
+Tabs["Main"].Accent.Size = UDim2.new(0, 4, 0, TabHeight - 8)
+PageHeader.Visible = true
+PageTitle.Text = "MAIN"
+PageTitle.TextTransparency = 0
+PageIndex.Text = "01"
+PageIndex.TextTransparency = 0
+AccentBar.BackgroundTransparency = 0
+HeaderBaseLine.BackgroundTransparency = 0.7
+HeaderRunner.BackgroundTransparency = 0
+HeaderPulse.BackgroundTransparency = 0.6
+print("[VL v3.3] Loaded")
+print("[VL] Main / Visuals / Combat / Sky / Jersey / Settings")
+print("[VL] Jersey tab: auto-scan + stylish buttons")
